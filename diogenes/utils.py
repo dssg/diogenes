@@ -367,8 +367,6 @@ def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
     """
     return (distance(lat_1, lon_1, lat_2, lon_2) < threshold)
 
-
-
 def stack_rows(*args):
     return nprf.stack_arrays(args, usemask=False)
 

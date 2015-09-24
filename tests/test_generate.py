@@ -1,13 +1,3 @@
-import unittest
-import numpy as np
-from numpy.random import rand
-import diogenes.read
-import diogenes.utils
-from diogenes.generate import generate_bin
-from diogenes.generate import normalize
-from diogenes.generate import distance_from_point
-from diogenes.generate import where_all_are_true, val_eq, val_lt, val_between
-from diogenes.generate import combine_sum, combine_mean, combine_cols
 
 class TestGenerate(unittest.TestCase):
 

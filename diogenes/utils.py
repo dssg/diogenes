@@ -8,6 +8,47 @@ from dateutil.parser import parse
 
 NOT_A_TIME = np.datetime64('NaT')
 
+__special_csv_strings = {'': None,
+                         'True': True,
+                         'False': False} 
+
+def __correct_csv_cell_type(cell):
+    # Change strings in CSV to appropriate Python objects
+    try:
+        return __special_csv_strings[cell]
+    except KeyError:
+        pass
+    try: 
+        return int(cell)
+    except ValueError:
+        pass
+    try:
+        return float(cell)
+    except ValueError:
+        pass
+    try:
+        return parse(cell)
+    except (TypeError, ValueError):
+        pass
+    return cell
+
+def __open_csv_as_list(f, delimiter=',', header=True, col_names=None, return_col_names=False):
+    # infers types
+    reader = csv.reader(f,  delimiter=delimiter)
+    if header:
+        col_names = reader.next() # skip header
+    data = [[__correct_csv_cell_type(cell) for cell in row] for
+            row in reader]
+    if col_names is None:
+        col_names = ['f{}'.format(i) for i in xrange(len(data[0]))]
+    if return_col_names:
+        return data, col_names
+    return data
+
+def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
+    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
+    return convert_to_sa(python_list, col_names)
+
 def utf_to_ascii(s):
     # http://stackoverflow.com/questions/4299675/python-script-to-convert-from-utf-8-to-ascii
     if isinstance(s, unicode):
@@ -117,7 +158,6 @@ def __str_col_to_datetime(col):
     return (bool(valid_dtimes), col_dtimes)
 
 def cast_list_of_list_to_sa(L, col_names=None, dtype=None):
-    # TODO utils.cast_list_of_list_to_sa is redundant   J: NOT agreed
     n_cols = len(L[0])
     if col_names is None:
         col_names = ['f{}'.format(i) for i in xrange(n_cols)]
@@ -187,7 +227,7 @@ def convert_to_sa(M, col_names=None):
         return M
 
     if is_nd(M):
-        return cast_np_nd_to_sa(M, names=col_names)
+        return __cast_np_nd_to_sa(M, col_names=col_names)
 
     if isinstance(M, list):
         return cast_list_of_list_to_sa(M, col_names=col_names)
@@ -209,7 +249,7 @@ def np_dtype_is_homogeneous(A):
     first_dtype = dtype[0]
     return all(dtype[i] == first_dtype for i in xrange(len(dtype)))
 
-def cast_np_nd_to_sa(nd, dtype=None, names=None):
+def __cast_np_nd_to_sa(nd, dtype=None, col_names=None):
     """
     Returns a view of a numpy, single-type, 0, 1 or 2-dimensional array as a
     structured array
@@ -235,9 +275,9 @@ def cast_np_nd_to_sa(nd, dtype=None, names=None):
         nd = nd.reshape(nd.size, 1)
     if dtype is None:
         n_cols = nd.shape[1]
-        if names is None: 
-            names = map('f{}'.format, xrange(n_cols))
-        dtype = np.dtype({'names': names,'formats': [nd_dtype for i in xrange(n_cols)]})
+        if col_names is None: 
+            col_names = map('f{}'.format, xrange(n_cols))
+        dtype = np.dtype({'names': col_names,'formats': [nd_dtype for i in xrange(n_cols)]})
         return nd.reshape(nd.size).view(dtype)
     type_len = nd_dtype.itemsize
     #import pdb; pdb.set_trace()
@@ -288,6 +328,12 @@ def cast_np_sa_to_nd(sa):
     cols = (sa[col_name].astype(most_permissive) for col_name in col_names)
     nd = np.column_stack(cols)
     return nd
+    
+def is_sa(M):
+    return is_nd(M) and M.dtype.names is not None
+
+def is_nd(M):
+    return isinstance(M, np.ndarray)
 
 def distance(lat_1, lon_1, lat_2, lon_2):
     """
@@ -321,11 +367,7 @@ def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
     """
     return (distance(lat_1, lon_1, lat_2, lon_2) < threshold)
 
-def is_sa(M):
-    return is_nd(M) and M.dtype.names is not None
 
-def is_nd(M):
-    return isinstance(M, np.ndarray)
 
 def stack_rows(*args):
     return nprf.stack_arrays(args, usemask=False)
@@ -334,8 +376,8 @@ def sa_from_cols(cols):
     # TODO take col names
     return nprf.merge_arrays(cols, usemask=False)    
 
-def append_cols(M, cols, names):
-    return nprf.append_fields(M, names, data=cols, usemask=False)
+def append_cols(M, cols, col_names):
+    return nprf.append_fields(M, col_names, data=cols, usemask=False)
 
 def remove_cols(M, col_names):
     return nprf.drop_fields(M, col_names, usemask=False)

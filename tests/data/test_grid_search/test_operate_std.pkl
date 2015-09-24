@@ -1,0 +1,51 @@
+(dp1
+S"Trial(clf=<class 'sklearn.tree.tree.DecisionTreeClassifier'>, clf_params={'max_depth': None}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p2
+cnumpy.core.multiarray
+scalar
+p3
+(cnumpy
+dtype
+p4
+(S'f8'
+I0
+I1
+tRp5
+(I3
+S'<'
+NNNI-1
+I-1
+I0
+tbS'\x87\xbd\x96\xfb\x8e\xdc\xe2?'
+tRp6
+sS"Trial(clf=<class 'sklearn.dummy.DummyClassifier'>, clf_params={'strategy': 'stratified'}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p7
+g3
+(g5
+S"\xd3\x08\xe2F\xda'\xde?"
+tRp8
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'n_estimators': 10, 'max_features': 'sqrt', 'n_jobs': 1, 'max_depth': None}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p9
+g3
+(g5
+S'\xa5\xdb\xb4\x19\xad\xfa\xe0?'
+tRp10
+sS"Trial(clf=<class 'sklearn.ensemble.weight_boosting.AdaBoostClassifier'>, clf_params={'n_estimators': 20}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p11
+g3
+(g5
+S'\x98*x\xae\x87\xec\xdf?'
+tRp12
+sS"Trial(clf=<class 'sklearn.dummy.DummyClassifier'>, clf_params={'strategy': 'most_frequent'}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p13
+g3
+(g5
+S'H1\xd4_\x8eH\xe1?'
+tRp14
+sS"Trial(clf=<class 'sklearn.linear_model.logistic.LogisticRegression'>, clf_params={'penalty': 'l1', 'C': 1.0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetNoSubset'>, subset_params={}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p15
+g3
+(g5
+S'M\x9b\xd1\xaa\x0f\xa3\xe0?'
+tRp16
+s.

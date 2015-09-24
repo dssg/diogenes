@@ -1,0 +1,39 @@
+(dp1
+S"Trial(clf=<class 'sklearn.svm.classes.SVC'>, clf_params={'kernel': 'linear', 'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p2
+cnumpy.core.multiarray
+scalar
+p3
+(cnumpy
+dtype
+p4
+(S'f8'
+I0
+I1
+tRp5
+(I3
+S'<'
+NNNI-1
+I-1
+I0
+tbS'\x8e\xe38\x8e\xe38\xee?'
+tRp6
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'n_estimators': 100, 'random_state': 0, 'max_depth': 1}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 40, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p7
+g3
+(g5
+S'\x8bQ\xc3\xdf\xa6\x18\xed?'
+tRp8
+sS"Trial(clf=<class 'sklearn.svm.classes.SVC'>, clf_params={'kernel': 'linear', 'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 40, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p9
+g3
+(g5
+S'\xde\xdd\xdd\xdd\xdd\xdd\xed?'
+tRp10
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'n_estimators': 100, 'random_state': 0, 'max_depth': 1}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+p11
+g3
+(g5
+S'\x0b\xed%\xb4\x97\xd0\xee?'
+tRp12
+s.

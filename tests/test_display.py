@@ -39,7 +39,7 @@ class TestDisplay(unittest.TestCase):
         self.report.add_heading(heading)
         self.report.add_fig(fig)
 
-    def test_print_matrix_row_col(self):
+    def test_pprint_sa(self):
         M = [(1, 2, 3), (4, 5, 6), (7, 8, 'STRING')]
         ctrl = """
                              f0              f1              f2
@@ -48,7 +48,7 @@ class TestDisplay(unittest.TestCase):
               2               7               8          STRING
         """.strip()
         with uft.rerout_stdout() as get_stdout:
-            dsp.print_matrix_row_col(M)
+            dsp.pprint_sa(M)
             self.assertEqual(get_stdout().strip(), ctrl)
         M = np.array([(1000, 'Bill'), (2000, 'Sam'), (3000, 'James')],
                      dtype=[('number', float), ('name', 'S5')])
@@ -60,7 +60,7 @@ class TestDisplay(unittest.TestCase):
               J          3000.0           James
         """.strip()
         with uft.rerout_stdout() as get_stdout:
-            dsp.print_matrix_row_col(M, row_labels=row_labels)
+            dsp.pprint_sa(M, row_labels=row_labels)
             self.assertEqual(get_stdout().strip(), ctrl)
 
 

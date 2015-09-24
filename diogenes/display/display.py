@@ -5,24 +5,35 @@ import cgi
 import uuid
 import abc
 from datetime import datetime
+from collections import Counter
+import itertools as it
+
 import numpy as np
+
 import matplotlib.pyplot as plt
 import matplotlib.dates
 from matplotlib.pylab import boxplot 
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
+from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve
+from sklearn.tree._tree import TREE_LEAF
+
 import pdfkit
 
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import precision_recall_curve
-from ..grid_search import Experiment
-from ..utils import is_sa, is_nd, cast_np_sa_to_nd, convert_to_sa
-from ..utils import cast_list_of_list_to_sa
+from diogenes.grid_search import Experiment
+from diogenes.utils import is_sa, is_nd, cast_np_sa_to_nd, convert_to_sa, cast_list_of_list_to_sa
 
-from display_helper import *
-from display_helper import _feature_pair_report
+def pprint_sa(M, row_labels=None, col_labels=None):
+    M = convert_to_sa(M, col_names=col_labels)
+    if row_labels is None:
+        row_labels = xrange(M.shape[0])
+    col_labels = M.dtype.names
+    # From http://stackoverflow.com/questions/9535954/python-printing-lists-as-tabular-data
+    row_format =' '.join(['{:>15}' for _ in xrange(len(col_labels) + 1)])
+    print row_format.format("", *col_labels)
+    for row_name, row in zip(row_labels, M):
+        print row_format.format(row_name, *row)
 
 __describe_cols_metrics = [('Count', len),
                            ('Mean', np.mean),
@@ -89,27 +100,6 @@ def crosstab(col1, col2):
                                   col2_unique]
     return convert_to_sa(crosstab_rows, col_names=col_names)
 
-def describe_column(col):
-    if col.dtype.kind not in ['f','i']:
-        return {}
-    cnt = len(col)
-    mean = np.mean(np.array(col))
-    std = np.std(np.array(col))
-    mi = min(col)
-    mx = max(col)
-    return {'Count:' : cnt,'Mean:': mean, 'Standard Dev:': std, 'Minimal ': mi,'Maximal:': mx}
-
-
-def print_matrix_row_col(M, row_labels=None, col_labels=None):
-    M = convert_to_sa(M, col_names=col_labels)
-    if row_labels is None:
-        row_labels = xrange(M.shape[0])
-    col_labels = M.dtype.names
-    # From http://stackoverflow.com/questions/9535954/python-printing-lists-as-tabular-data
-    row_format =' '.join(['{:>15}' for _ in xrange(len(col_labels) + 1)])
-    print row_format.format("", *col_labels)
-    for row_name, row in zip(row_labels, M):
-        print row_format.format(row_name, *row)
 
 def plot_simple_histogram(col, verbose=True):
     hist, bins = np.histogram(col, bins=50)
@@ -122,7 +112,6 @@ def plot_simple_histogram(col, verbose=True):
     return f
 
 # all of the below take output from any func in grid_search or operate
-
 
 def plot_prec_recall(labels, score, title='Prec/Recall', verbose=True):
     # adapted from Rayid's prec/recall code
@@ -215,7 +204,7 @@ def get_top_features(clf, M=None, col_names=None, n=10, verbose=True):
             ranked_name_and_score[:n], 
             col_names=('feat_name', 'score'))
     if verbose:
-        print_matrix_row_col(ranked_name_and_score)
+        pprint_sa(ranked_name_and_score)
     return ranked_name_and_score
 
 # TODO features form top % of clfs
@@ -366,6 +355,77 @@ def plot_on_timeline(col, verbose=True):
     if verbose:
         plt.show()
     return fig
+    
+def _feature_pair_report(pair_and_values,
+                         description='pairs', 
+                         measurement='value',
+                         note=None,
+                         n=10):
+    print '-' * 80
+    print description
+    print '-' * 80
+    print 'feature pair : {}'.format(measurement)
+    for pair, value in it.islice(pair_and_values, n):
+        print '{} : {}'.format(pair, value)
+    if note is not None:
+        print '* {}'.format(note)
+    print
+
+
+def feature_pairs_in_tree(dt):
+    """Lists subsequent features sorted by importance
+
+    Parameters
+    ----------
+    dt : sklearn.tree.DecisionTreeClassifer
+
+    Returns
+    -------
+    list of list of tuple of int :
+        Going from inside to out:
+
+        1. Each int is a feature that a node split on
+    
+        2. If two ints appear in the same tuple, then there was a node
+           that split on the second feature immediately below a node
+           that split on the first feature
+
+        3. Tuples appearing in the same inner list appear at the same
+           depth in the tree
+
+        4. The outer list describes the entire tree
+
+    """
+    t = dt.tree_
+    feature = t.feature
+    children_left = t.children_left
+    children_right = t.children_right
+    result = []
+    if t.children_left[0] == TREE_LEAF:
+        return result
+    next_queue = [0]
+    while next_queue:
+        this_queue = next_queue
+        next_queue = []
+        results_this_depth = []
+        while this_queue:
+            node = this_queue.pop()
+            left_child = children_left[node]
+            right_child = children_right[node]
+            if children_left[left_child] != TREE_LEAF:
+                results_this_depth.append(tuple(sorted(
+                    (feature[node], 
+                     feature[left_child]))))
+                next_queue.append(left_child)
+            if children_left[right_child] != TREE_LEAF:
+                results_this_depth.append(tuple(sorted(
+                    (feature[node], 
+                     feature[right_child]))))
+                next_queue.append(right_child)
+        result.append(results_this_depth)
+    result.pop() # The last results are always empty
+    return result
+    
 
 def feature_pairs_in_rf(rf, weight_by_depth=None, verbose=True, n=10):
     """Describes the frequency of features appearing subsequently in each tree

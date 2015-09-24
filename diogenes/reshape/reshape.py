@@ -1,8 +1,16 @@
-import numpy as np
-from collections import Counter
-from ..utils import remove_cols, append_cols, distance
 from uuid import uuid4
+from collections import Counter
 
+import numpy as np
+from sklearn import preprocessing
+
+from diogenes.utils import remove_cols, append_cols, distance,convert_to_sa
+
+def random_subset_of_columns(M, number_to_select):
+    num_col = len(M.dtypes.names)
+    remove_these_columns = np.random.choice(num_col, number_to_select, replace=False)
+    names = [col_names[i] for i in remove_these_columns]
+    return names
 
 def remove_col_where(M, arguments):
     to_remove = np.ones(len(M.dtype), dtype=bool)
@@ -32,6 +40,7 @@ def is_within_region(L, point):
     import matplotlib.path as mplPath
     bbPath = mplPath.Path(np.array(L))
     return bbPath.contains_point(point)
+    
 #remove
 def remove_these_columns(M, list_of_col_to_remove):
     return M[[col for col in M.dtype.names if col not in list_of_col_to_remove]]
@@ -50,10 +59,6 @@ def col_has_lt_threshold_unique_values(col, threshold):
     vals = sort(d.values())
     return ( sum(vals[:-1]) < threshold) 
     
-import numpy as np
-from sklearn import preprocessing
-from sklearn.preprocessing import Imputer
-from diogenes.utils import convert_to_sa
 
 def label_encode(M):
     """
@@ -105,7 +110,7 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
         return M_cp
 
     # we're doing one of the sklearn imputer strategies
-    imp = Imputer(missing_values=missing_val, strategy=strategy, axis=1)
+    imp = processing.Imputer(missing_values=missing_val, strategy=strategy, axis=1)
     for col_name, col_type in M_cp.dtype.descr:
         if 'f' in col_type or 'i' in col_type:
             # The Imputer only works on float and int columns
@@ -113,9 +118,9 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
             col[:] = imp.fit_transform(col)
     return M_cp
 
+
+
 ####Generate
-
-
 def where_all_are_true(M, arguments, generated_name=None):
     if generated_name is None:
         generated_name = str(uuid4())
@@ -125,11 +130,6 @@ def where_all_are_true(M, arguments, generated_name=None):
                                     arg_set['vals'])
         to_select = np.logical_and(to_select, lambd(M, col_name, vals))
     return append_cols(M, to_select, generated_name)
-
-# where_all_are_true(
-#    M,
-#    [{'func': val_eq, 'col_name': 'f1', 'vals': 4},
-#     {'func': val_between, 'col_name': 'f7', 'vals': (1.2, 2.5)}]      
 
 def is_outlier(M, col_name, boundary):
     std = np.std(M[col_name])

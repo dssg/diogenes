@@ -3,36 +3,18 @@ import json
 import copy
 import abc
 import datetime
-import itertools as it
-import numpy as np
 import csv
 import os
-
-from collections import Counter
-
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.cross_validation import KFold, StratifiedKFold
-from sklearn.cross_validation import _PartitionIterator
-from sklearn.ensemble import RandomForestClassifier
-
-from joblib import Parallel, delayed
-from multiprocessing import cpu_count
-
-import diogenes.utils as utils
-
-
-
-from diogenes.utils import remove_cols
-
-
-import abc
-import copy
-import inspect
-import numpy as np
 import itertools as it
 from collections import Counter
-from random import sample, seed, setstate, getstate
+from multiprocessing import cpu_count
+
+import numpy as np
+from joblib import Parallel, delayed
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cross_validation import KFold, StratifiedKFold
 from sklearn.ensemble import AdaBoostClassifier,RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -42,7 +24,8 @@ from sklearn.metrics import roc_auc_score, f1_score, precision_recall_curve
 
 from diogenes.grid_search import subset
 from diogenes.grid_search import partition_iterator as p_i
-
+import diogenes.utils as utils
+from diogenes.utils import remove_cols
 
 def _run_trial(trial):
     return trial.run()

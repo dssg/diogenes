@@ -1,5 +1,5 @@
 (dp1
-S"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 80, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+S"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 80, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
 p2
 cnumpy.core.multiarray
 scalar
@@ -18,25 +18,25 @@ I-1
 I0
 tbS'`\x07cV\x1a=\xee?'
 tRp6
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
 p7
 g3
 (g5
 S'\xa2\xbd\x84\xf6\x12\xda\xeb?'
 tRp8
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 40, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 40, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
 p9
 g3
 (g5
 S'\xca:W\x1e\x90\xac\xeb?'
 tRp10
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 60, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 60, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
 p11
 g3
 (g5
 S'\x8e\xe38\x8e\xe38\xee?'
 tRp12
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.grid_search_helper.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 100, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={'random_state': 0}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 100, 'random_state': 0}, cv=<class 'sklearn.cross_validation.StratifiedKFold'>, cv_params={})"
 p13
 g3
 (g5

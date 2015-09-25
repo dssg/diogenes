@@ -1,8 +1,10 @@
-#files included here are those that you SHOULD be able to do in python syntax but can not.
+#functions included here are those that you SHOULD be able to do in python syntax but can not.
+import csv
+import itertools as it
+
 import numpy as np
 import numpy.lib.recfunctions as nprf
 import matplotlib.mlab
-import itertools as it
 from datetime import datetime
 from dateutil.parser import parse
 

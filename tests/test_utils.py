@@ -49,7 +49,7 @@ class TestUtils(unittest.TestCase):
         for (s, ctrl) in trials:
             self.assertEqual(utils.str_to_time(s), ctrl)
 
-    def test_cast_list_of_list_to_sa(self):
+    def test_cast_list_of_list_to_sa2(self):
         L = [[None, None, None],
              ['a',  5,    None],
              ['ab', 'x',  None]]
@@ -75,6 +75,14 @@ class TestUtils(unittest.TestCase):
                 L, 
                 col_names=['int', 'ucode', 'float', 'long'])
         self.assertTrue(utils_for_tests.array_equal(ctrl, conv))
+
+    def test_cast_list_of_list_to_sa1(self):
+        test = [[1,2.,'a'],[2,4.,'b'],[4,5.,'g']]
+        names = ['ints','floats','strings']
+        correct_1 = np.array([(1, 2.0, 'a'), (2, 4.0, 'b'), (4, 5.0, 'g')],dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', 'S1')])
+        correct_2 = np.array([(1, 2.0, 'a'), (2, 4.0, 'b'), (4, 5.0, 'g')], dtype=[('ints', '<i8'), ('floats', '<f8'), ('strings', 'S1')])
+        self.assertTrue(np.array_equal(correct_1, cast_list_of_list_to_sa(test)))
+        self.assertTrue(np.array_equal(correct_2, cast_list_of_list_to_sa(test, names)))
 
     def test_convert_to_sa(self):
         # already a structured array

@@ -8,15 +8,17 @@ from datetime import datetime
 import itertools as it
 import numpy as np
 
-from eights.utils import open_csv_as_sa
+from diogenes.utils import open_csv_as_sa, cast_list_of_list_to_sa
 
 def open_csv(path, delimiter=',', header=True, col_names=None):
     with open(path, 'rU') as fin:
         return open_csv_as_sa(fin, delimiter, header, col_names)
     
 def open_csv_url(url, delimiter=',', header=True, col_names=None):
-    with urllib2.urlopen(url):
-        return open_csv_as_sa(fin, delimiter, header, col_names)
+    fin = urllib2.urlopen(url)
+    sa = open_csv_as_sa(fin, delimiter, header, col_names)
+    fin.close()
+    return sa
 
 def connect_sql(con_str, allow_caching=False, cache_dir='.'):
     return SQLConnection(con_str, allow_caching, cache_dir)

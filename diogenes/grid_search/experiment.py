@@ -14,35 +14,16 @@ from collections import Counter
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import KFold, StratifiedKFold
 from sklearn.cross_validation import _PartitionIterator
+from sklearn.ensemble import RandomForestClassifier
 
 from joblib import Parallel, delayed
 from multiprocessing import cpu_count
 
-from .grid_search_helper import *
 import diogenes.utils as utils
 
 
-from sklearn.ensemble import (AdaBoostClassifier, 
-                              RandomForestClassifier,
-                              ExtraTreesClassifier,
-                              GradientBoostingClassifier)
-from sklearn.linear_model import (LogisticRegression, 
-                                  RidgeClassifier, 
-                                  SGDClassifier, 
-                                  Perceptron, 
-                                  PassiveAggressiveClassifier)
-from sklearn.cross_validation import (StratifiedKFold, 
-                                      KFold)
-from sklearn.naive_bayes import (BernoulliNB, 
-                                 MultinomialNB,
-                                 GaussianNB)
-from sklearn.neighbors import(KNeighborsClassifier, 
-                              NearestCentroid)
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.dummy import DummyClassifier
 
-from ..utils import remove_cols
+from diogenes.utils import remove_cols
 
 
 import abc
@@ -52,13 +33,15 @@ import numpy as np
 import itertools as it
 from collections import Counter
 from random import sample, seed, setstate, getstate
-from sklearn.cross_validation import _PartitionIterator
 from sklearn.ensemble import AdaBoostClassifier,RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import roc_auc_score, f1_score, precision_recall_curve
+
+from diogenes.grid_search import subset
+from diogenes.grid_search import partition_iterator as p_i
 
 
 def _run_trial(trial):
@@ -70,8 +53,8 @@ class Experiment(object):
             M, 
             y, 
             clfs=[{'clf': RandomForestClassifier}], 
-            subsets=[{'subset': SubsetNoSubset}], 
-            cvs=[{'cv': NoCV}],
+            subsets=[{'subset': subset.SubsetNoSubset}], 
+            cvs=[{'cv': p_i.NoCV}],
             trials=None):
         if utils.is_sa(M):
             self.col_names = M.dtype.names
@@ -455,9 +438,9 @@ class Trial(object):
         col_names,
         clf=RandomForestClassifier,
         clf_params={},
-        subset=SubsetNoSubset,
+        subset=subset.SubsetNoSubset,
         subset_params={},
-        cv=NoCV,
+        cv=p_i.NoCV,
         cv_params={}):
         self.M = M
         self.y = y

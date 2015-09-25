@@ -1,3 +1,23 @@
+from sklearn.ensemble import (AdaBoostClassifier, 
+                              RandomForestClassifier,
+                              ExtraTreesClassifier,
+                              GradientBoostingClassifier)
+from sklearn.linear_model import (LogisticRegression, 
+                                  RidgeClassifier, 
+                                  SGDClassifier, 
+                                  Perceptron, 
+                                  PassiveAggressiveClassifier)
+from sklearn.cross_validation import (StratifiedKFold, 
+                                      KFold)
+from sklearn.naive_bayes import (BernoulliNB, 
+                                 MultinomialNB,
+                                 GaussianNB)
+from sklearn.neighbors import(KNeighborsClassifier, 
+                              NearestCentroid)
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.dummy import DummyClassifier
+
 std_clfs = [{'clf': AdaBoostClassifier, 'n_estimators': [20,50,100]}, 
             {'clf': RandomForestClassifier, 
              'n_estimators': [10,30,50],

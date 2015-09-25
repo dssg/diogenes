@@ -1,3 +1,7 @@
+import numpy as np
+
+from sklearn.cross_validation import _PartitionIterator
+
 
 class NoCV(_PartitionIterator):
     """Cross validator that just returns the entire set as the training set

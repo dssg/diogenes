@@ -110,7 +110,7 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
         return M_cp
 
     # we're doing one of the sklearn imputer strategies
-    imp = processing.Imputer(missing_values=missing_val, strategy=strategy, axis=1)
+    imp = preprocessing.Imputer(missing_values=missing_val, strategy=strategy, axis=1)
     for col_name, col_type in M_cp.dtype.descr:
         if 'f' in col_type or 'i' in col_type:
             # The Imputer only works on float and int columns

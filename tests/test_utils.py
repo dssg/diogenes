@@ -81,8 +81,8 @@ class TestUtils(unittest.TestCase):
         names = ['ints','floats','strings']
         correct_1 = np.array([(1, 2.0, 'a'), (2, 4.0, 'b'), (4, 5.0, 'g')],dtype=[('f0', '<i8'), ('f1', '<f8'), ('f2', 'S1')])
         correct_2 = np.array([(1, 2.0, 'a'), (2, 4.0, 'b'), (4, 5.0, 'g')], dtype=[('ints', '<i8'), ('floats', '<f8'), ('strings', 'S1')])
-        self.assertTrue(np.array_equal(correct_1, cast_list_of_list_to_sa(test)))
-        self.assertTrue(np.array_equal(correct_2, cast_list_of_list_to_sa(test, names)))
+        self.assertTrue(np.array_equal(correct_1, utils.cast_list_of_list_to_sa(test)))
+        self.assertTrue(np.array_equal(correct_2, utils.cast_list_of_list_to_sa(test, names)))
 
     def test_convert_to_sa(self):
         # already a structured array
@@ -139,24 +139,6 @@ class TestUtils(unittest.TestCase):
                                           ('f2', int)])
         self.assertTrue(utils.np_dtype_is_homogeneous(sa))
 
-
-    def test_nd_to_sa_w_type(self):
-        nd = np.array([[1, 2, 3], [4, 5, 6]], dtype=int)
-        dtype = np.dtype({'names': map('f{}'.format, xrange(3)),
-                          'formats': [int] * 3})
-        control = np.array([(1, 2, 3), (4, 5, 6)], dtype=dtype)
-        result = utils.cast_np_nd_to_sa(nd, dtype)
-        self.assertEqual(control.dtype, result.dtype)
-        self.assertTrue(np.array_equal(result, control))
-
-    def test_nd_to_sa_no_type(self):
-        nd = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=float)
-        dtype = np.dtype({'names': map('f{}'.format, xrange(3)),
-                          'formats': [float] * 3})
-        control = np.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)], dtype=dtype)
-        result = utils.cast_np_nd_to_sa(nd)
-        self.assertEqual(control.dtype, result.dtype)
-        self.assertTrue(np.array_equal(result, control))
 
     def test_sa_to_nd(self):
         dtype = np.dtype({'names': map('f{}'.format, xrange(3)),

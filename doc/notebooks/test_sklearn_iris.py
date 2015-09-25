@@ -57,7 +57,7 @@ if False:
                             'vals': 5}],
                             'new_col')
     
-    from  diogenes.reshape import (fewer_then_n_nonzero_in_col, 
+    from  diogenes.modify import (fewer_then_n_nonzero_in_col, 
                                  remove_rows_where,
                                  remove_cols,
                                  val_eq)

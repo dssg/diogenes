@@ -6,12 +6,12 @@ from diogenes.utils import remove_cols,cast_list_of_list_to_sa
 
 import utils_for_tests 
 
-from diogenes.reshape import label_encode
-from diogenes.reshape import replace_missing_vals
+from diogenes.modify import label_encode
+from diogenes.modify import replace_missing_vals
 
-from diogenes.reshape import (col_has_all_same_val)
+from diogenes.modify import (col_has_all_same_val)
 
-from diogenes.reshape import (remove_col_where,
+from diogenes.modify import (remove_col_where,
                                       all_equal_to,
                                       all_same_value,
                                       fewer_then_n_nonzero_in_col,
@@ -22,15 +22,15 @@ import numpy as np
 from numpy.random import rand
 import diogenes.read
 import diogenes.utils
-from diogenes.reshape import generate_bin
-from diogenes.reshape import normalize
-from diogenes.reshape import distance_from_point
-from diogenes.reshape import where_all_are_true, val_eq, val_lt, val_between
-from diogenes.reshape import combine_sum, combine_mean, combine_cols
+from diogenes.modify import generate_bin
+from diogenes.modify import normalize
+from diogenes.modify import distance_from_point
+from diogenes.modify import where_all_are_true, val_eq, val_lt, val_between
+from diogenes.modify import combine_sum, combine_mean, combine_cols
 
 
 
-class TestInvestigate(unittest.TestCase):
+class TestModify(unittest.TestCase):
     def test_are_all_col_equal(self):
         M = cast_list_of_list_to_sa(
             [[1,2,3], [1,3,4], [1,4,5]],

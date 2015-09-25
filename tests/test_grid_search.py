@@ -60,7 +60,7 @@ class TestGridSearch(unittest.TestCase):
                   exp.average_score().iteritems()}
         self.__compare_to_ref_pkl(result, 'run_experiment')
 
-    def test_operate(self):
+    def test_std_clfs(self):
         M, y = uft.generate_test_matrix(100, 5, 2, random_state=0)
         cvs = [{'cv': StratifiedKFold}]
         for label, clfs in zip(('std',), (per.DBG_std_clfs,)):

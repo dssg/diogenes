@@ -1,5 +1,5 @@
 (dp1
-S"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsEvenDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'diogenes.grid_search.grid_search_helper.NoCV'>, cv_params={})"
+S"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsEvenDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'diogenes.grid_search.partition_iterator.NoCV'>, cv_params={})"
 p2
 c__builtin__
 frozenset
@@ -12,18 +12,18 @@ p6
 aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 2}, cv_note={'fold': 0})]"
 p7
 atRp8
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetSweepNumRows'>, subset_params={'num_rows': [10, 20, 30], 'random_state': 0}, cv=<class 'diogenes.grid_search.grid_search_helper.NoCV'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'diogenes.grid_search.partition_iterator.NoCV'>, cv_params={})"
 p9
 g3
 ((lp10
-S"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 30}, cv_note={'fold': 0})]"
+S"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 0}, cv_note={'fold': 0})]"
 p11
-aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 10}, cv_note={'fold': 0})]"
+aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 1}, cv_note={'fold': 0})]"
 p12
-aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 20}, cv_note={'fold': 0})]"
+aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 2}, cv_note={'fold': 0})]"
 p13
 atRp14
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetSweepVaryStratification'>, subset_params={'proportions_positive': [0.5, 0.75, 0.9], 'random_state': 0, 'subset_size': 10}, cv=<class 'diogenes.grid_search.grid_search_helper.NoCV'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetSweepVaryStratification'>, subset_params={'proportions_positive': [0.5, 0.75, 0.9], 'random_state': 0, 'subset_size': 10}, cv=<class 'diogenes.grid_search.partition_iterator.NoCV'>, cv_params={})"
 p15
 g3
 ((lp16
@@ -34,15 +34,15 @@ p18
 aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note=prop_positive=0.75, cv_note={'fold': 0})]"
 p19
 atRp20
-sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetRandomRowsActualDistribution'>, subset_params={'subset_size': 20, 'random_state': 0}, cv=<class 'diogenes.grid_search.grid_search_helper.NoCV'>, cv_params={})"
+sS"Trial(clf=<class 'sklearn.ensemble.forest.RandomForestClassifier'>, clf_params={}, subset=<class 'diogenes.grid_search.subset.SubsetSweepNumRows'>, subset_params={'num_rows': [10, 20, 30], 'random_state': 0}, cv=<class 'diogenes.grid_search.partition_iterator.NoCV'>, cv_params={})"
 p21
 g3
 ((lp22
-S"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 0}, cv_note={'fold': 0})]"
+S"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 30}, cv_note={'fold': 0})]"
 p23
-aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 1}, cv_note={'fold': 0})]"
+aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 10}, cv_note={'fold': 0})]"
 p24
-aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'sample_num': 2}, cv_note={'fold': 0})]"
+aS"[Run(clf=RandomForestClassifier(bootstrap=True, compute_importances=None,\n            criterion='gini', max_depth=None, max_features='auto',\n            max_leaf_nodes=None, min_density=None, min_samples_leaf=1,\n            min_samples_split=2, n_estimators=10, n_jobs=1,\n            oob_score=False, random_state=None, verbose=0), subset_note={'rows': 20}, cv_note={'fold': 0})]"
 p25
 atRp26
 s.

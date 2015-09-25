@@ -304,7 +304,10 @@ class Run(object):
         return self.y[self.test_indices]
 
     def __pred_proba(self):
-        return self.clf.predict_proba(self.__test_M())[:,-1]
+        try:
+            return self.clf.predict_proba(self.__test_M())[:,-1]
+        except AttributeError:
+            return np.zeros((self.__test_M().shape[0]))
 
     def __predict(self):
         return self.clf.predict(self.__test_M())

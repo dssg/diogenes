@@ -6,6 +6,8 @@ from diogenes.display.display import plot_box_plot,plot_simple_histogram
 import diogenes.display as dsp
 from diogenes.display.display import feature_pairs_in_tree
 from diogenes.display.display import feature_pairs_in_rf
+from diogenes.display.display import crosstab
+from diogenes.display.display import describe_cols
 from diogenes import utils
 from sklearn import datasets
 from sklearn.ensemble import RandomForestClassifier
@@ -75,18 +77,18 @@ class TestDisplay(unittest.TestCase):
                              dtype=[('Column Name', 'S2'), ('Count', int),
                                     ('Mean', float), ('Standard Dev', float),
                                     ('Minimum', int), ('Maximum', int)])
-        self.assertTrue(utils_for_tests.array_equal(ctrl_list, 
-                                                    describe_cols(test_list)))
-        self.assertTrue(utils_for_tests.array_equal(ctrl_list, 
-                                                    describe_cols(test_nd)))
+        self.assertTrue(uft.array_equal(ctrl_list, 
+                                        describe_cols(test_list)))
+        self.assertTrue(uft.array_equal(ctrl_list, 
+                                        describe_cols(test_nd)))
         ctrl_sa = np.array([('id', 6, 3.5, 1.707825127659933, 1, 6),
                             ('val', 6, 4.5, 1.707825127659933, 2, 7),
                             ('name', np.nan, np.nan, np.nan, np.nan, np.nan)],
                            dtype=[('Column Name', 'S4'), ('Count', float),
                                   ('Mean', float), ('Standard Dev', float),
                                   ('Minimum', float), ('Maximum', float)])
-        self.assertTrue(utils_for_tests.array_equal(ctrl_sa, 
-                                                    describe_cols(test_sa)))
+        self.assertTrue(uft.array_equal(ctrl_sa, 
+                                        describe_cols(test_sa)))
 
     def test_crosstab(self):
         l1= [1, 2, 7, 7, 2, 1, 2, 1, 1]

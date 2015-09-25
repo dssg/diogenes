@@ -30,7 +30,8 @@ std_clfs = [{'clf': AdaBoostClassifier, 'n_estimators': [20,50,100]},
             {'clf': DecisionTreeClassifier, 
              'max_depth': [None,4,7,15,25]},
             {'clf': SVC, 'kernel': ['linear','rbf'], 
-             'probability': [True]},
+             'probability': [True],
+             'max_iter': [1000]},
             {'clf': DummyClassifier, 
              'strategy': ['stratified','most_frequent','uniform']}]
 

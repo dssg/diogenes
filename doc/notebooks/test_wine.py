@@ -8,7 +8,7 @@ from diogenes.display import (plot_correlation_scatter_plot,
                                plot_box_plot)
 
 from diogenes.grid_search import Experiment 
-from diogenes.grid_search import DBG_std_clfs as std_clfs
+from diogenes.grid_search import std_clfs as std_clfs
 from diogenes.utils import remove_cols
 
 

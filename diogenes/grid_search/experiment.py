@@ -37,7 +37,7 @@ class Experiment(object):
             y, 
             clfs=[{'clf': RandomForestClassifier}], 
             subsets=[{'subset': subset.SubsetNoSubset}], 
-            cvs=[{'cv': p_i.NoCV}],
+            cvs=[{'cv': KFold}],
             trials=None):
         if utils.is_sa(M):
             self.col_names = M.dtype.names

@@ -1,29 +1,26 @@
 import numpy as np
 import sklearn.datasets
 
-from diogenes.read import (cast_np_nd_to_sa, describe_cols,open_csv_url_as_list)
+from diogenes.read import open_csv_url
 from diogenes.display import (plot_correlation_scatter_plot,
                                plot_correlation_matrix, 
                                plot_kernel_density,
                                plot_box_plot)
 
-from diogenes.operate import run_std_classifiers 
+from diogenes.grid_search import Experiment 
+from diogenes.grid_search import DBG_std_clfs as std_clfs
+from diogenes.utils import remove_cols
 
 
-data = open_csv_url_as_list(
+data = open_csv_url(
             'http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv',  
             delimiter=';')
+y = data['quality']
+M = remove_cols(data, 'quality')
 
-col_names = data[0][:-1]
-labels = np.array([int(x[-1]) for x in data[1:]])
-#make this problem binary
-labels = np.array([0 if x < np.average(labels) else 1 for x in labels])
-dtype = np.dtype({'names':  col_names,'formats': [float] * (len(col_names)+1)})
-M = cast_np_nd_to_sa(np.array([x[:-1] for x in data[1:]],dtype='float'), dtype)
+y = y < np.average(y)
 
 
-
-import pdb; pdb.set_trace()
 if False:
     for x in describe_cols(M):
         print x
@@ -34,18 +31,6 @@ if False:
    plot_kernel_density(M['f0']) #no designation of col name
    plot_box_plot(M['f0']) #no designation of col name
 
-
-
-
-exp = run_std_classifiers(M,labels)
+exp = Experiment(M, y, clfs=std_clfs)
 exp.make_csv()
 
-import pdb; pdb.set_trace()
-
-
-
-
-
-
-
-import pdb; pdb.set_trace()

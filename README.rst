@@ -1,23 +1,21 @@
 ::
 
-    ============================================
-          _       _     _       
-         (_)     | |   | |      
-      ___ _  __ _| |__ | |_ ___ 
-     / _ \ |/ _` | '_ \| __/ __|
-    |  __/ | (_| | | | | |_\__ \
-     \___|_|\__, |_| |_|\__|___/
-             __/ |              
-            |___/
+    ================================================
+          ____  _                                 
+         / __ \(_)___  ____ ____  ____  ___  _____
+        / / / / / __ \/ __ `/ _ \/ __ \/ _ \/ ___/
+       / /_/ / / /_/ / /_/ /  __/ / / /  __(__  ) 
+      /_____/_/\____/\__, /\___/_/ /_/\___/____/  
+                    /____/                        
 
-    ============================================
+    ================================================
 
 
 ------------
 Introduction
 ------------
 
-Eights is a a Python library and workflow templet for machine learning.
+Diogenes is a a Python library and workflow templet for machine learning.
 Principally it wraps sklearn providing enhanced functionality and simplified 
 interface of often used workflows. 
 

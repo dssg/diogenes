@@ -22,7 +22,7 @@ Quick test::
        return M[col_name] == boundary
 
    #This generates a new frow where the values are all true
-   M_new = diogenes.generate.where_all_are_true(
+   M_new = diogenes.generate.choose_rows_where(
                   M,
                   [test_equality, test_equality, test_equality], 
                   ['height','weight', 'age'], 

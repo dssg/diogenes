@@ -10,7 +10,7 @@ class TestGenerate(unittest.TestCase):
         self.assertTrue(np.array_equal(ctrl, generate_bin(M, 3)))
     
 
-    def test_where_all_are_true(self):
+    def test_choose_rows_where(self):
         M = [[1,2,3], [2,3,4], [3,4,5]]
         col_names = ['heigh','weight', 'age']
         lables= [0,0,1]
@@ -23,7 +23,7 @@ class TestGenerate(unittest.TestCase):
                      {'func': val_between, 'col_name': 'age', 'vals': 
                       (3, 4)}]
 
-        res = where_all_are_true(
+        res = choose_rows_where(
             M, 
             arguments,
             'eq_to_stuff')

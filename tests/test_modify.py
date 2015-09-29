@@ -25,7 +25,7 @@ import diogenes.utils
 from diogenes.modify import generate_bin
 from diogenes.modify import normalize
 from diogenes.modify import distance_from_point
-from diogenes.modify import where_all_are_true, val_eq, val_lt, val_between
+from diogenes.modify import choose_rows_where, val_eq, val_lt, val_between
 from diogenes.modify import combine_sum, combine_mean, combine_cols
 
 
@@ -134,7 +134,7 @@ class TestModify(unittest.TestCase):
         self.assertTrue(np.array_equal(ctrl, generate_bin(M, 3)))
     
 
-    def test_where_all_are_true(self):
+    def test_choose_rows_where(self):
         M = [[1,2,3], [2,3,4], [3,4,5]]
         col_names = ['heigh','weight', 'age']
         lables= [0,0,1]
@@ -147,7 +147,7 @@ class TestModify(unittest.TestCase):
                      {'func': val_between, 'col_name': 'age', 'vals': 
                       (3, 4)}]
 
-        res = where_all_are_true(
+        res = choose_rows_where(
             M, 
             arguments,
             'eq_to_stuff')

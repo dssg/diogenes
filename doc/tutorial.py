@@ -29,14 +29,14 @@ replace_missing_vals
 def is_this_word_in(a_text, word):
     return word in a_text
 
-M = where_all_are_true(
+M = choose_rows_where(
     M, 
     [(val_eq, 'open_col', NULL),
      (val_eq, 'click', NULL ])
      "n_click,n_open"
      )
           
-M = where_all_are_true(
+M = choose_rows_where(
     M, 
     [(is_this_word_in, 'email_text', 'unsubscribe'),
      (val_eq, 'click', NULL ])

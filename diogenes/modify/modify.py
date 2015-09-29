@@ -6,12 +6,16 @@ from sklearn import preprocessing
 
 from diogenes.utils import remove_cols, append_cols, distance,convert_to_sa
 
-def random_subset_of_columns(M, number_to_select):
+#convert below to a lambada
+def col_random(M, number_to_select):
     num_col = len(M.dtypes.names)
     remove_these_columns = np.random.choice(num_col, number_to_select, replace=False)
     names = [col_names[i] for i in remove_these_columns]
     return names
-
+    
+def choose_cols_where(M, arguments):
+    return
+    
 def remove_col_where(M, arguments):
     to_remove = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
@@ -20,10 +24,10 @@ def remove_col_where(M, arguments):
     remove_col_names = [col_name for col_name,included in zip(M.dtype.names, to_remove) if included] 
     return remove_cols(M, remove_col_names)
 
-def all_equal_to(M, boundary):
+def col_val_eq(M, boundary):
     return [np.all(M[col_name] == boundary) for col_name in M.dtype.names]
 
-def all_same_value(M, boundary=None):
+def col_val_eq_any(M, boundary=None):
     return [np.all(M[col_name]==M[col_name][0]) for col_name in M.dtype.names]
 
 def fewer_then_n_nonzero_in_col(M, boundary):
@@ -35,25 +39,15 @@ def remove_rows_where(M, lamd, col_name, vals):
     return M[to_keep]
 
 #checks
-
-def is_within_region(L, point):
+# rewritten as lambda
+def row_is_within_region(L, point):
     import matplotlib.path as mplPath
     bbPath = mplPath.Path(np.array(L))
     return bbPath.contains_point(point)
     
-#remove
-def remove_these_columns(M, list_of_col_to_remove):
-    return M[[col for col in M.dtype.names if col not in list_of_col_to_remove]]
 
-def col_has_all_same_val(col):
-    return np.all(col==col[0])
 
-def col_has_one_unique_val(col):
-    d = Counter(col)
-    if len(d) == 2: #ignores case for -999, null
-        return (1 in d.values())
-    return False
-
+#write below diffently as lambda
 def col_has_lt_threshold_unique_values(col, threshold):
     d = Counter(col)
     vals = sort(d.values())
@@ -121,7 +115,7 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
 
 
 ####Generate
-def where_all_are_true(M, arguments, generated_name=None):
+def choose_rows_where(M, arguments, generated_name=None):
     if generated_name is None:
         generated_name = str(uuid4())
     to_select = np.ones(M.size, dtype=bool)
@@ -131,25 +125,25 @@ def where_all_are_true(M, arguments, generated_name=None):
         to_select = np.logical_and(to_select, lambd(M, col_name, vals))
     return append_cols(M, to_select, generated_name)
 
-def is_outlier(M, col_name, boundary):
+def row_is_outlier(M, col_name, boundary):
     std = np.std(M[col_name])
     mean = np.mean(M[col_name])
     return (np.logical_or( (mean-3*std)>M[col_name], (mean+3*std)<M[col_name]) )
     
 
-def val_eq(M, col_name, boundary):
+def row_val_eq(M, col_name, boundary):
     return M[col_name] == boundary
 
-def val_lt(M, col_name, boundary):
+def row_val_lt(M, col_name, boundary):
     return M[col_name] < boundary
 
-def val_lt_TIME_EDITION(M, col_name, boundary):
+def row_val_lt_TIME_EDITION(M, col_name, boundary):
     return M[col_name] < boundary
 
-def val_gt(M, col_name, boundary):
+def row_val_gt(M, col_name, boundary):
     return M[col_name] > boundary
 
-def val_between(M, col_name, boundary):
+def row_val_between(M, col_name, boundary):
     return np.logical_and(boundary[0] <= M[col_name], M[col_name] <= boundary[1])
 
 

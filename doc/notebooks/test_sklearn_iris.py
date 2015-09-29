@@ -35,9 +35,9 @@ if False:
 
 
 if False:
-    from diogenes.generate import val_between, where_all_are_true, append_cols  #val_btwn, where
+    from diogenes.generate import val_between, choose_rows_where, append_cols  #val_btwn, where
     #generate a composite rule
-    M = where_all_are_true(M, 
+    M = choose_rows_where(M, 
                           [{'func': val_between, 
                             'col_name': 'f0', 
                             'vals': (3.5, 5.0)},
@@ -51,7 +51,7 @@ if False:
     def rounds_to_val(M, col_name, boundary):
         return (np.round(M[col_name]) == boundary)
     
-    M = where_all_are_true(M,
+    M = choose_rows_where(M,
                           [{'func': rounds_to_val, 
                             'col_name': 'f0', 
                             'vals': 5}],

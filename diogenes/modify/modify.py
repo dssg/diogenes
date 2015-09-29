@@ -6,15 +6,13 @@ from sklearn import preprocessing
 
 from diogenes.utils import remove_cols, append_cols, distance,convert_to_sa
 
-#convert below to a lambada
-def col_random(M, number_to_select):
-    num_col = len(M.dtypes.names)
-    remove_these_columns = np.random.choice(num_col, number_to_select, replace=False)
-    names = [col_names[i] for i in remove_these_columns]
-    return names
-    
 def choose_cols_where(M, arguments):
-    return
+    to_keep = np.ones(len(M.dtype), dtype=bool)
+    for arg_set in arguments:
+        lambd, vals = (arg_set['func'], arg_set['vals'])
+        to_keep = np.logical_and(to_keep, lambd(M,  vals))
+    keep_col_names = [col_name for col_name,included in zip(M.dtype.names, to_keep) if included] 
+    return M[keep_col_names]
     
 def remove_col_where(M, arguments):
     to_remove = np.ones(len(M.dtype), dtype=bool)
@@ -23,6 +21,13 @@ def remove_col_where(M, arguments):
         to_remove = np.logical_and(to_remove, lambd(M,  vals))
     remove_col_names = [col_name for col_name,included in zip(M.dtype.names, to_remove) if included] 
     return remove_cols(M, remove_col_names)
+
+def col_random(M, number_to_select):
+    num_col = len(M.dtypes.names)
+    remove_these_columns = np.random.choice(num_col, number_to_select, replace=False)
+    indices = np.ones(num_col, dtype=bool)
+    indices[remove_these_column] = False
+    return indices
 
 def col_val_eq(M, boundary):
     return [np.all(M[col_name] == boundary) for col_name in M.dtype.names]

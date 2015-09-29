@@ -35,30 +35,84 @@ def col_val_eq(M, boundary):
 def col_val_eq_any(M, boundary=None):
     return [np.all(M[col_name]==M[col_name][0]) for col_name in M.dtype.names]
 
-def fewer_then_n_nonzero_in_col(M, boundary):
+def col_fewer_then_n_nonzero(M, boundary):
     return [len(np.where(M[col_name]!=0)[0])<2 for col_name in M.dtype.names]
 
-def remove_rows_where(M, lamd, col_name, vals):
-    to_remove = lamd(M, col_name, vals)
-    to_keep = np.logical_not(to_remove)
-    return M[to_keep]
-
-#checks
-# rewritten as lambda
-def row_is_within_region(L, point):
-    import matplotlib.path as mplPath
-    bbPath = mplPath.Path(np.array(L))
-    return bbPath.contains_point(point)
-    
-
-
 #write below diffently as lambda
-def col_has_lt_threshold_unique_values(col, threshold):
-    d = Counter(col)
-    vals = sort(d.values())
-    return ( sum(vals[:-1]) < threshold) 
-    
+def col_has_lt_threshold_unique_values(M, threshold):
+    ret = []
+    for name in M.dtype.names:
+        col = M[name]
+        d = Counter(col)
+        vals = sort(d.values())
+        ret.append(sum(vals[:-1]) < threshold) 
+    return ret
 
+
+def where_all_are_true(M, arguments, generated_name=None):
+    if generated_name is None:
+        generated_name = str(uuid4())
+    to_select = np.ones(M.size, dtype=bool)
+    for arg_set in arguments:
+        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
+                                    arg_set['vals'])
+        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
+    return append_cols(M, to_select, generated_name)
+
+def choose_rows_where(M, arguments):
+    to_select = np.ones(M.size, dtype=bool)
+    for arg_set in arguments:
+        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
+                                    arg_set['vals'])
+        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
+    return M[to_select]
+
+def remove_rows_where(M, arguments):
+    to_remove = np.ones(M.size, dtype=bool)
+    for arg_set in arguments:
+        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
+                                    arg_set['vals'])
+        to_remove = np.logical_and(to_remove, lambd(M, col_name, vals))
+    return M[np.logical_not(to_remove)]
+
+def row_is_outlier(M, col_name, boundary):
+    std = np.std(M[col_name])
+    mean = np.mean(M[col_name])
+    return (np.logical_or( (mean-3*std)>M[col_name], (mean+3*std)<M[col_name]) )
+    
+def row_val_eq(M, col_name, boundary):
+    return M[col_name] == boundary
+
+def row_val_lt(M, col_name, boundary):
+    return M[col_name] < boundary
+
+def row_val_lt_TIME_EDITION(M, col_name, boundary):
+    return M[col_name] < boundary
+
+def row_val_gt(M, col_name, boundary):
+    return M[col_name] > boundary
+
+def row_val_between(M, col_name, boundary):
+    return np.logical_and(boundary[0] <= M[col_name], M[col_name] <= boundary[1])
+
+
+def row_is_within_region(M, col_names, boundary):
+    import matplotlib.path as mplPath
+    bbPath = mplPath.Path(np.array(boundary))
+    return [bbPath.contains_point(point) for point in M[col_names]]
+
+def combine_cols(M, lambd, col_names, generated_name):
+    new_col = lambd(*[M[name] for name in col_names])
+    return append_cols(M, new_col, generated_name)
+
+@np.vectorize
+def combine_sum(*args):
+    return sum(args)
+
+@np.vectorize
+def combine_mean(*args):
+    return np.mean(args)
+    
 def label_encode(M):
     """
     Changes string cols to integers so that there is a 1-1 mapping between 
@@ -116,42 +170,6 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
             col = M_cp[col_name]
             col[:] = imp.fit_transform(col)
     return M_cp
-
-
-
-####Generate
-def choose_rows_where(M, arguments, generated_name=None):
-    if generated_name is None:
-        generated_name = str(uuid4())
-    to_select = np.ones(M.size, dtype=bool)
-    for arg_set in arguments:
-        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
-                                    arg_set['vals'])
-        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
-    return append_cols(M, to_select, generated_name)
-
-def row_is_outlier(M, col_name, boundary):
-    std = np.std(M[col_name])
-    mean = np.mean(M[col_name])
-    return (np.logical_or( (mean-3*std)>M[col_name], (mean+3*std)<M[col_name]) )
-    
-
-def row_val_eq(M, col_name, boundary):
-    return M[col_name] == boundary
-
-def row_val_lt(M, col_name, boundary):
-    return M[col_name] < boundary
-
-def row_val_lt_TIME_EDITION(M, col_name, boundary):
-    return M[col_name] < boundary
-
-def row_val_gt(M, col_name, boundary):
-    return M[col_name] > boundary
-
-def row_val_between(M, col_name, boundary):
-    return np.logical_and(boundary[0] <= M[col_name], M[col_name] <= boundary[1])
-
-
 
 def generate_bin(col, num_bins):
     """Generates a column of categories, where each category is a bin.
@@ -217,17 +235,6 @@ def distance_from_point(lat_origin, lng_origin, lat_col, lng_col):
     """ Generates a column of how far each record is from the origin"""
     return distance(lat_origin, lng_origin, lat_col, lng_col)
 
-@np.vectorize
-def combine_sum(*args):
-    return sum(args)
-
-@np.vectorize
-def combine_mean(*args):
-    return np.mean(args)
-
-def combine_cols(M, lambd, col_names, generated_name):
-    new_col = lambd(*[M[name] for name in col_names])
-    return append_cols(M, new_col, generated_name)
 
 
 

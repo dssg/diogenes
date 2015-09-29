@@ -44,10 +44,10 @@ class TestDisplay(unittest.TestCase):
     def test_pprint_sa(self):
         M = [(1, 2, 3), (4, 5, 6), (7, 8, 'STRING')]
         ctrl = """
-                             f0              f1              f2
-              0               1               2               3
-              1               4               5               6
-              2               7               8          STRING
+  f0 f1     f2
+0  1  2      3
+1  4  5      6
+2  7  8 STRING
         """.strip()
         with uft.rerout_stdout() as get_stdout:
             dsp.pprint_sa(M)
@@ -56,10 +56,10 @@ class TestDisplay(unittest.TestCase):
                      dtype=[('number', float), ('name', 'S5')])
         row_labels = [name[0] for name in M['name']]
         ctrl = """
-                         number            name
-              B          1000.0            Bill
-              S          2000.0             Sam
-              J          3000.0           James
+  number  name
+B 1000.0  Bill
+S 2000.0   Sam
+J 3000.0 James
         """.strip()
         with uft.rerout_stdout() as get_stdout:
             dsp.pprint_sa(M, row_labels=row_labels)

@@ -30,7 +30,12 @@ def pprint_sa(M, row_labels=None, col_labels=None):
         row_labels = xrange(M.shape[0])
     col_labels = M.dtype.names
     # From http://stackoverflow.com/questions/9535954/python-printing-lists-as-tabular-data
-    row_format =' '.join(['{:>15}' for _ in xrange(len(col_labels) + 1)])
+    col_lens = [max(max([len('{}'.format(cell)) for cell in M[name]]), 
+                len(name)) for name in col_labels]
+    row_label_len = max([len('{}'.format(label)) for label in row_labels])
+    row_format =('{{:>{}}} '.format(row_label_len) + 
+                 ' '.join(['{{:>{}}}'.format(col_len) for col_len 
+                           in col_lens]))
     print row_format.format("", *col_labels)
     for row_name, row in zip(row_labels, M):
         print row_format.format(row_name, *row)

@@ -14,7 +14,7 @@ def choose_cols_where(M, arguments):
     keep_col_names = [col_name for col_name,included in zip(M.dtype.names, to_keep) if included] 
     return M[keep_col_names]
     
-def remove_col_where(M, arguments):
+def remove_cols_where(M, arguments):
     to_remove = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
         lambd, vals = (arg_set['func'], arg_set['vals'])
@@ -35,7 +35,7 @@ def col_val_eq(M, boundary):
 def col_val_eq_any(M, boundary=None):
     return [np.all(M[col_name]==M[col_name][0]) for col_name in M.dtype.names]
 
-def col_fewer_then_n_nonzero(M, boundary):
+def col_fewer_than_n_nonzero(M, boundary):
     return [len(np.where(M[col_name]!=0)[0])<2 for col_name in M.dtype.names]
 
 #write below diffently as lambda

@@ -6,76 +6,64 @@ from diogenes.utils import remove_cols,cast_list_of_list_to_sa
 
 import utils_for_tests 
 
-from diogenes.modify import label_encode
-from diogenes.modify import replace_missing_vals
-
-from diogenes.modify import (col_has_all_same_val)
-
-from diogenes.modify import (remove_col_where,
-                                      all_equal_to,
-                                      all_same_value,
-                                      fewer_then_n_nonzero_in_col,
-                                      remove_rows_where,
-                                      val_eq)
 import unittest
 import numpy as np
 from numpy.random import rand
 import diogenes.read
 import diogenes.utils
+from diogenes.modify import remove_cols_where
+from diogenes.modify import col_val_eq
+from diogenes.modify import col_val_eq_any
+from diogenes.modify import col_fewer_than_n_nonzero
+from diogenes.modify import where_all_are_true 
+from diogenes.modify import remove_rows_where
+from diogenes.modify import row_val_eq
+from diogenes.modify import row_val_lt 
+from diogenes.modify import row_val_between
+from diogenes.modify import combine_cols
+from diogenes.modify import combine_sum
+from diogenes.modify import combine_mean 
+from diogenes.modify import label_encode
 from diogenes.modify import generate_bin
 from diogenes.modify import normalize
+from diogenes.modify import replace_missing_vals
 from diogenes.modify import distance_from_point
-from diogenes.modify import where_all_are_true, val_eq, val_lt, val_between
-from diogenes.modify import combine_sum, combine_mean, combine_cols
-
-
 
 class TestModify(unittest.TestCase):
-    def test_are_all_col_equal(self):
+    def test_col_val_eq(self):
         M = cast_list_of_list_to_sa(
             [[1,2,3], [1,3,4], [1,4,5]],
             col_names=['height','weight', 'age'])
         
-        arguments = [{'func': all_equal_to,  'vals': 1}]  
-        M = remove_col_where(M, arguments)  
+        arguments = [{'func': col_val_eq,  'vals': 1}]  
+        M = remove_cols_where(M, arguments)  
         correct = cast_list_of_list_to_sa(
             [[2,3], [3,4], [4,5]],
             col_names=['weight', 'age'])    
         self.assertTrue(np.array_equal(M, correct))
         
-    def test_all_same_value(self):
+    def test_col_val_eq_any(self):
         M = cast_list_of_list_to_sa(
             [[1,2,3], [1,3,4], [1,4,5]],
             col_names=['height','weight', 'age'])
-        arguments = [{'func': all_same_value,  'vals': None}]  
-        M = remove_col_where(M, arguments)  
+        arguments = [{'func': col_val_eq_any,  'vals': None}]  
+        M = remove_cols_where(M, arguments)  
         correct = cast_list_of_list_to_sa(
             [[2,3], [3,4], [4,5]],
             col_names=['weight', 'age'])    
         self.assertTrue(np.array_equal(M, correct)) 
         
-    def test_fewer_then_n_nonzero_in_col(self):
+    def test_col_fewer_than_n_nonzero(self):
         M = cast_list_of_list_to_sa(
             [[0,2,3], [0,3,4], [1,4,5]],
             col_names=['height','weight', 'age'])
-        arguments = [{'func': fewer_then_n_nonzero_in_col,  'vals': 2}]  
-        M = remove_col_where(M, arguments)  
+        arguments = [{'func': col_fewer_than_n_nonzero,  'vals': 2}]  
+        M = remove_cols_where(M, arguments)  
         correct = cast_list_of_list_to_sa(
             [[2,3], [3,4], [4,5]],
             col_names=['weight', 'age'])   
         self.assertTrue(np.array_equal(M, correct))    
                    
-    def test_remove_row(self):
-        M = cast_list_of_list_to_sa(
-            [[0,2,3], [0,3,4], [1,4,5]],
-            col_names=['height','weight', 'age'])
-        arguments = [{'func': fewer_then_n_nonzero_in_col,  'vals': 2}]  
-        M = remove_rows_where(M, val_eq, 'weight', 3)
-        correct = cast_list_of_list_to_sa(
-             [[0, 2, 3], [1, 4, 5]],
-            col_names=['height','weight', 'age'])   
-        self.assertTrue(np.array_equal(M, correct))   
-    
     def test_label_encoding(self):
         M = np.array(
             [('a', 0, 'Martin'),
@@ -142,9 +130,9 @@ class TestModify(unittest.TestCase):
             M,
             col_names=col_names)
 
-        arguments = [{'func': val_eq, 'col_name': 'heigh', 'vals': 1},
-                     {'func': val_lt, 'col_name': 'weight', 'vals': 3},
-                     {'func': val_between, 'col_name': 'age', 'vals': 
+        arguments = [{'func': row_val_eq, 'col_name': 'heigh', 'vals': 1},
+                     {'func': row_val_lt, 'col_name': 'weight', 'vals': 3},
+                     {'func': row_val_between, 'col_name': 'age', 'vals': 
                       (3, 4)}]
 
         res = where_all_are_true(

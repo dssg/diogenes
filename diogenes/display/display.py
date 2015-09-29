@@ -314,6 +314,7 @@ def plot_correlation_scatter_plot(M, verbose=True):
     return fig
 
 def plot_kernel_density(col, n=None, missing_val=np.nan, verbose=True): 
+    # https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/
     #address pass entire matrix
     # TODO respect missing_val
     # TODO what does n do?

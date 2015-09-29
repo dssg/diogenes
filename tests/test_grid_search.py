@@ -67,9 +67,11 @@ class TestGridSearch(unittest.TestCase):
             exp = per.Experiment(M, y, clfs=clfs, cvs=cvs)
             result = {str(key) : val for key, val in 
                       exp.average_score().iteritems()}
-            self.__compare_to_ref_pkl(
-                    result, 
-                    'test_operate_{}'.format(label))
+            #self.__compare_to_ref_pkl(
+            #        result, 
+            #        'test_operate_{}'.format(label))
+        import pdb; pdb.set_trace()
+        return
                     
     def test_slice_on_dimension(self):
         iris = datasets.load_iris()

@@ -642,12 +642,16 @@ class ArrayEmitter(object):
                     None,
                     col_names,
                     np.arange(len(col_names)),
-                    {},
-                    {},
+                    {'train_interval_start': current_interval_train_start,
+                     'train_interval_end': current_interval_train_end,
+                     'test_interval_start': current_interval_test_start,
+                     'test_interval_end': current_interval_test_end},
+                    {'train_start': current_row_M_train_start,
+                     'train_end': current_row_M_train_end,
+                     'test_start': current_row_M_test_start,
+                     'test_end': current_row_M_test_end},
                     M_test_nd,
                     y_test))
-
-            #yield M_train, y_train, M_test, y_test
 
             if not interval_expanding:
                 current_interval_train_start += interval_inc_value

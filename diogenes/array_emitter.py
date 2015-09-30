@@ -1,8 +1,8 @@
 import numpy as np 
 import sqlalchemy as sqla
-from investigate import open_csv
+from diogenes.read import open_csv
 from uuid import uuid4
-from eights import utils
+from diogenes import utils
 
 from sklearn.ensemble import RandomForestClassifier
 

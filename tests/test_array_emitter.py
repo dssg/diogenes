@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 
 import utils_for_tests as uft
-from eights import array_emitter
+from diogenes import array_emitter
 
 class TestArrayEmitter(unittest.TestCase):
 

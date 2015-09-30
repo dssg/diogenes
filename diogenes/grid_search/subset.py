@@ -155,39 +155,5 @@ class SubsetSweepVaryStratification(BaseSubsetIter):
                 self.__random_state_seed)
 
 
-class SubsetSweepExcludeColumns(BaseSubsetIter):
-    """
-    
-    Analyze feature importance when each of a specified set of columns are
-    excluded. 
-    
-    Parameters
-    ----------
-    M : Numpy structured array
-    cols_to_exclude : list of str or None
-         List of names of columns to exclude one at a time. If None, tries
-         all columns
-         
-    Returns
-    -------
-    Numpy Structured array
-        First col
-            Excluded col name
-        Second col
-            Accuracy score
-        Third col
-            Feature importances
-    """
-    # not providing cv because it's always Kfold
-    # returns fitted classifers along a bunch of metadata
-    #Why don't we use this as buildinger for slices. AKA the way the cl
-    # 
-    def __init__(self, M, cols_to_exclude=None):
-        raise NotImplementedError
 
-class SubsetSweepLeaveOneColOut(BaseSubsetIter):
-    # TODO
-    #returns list of list eachone missing a value in order.  
-    #needs to be tested
-    pass
 

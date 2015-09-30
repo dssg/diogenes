@@ -4,7 +4,9 @@ from collections import Counter
 import numpy as np
 from sklearn import preprocessing
 
-from diogenes.utils import remove_cols, append_cols, distance,convert_to_sa
+from diogenes.utils import (remove_cols, append_cols, distance,convert_to_sa, 
+                            stack_rows, sa_from_cols, join)
+
 
 def choose_cols_where(M, arguments):
     to_keep = np.ones(len(M.dtype), dtype=bool)

@@ -39,12 +39,15 @@ class Experiment(object):
             subsets=[{'subset': subset.SubsetNoSubset}], 
             cvs=[{'cv': KFold}],
             trials=None):
-        if utils.is_sa(M):
-            self.col_names = M.dtype.names
-            self.M = utils.cast_np_sa_to_nd(M)
-        else: # assuming an nd_array
-            self.M = M
-            self.col_names = ['f{}'.format(i) for i in xrange(M.shape[1])]
+        if M is not None:
+            if utils.is_sa(M):
+                self.col_names = M.dtype.names
+                self.M = utils.cast_np_sa_to_nd(M)
+            else: # assuming an nd_array
+                self.M = M
+                self.col_names = ['f{}'.format(i) for i in xrange(M.shape[1])]
+        else:
+            self.col_names = None
         self.y = y
         self.clfs = clfs
         self.subsets = subsets
@@ -74,9 +77,7 @@ class Experiment(object):
                 trials)
 
     def __transpose_dict_of_lists(self, dol):
-        # http://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
-        return (dict(it.izip(dol, x)) for 
-                x in it.product(*dol.itervalues()))
+        return utils.transpose_dict_of_lists(dol)
 
     def slice_on_dimension(self, dimension, value, trials=None):
         self.run()
@@ -224,7 +225,9 @@ dimension_descr = {CLF: 'classifier',
     
 # TODO these really, really need to be dynamically generated based on the experiment
 all_subset_notes = sorted(['sample_num', 'rows', 'prop_positive', 
-                           'excluded_col', 'max_grade'])
+                           'excluded_col', 'max_grade', 'train_interval_start',
+                           'train_interval_end', 'test_interval_start', 
+                           'test_interval_end'])
 
 all_subset_notes_backindex = {name: i for i, name in 
                               enumerate(all_subset_notes)}
@@ -247,7 +250,9 @@ class Run(object):
         sub_col_names,
         sub_col_inds,
         subset_note,
-        cv_note):
+        cv_note,
+        M_test=None,
+        y_test=None):
         self.M = M
         self.y = y
         self.col_names = col_names
@@ -258,15 +263,21 @@ class Run(object):
         self.train_indices = train_indices
         self.subset_note = subset_note
         self.cv_note = cv_note
+        self.M_test = M_test
+        self.y_test = y_test
 
     def __repr__(self):
         return 'Run(clf={}, subset_note={}, cv_note={})'.format(
                 self.clf, self.subset_note, self.cv_note)
 
     def __test_M(self):
+        if self.M_test is not None:
+            return self.M_test
         return self.M[np.ix_(self.test_indices, self.sub_col_inds)]
 
     def __test_y(self):
+        if self.y_test is not None:
+            return self.y_test
         return self.y[self.test_indices]
 
     def __pred_proba(self):
@@ -424,11 +435,12 @@ class Trial(object):
         subset=subset.SubsetNoSubset,
         subset_params={},
         cv=p_i.NoCV,
-        cv_params={}):
+        cv_params={},
+        runs=None):
         self.M = M
         self.y = y
         self.col_names = col_names 
-        self.runs = None
+        self.runs = runs
         self.clf = clf
         self.clf_params = clf_params
         self.subset = subset
@@ -556,8 +568,6 @@ class Trial(object):
         if self.__cached_ave_score is not None:
             return self.__cached_ave_score
         self.run()
-        M = self.M
-        y = self.y
         ave_score = np.mean([run.score() for run in self.runs_flattened()])
         self.__cached_ave_score = ave_score
         return ave_score

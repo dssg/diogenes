@@ -65,6 +65,12 @@ def validate_time(date_text):
 def str_to_time(date_text):
     return __str_to_datetime(date_text)
 
+def transpose_dict_of_lists(dol):
+    # http://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
+    return (dict(it.izip(dol, x)) for 
+            x in it.product(*dol.itervalues()))
+
+
 def invert_dictionary(aDict):
     return {v: k for k, v in aDict.items()}
 

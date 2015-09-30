@@ -3,6 +3,7 @@ import sqlalchemy as sqla
 from diogenes.read import open_csv
 from uuid import uuid4
 from diogenes import utils
+import diogenes.grid_search.experiment as exp
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -579,6 +580,14 @@ class ArrayEmitter(object):
         else:
             row_M_end = interval_end
 
+        trial_directives = []
+        for clf_params in clfs:
+            clf = clf_params['clf']
+            all_clf_ps = clf_params.copy()
+            del all_clf_ps['clf']
+            for param_dict in utils.transpose_dict_of_lists(all_clf_ps):
+                trial_directives.append((clf, param_dict, []))
+
         current_interval_train_start = interval_train_window_start
         current_interval_train_end = (interval_train_window_start + 
                                       interval_train_window_size)
@@ -591,8 +600,6 @@ class ArrayEmitter(object):
         current_row_M_test_start = row_M_test_window_start
         current_row_M_test_end = (row_M_test_window_start + 
                                       row_M_test_window_size)
-        print interval_end
-        print row_M_end
         while (current_interval_test_end <= interval_end and
                current_row_M_test_end <= row_M_end):
             ae_train = self.set_interval(current_interval_train_start,
@@ -618,7 +625,29 @@ class ArrayEmitter(object):
             data_test = ae_test.emit_M()
             M_test = utils.remove_cols(data_test, label_feat)
             y_test = data_test[label_feat]
-            yield M_train, y_train, M_test, y_test
+
+            col_names = M_train.dtype.names
+            M_train_nd = utils.cast_np_sa_to_nd(M_train)
+            M_test_nd = utils.cast_np_sa_to_nd(M_test)
+
+            for clf, params, runs in trial_directives:
+                clf_inst = clf(**params)
+                clf_inst.fit(M_train_nd, y_train)
+                runs.append(exp.Run(
+                    M_train_nd,
+                    y_train,
+                    col_names,
+                    clf_inst,
+                    None,
+                    None,
+                    col_names,
+                    np.arange(len(col_names)),
+                    {},
+                    {},
+                    M_test_nd,
+                    y_test))
+
+            #yield M_train, y_train, M_test, y_test
 
             if not interval_expanding:
                 current_interval_train_start += interval_inc_value
@@ -630,3 +659,22 @@ class ArrayEmitter(object):
             current_row_M_train_end += row_M_inc_value
             current_row_M_test_start += row_M_inc_value
             current_row_M_test_end += row_M_inc_value
+
+        trials = [exp.Trial(
+            None,
+            None,
+            None,
+            clf,
+            params,
+            'Array Emitter',
+            {},
+            'Array Emitter',
+            {},
+            [runs]) for clf, params, runs in trial_directives]
+        return exp.Experiment(
+                None, 
+                None, 
+                clfs, 
+                [{'subset': 'Array Emitter'}],
+                [{'cv': 'Array Emitter'}],
+                trials)

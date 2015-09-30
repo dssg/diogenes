@@ -4,6 +4,7 @@ import numpy as np
 
 import utils_for_tests as uft
 from diogenes import array_emitter
+from diogenes.grid_search.standard_clfs import DBG_std_clfs
 
 class TestArrayEmitter(unittest.TestCase):
 
@@ -127,7 +128,7 @@ class TestArrayEmitter(unittest.TestCase):
         ae = array_emitter.ArrayEmitter()
         ae = ae.get_rg_from_sql(conn_str, 'subset_over')
         ae = ae.set_default_aggregation('SUM')
-        for train_M, train_y, test_M, test_y in ae.subset_over(
+        exp = ae.subset_over(
             label_feat='label',
             interval_train_window_start=2004,
             interval_train_window_size=1,
@@ -141,18 +142,11 @@ class TestArrayEmitter(unittest.TestCase):
             row_M_test_window_start=2009,
             row_M_test_window_size=0,
             row_M_inc_value=1,
-            row_M_expanding=False):
-            print '-'*80
-            print train_M
-            print train_M.dtype
-            print train_y
-            print train_y.dtype
-            print
-            print test_M
-            print test_M.dtype
-            print test_y
-            print test_y.dtype
-            print
+            row_M_expanding=False,
+            clfs=DBG_std_clfs)
+        exp.make_report()
+        exp.make_csv()
+
 
 if __name__ == '__main__':
     unittest.main()

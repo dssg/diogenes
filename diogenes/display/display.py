@@ -282,6 +282,29 @@ def plot_box_plot(col, title=None, verbose=True):
     return fig
 
 def get_top_features(clf, M=None, col_names=None, n=10, verbose=True):
+    """Gets the top features for a fitted clf
+
+    Parameters
+    ----------
+    clf : sklearn.base.BaseEstimator
+        Fitted classifier with a feature_importances_ attribute
+    M : numpy.ndarray or None
+        Structured array corresponding to fitted clf. Used here to deterimine
+        column names
+    col_names : list of str or None
+        List of column names corresponding to fitted clf.
+    n : int
+        Number of features to return
+    verbose : boolean
+        iff True, prints ranked features
+
+    Returns
+    -------
+    numpy.ndarray
+        structured array with top feature names and scores
+
+    """
+
     scores = clf.feature_importances_
     if col_names is None:
         if is_sa(M):
@@ -300,6 +323,24 @@ def get_top_features(clf, M=None, col_names=None, n=10, verbose=True):
 # TODO features form top % of clfs
 
 def get_roc_auc(labels, score, verbose=True):
+    """return area under ROC curve
+
+    Parameters
+    ----------
+    labels : np.ndarray
+        vector of ground truth
+    score : np.ndarray
+        vector of scores assigned by classifier (i.e. 
+        clf.pred_proba(...)[-1] in sklearn)
+    verbose : boolean
+        iff True, prints area under the curve
+        
+    Returns
+    -------
+    float
+        area under the curve
+
+    """
     auc_score = roc_auc_score(labels, score)
     if verbose:
         print 'ROC AUC: {}'.format(auc_score)
@@ -310,11 +351,15 @@ def plot_correlation_matrix(M, verbose=True):
     
     Parameters
     ----------
-    M : numpy structured array
+    M : numpy.ndarray
+        structured array
+    verbose : boolean
+        iff True, display the graph
 
     Returns
     -------
     matplotlib.figure.Figure
+        Figure containing plot
     
     """
     # http://glowingpython.blogspot.com/2012/10/visualizing-correlation-matrices.html
@@ -350,11 +395,15 @@ def plot_correlation_scatter_plot(M, verbose=True):
     
     Parameters
     ----------
-    M : numpy structured array
-    
+    M : numpy.ndarray
+        structured array
+    verbose : boolean
+        iff True, display the graph
+
     Returns
     -------
     matplotlib.figure.Figure
+        Figure containing plot
     
     """
     # TODO work for all three types that M might be
@@ -403,8 +452,24 @@ def plot_correlation_scatter_plot(M, verbose=True):
         plt.show()
     return fig
 
-def plot_kernel_density(col, n=None, missing_val=np.nan, verbose=True): 
-    # https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/
+def plot_kernel_density(col, verbose=True): 
+    """Plots kernel density function of column
+
+    From: 
+    https://jakevdp.github.io/blog/2013/12/01/kernel-density-estimation/
+
+    Parameters
+    ----------
+    col : np.ndarray
+    verbose : boolean
+        iff True, display the graph
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing plot
+
+    """
     #address pass entire matrix
     # TODO respect missing_val
     # TODO what does n do?
@@ -432,6 +497,14 @@ def plot_on_timeline(col, verbose=True):
     Parameters
     ----------
     col : np.array
+    verbose : boolean
+        iff True, display the graph
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing plot
+
     
     Returns
     -------
@@ -520,13 +593,40 @@ def feature_pairs_in_tree(dt):
 
 def feature_pairs_in_rf(rf, weight_by_depth=None, verbose=True, n=10):
     """Describes the frequency of features appearing subsequently in each tree
-    in a random forest"""
-    # weight be depth is a vector. The 0th entry is the weight of being at
-    # depth 0; the 1st entry is the weight of being at depth 1, etc.
-    # If not provided, wdiogenes are linear with negative depth. If 
-    # the provided vector is not as long as the number of depths, then 
-    # remaining depths are weighted with 0
-    # If verbose, will only print the first n results
+    in a random forest
+    
+    Parameters
+    ----------
+    rf : sklearn.ensemble.RandomForestClassifier
+        Fitted random forest
+    weight_by_depth : iterable or None
+        Weights to give to each depth in the "occurences weighted by depth
+        metric"
+
+        weight_by_depth is a vector. The 0th entry is the weight of being at
+        depth 0; the 1st entry is the weight of being at depth 1, etc.
+        If not provided, wdiogenes are linear with negative depth. If 
+        the provided vector is not as long as the number of depths, then 
+        remaining depths are weighted with 0
+    verbose : boolean
+        iff True, prints metrics to console
+    n : int
+        Prints the top-n-scoring feature pairs to console if verbose==True
+
+    Returns
+    -------
+    (collections.Counter, list of collections.Counter, dict, dict)
+        A tuple with a number of metrics
+
+        1. A Counter of cooccuring feature pairs at all depths
+        2. A list of Counters of feature pairs. Element 0 corresponds to 
+           depth 0, element 1 corresponds to depth 1 etc.
+        3. A dict where keys are feature pairs and values are the average
+           depth of those feature pairs
+        4. A dict where keys are feature pairs and values are the number
+           of occurences of those feature pairs weighted by depth
+        
+    """
 
 
     pairs_by_est = [feature_pairs_in_tree(est) for est in rf.estimators_]

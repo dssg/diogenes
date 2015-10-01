@@ -24,7 +24,22 @@ import pdfkit
 from diogenes.grid_search import Experiment
 from diogenes.utils import is_sa, is_nd, cast_np_sa_to_nd, convert_to_sa, cast_list_of_list_to_sa
 
+"""Tools to visualize data and display results"""
+
 def pprint_sa(M, row_labels=None, col_labels=None):
+    """Prints a nicely formatted Structured array (or similar object) to console
+    
+    Parameters
+    ----------
+    M : numpy.ndarray or list of lists
+        structured array or homogeneous array or list of lists to print
+    row_labels : list or None
+        labels to put in front of rows. Defaults to row number
+    col_labels : list of str or None    
+        names to label columns with. If M is a structured array, its column
+        names will be used instead
+        
+    """
     M = convert_to_sa(M, col_names=col_labels)
     if row_labels is None:
         row_labels = xrange(M.shape[0])
@@ -49,17 +64,17 @@ __describe_cols_metrics = [('Count', len),
 __describe_cols_fill = [np.nan] * len(__describe_cols_metrics)
 
 def describe_cols(M):
-    """takes a SA or list of Np.rayas and returns the summary statistcs
+    """Returns summary statistics for a numpy array
+
     Parameters
     ----------
-    M import numpy as np
-    : Structured Array or list of Numpy ND arays.
-       Description 
+    M : numpy.ndarray
+        structured array
        
     Returns
     -------
-    temp : type
-       Description
+    numpy.ndarray
+        structured array of summary statistics for M
        
     """ 
     M = convert_to_sa(M)           
@@ -88,6 +103,17 @@ def crosstab(col1, col2):
     3. To find the number of cooccurences of x from col1 and y in col2,
        find the row that has 'x' in col1 and the column named 'y'. The 
        corresponding cell is the number of cooccurrences of x and y
+
+    Parameters
+    ----------
+    col1 : np.ndarray
+    col2 : np.ndarray
+
+    Returns
+    -------
+    np.ndarray
+        structured array
+
     """
     col1 = np.array(col1)
     col2 = np.array(col2)

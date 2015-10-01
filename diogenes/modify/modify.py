@@ -7,6 +7,68 @@ from sklearn import preprocessing
 from diogenes.utils import (remove_cols, append_cols, distance,convert_to_sa, 
                             stack_rows, sa_from_cols, join)
 
+"""This module provides a number of operations to modify structured arrays
+
+A number of functions take a parameter called "arguments" of type list of
+dict. Diogenes expects these parameters to be expressed in the following
+format for functions operating on columns (choose_cols_where, 
+remove_cols_where):
+
+    [{'func': LAMBDA_1, 'vals': LAMBDA_ARGUMENTS_1},
+     {'func': LAMBDA_2, 'vals': LAMBDA_ARGUMENTS_2},
+     ...
+     {'func': LAMBDA_N, 'vals': LAMBDA_ARGUMENTS_N}]
+
+and in this format for functions operating on rows (choose_rows_where, 
+remove_rows_where, where_all_are_true):
+
+    [{'func': LAMBDA_1, 'vals': LAMBDA_ARGUMENTS_1, 'col_name': LAMBDA_COL_1},
+     {'func': LAMBDA_2, 'vals': LAMBDA_ARGUMENTS_2, 'col_name': LAMBDA_COL_2},
+     ...
+     {'func': LAMBDA_N, 'vals': LAMBDA_ARGUMENTS_N, 'col_name': LAMBDA_COL_N}]
+
+In either case, the user can think of arguments as a query to be matched 
+against certain rows or columns. Some operation will then be performed on
+the matched rows or columns. For example, in choose_rows_where, an array
+will be returned that has only the rows that matched the query. In 
+remove_cols_where, all columns that matched the query will be removed.
+
+Each dictionary is a single directive. The value assigned to the 'func' key
+is a function that returns a binary array signifying the rows or columns
+that pass a certain check. The value assigned to the 'vals' key is an argument
+to be passed to the function assigned to the 'func' key. For queries affecting
+rows, the value assigned to the 'col_name' key is the column over which the
+'func' function should be applied. For example, in order to pick all rows
+for which the 'year' column is between 1990 and 2000, we would create the
+directive:
+
+    {'func': diogenes.modify.row_val_between, 'vals': [1990, 2000],
+     'col_name': 'year'}
+
+To pick columns where every cell in the column is 0, we would create the
+directive:
+
+    {'func': diogenes.modify.col_val_eq, 'vals': 0}
+
+Ultimately, diogenes will pick the columns or rows for which all directives
+in the passed list are true. For example, if we want to pick rows for which
+the 'year' column is between 1990 and 2000. We use:
+
+    arguments=[{'func': diogenes.modify.row_val_between, 'vals': [1990, 2000],
+                'col_name': 'year'}]
+
+If we want to pick rows for which the 'year' column is between 1990 and 2000
+*and* the 'gender' column is 'F' we use:
+
+    arguments=[{'func': diogenes.modify.row_val_between, 'vals': [1990, 2000],
+                'col_name': 'year'},
+               {'func': diogenes.modify.row_val_eq, 'vals': 'F', 
+                'col_name': 'gender'}]
+
+Note that arguments must always be a list of dict, so even if there is only
+one directive it must be in a list.
+
+"""
 
 def choose_cols_where(M, arguments):
     to_keep = np.ones(len(M.dtype), dtype=bool)

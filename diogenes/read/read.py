@@ -10,6 +10,13 @@ import numpy as np
 
 from diogenes.utils import open_csv_as_sa, cast_list_of_list_to_sa
 
+"""
+
+This module provides functions that convert databases in external formats
+to Numpy structured arrays.
+
+"""
+
 def open_csv(path, delimiter=',', header=True, col_names=None):
     with open(path, 'rU') as fin:
         return open_csv_as_sa(fin, delimiter, header, col_names)

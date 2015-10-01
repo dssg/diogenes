@@ -51,7 +51,7 @@ directive:
     {'func': diogenes.modify.col_val_eq, 'vals': 0}
 
 Ultimately, diogenes will pick the columns or rows for which all directives
-in the passed list are true. For example, if we want to pick rows for which
+in the passed list are True. For example, if we want to pick rows for which
 the 'year' column is between 1990 and 2000. We use:
 
     arguments=[{'func': diogenes.modify.row_val_between, 'vals': [1990, 2000],
@@ -130,6 +130,11 @@ def col_random(M, boundary):
     boundary : int
         number of columns to pick
 
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if column picked, False if not.
+
     """
     num_col = len(M.dtypes.names)
     remove_these_columns = np.random.choice(num_col, boundary, replace=False)
@@ -150,6 +155,11 @@ def col_val_eq(M, boundary):
     boundary : number or str or bool
         if every cell==boundary, the column will be picked
 
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if column picked, False if not.
+
     """
     return [np.all(M[col_name] == boundary) for col_name in M.dtype.names]
 
@@ -165,6 +175,11 @@ def col_val_eq_any(M, boundary=None):
         structured array
     boundary : None
         ignored
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if column picked, False if not.
 
     """
     return [np.all(M[col_name]==M[col_name][0]) for col_name in M.dtype.names]
@@ -183,11 +198,35 @@ def col_fewer_than_n_nonzero(M, boundary=2):
         If the number of nonzeros is at or above boundary nonzeros, the column
         will not be picked
 
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if column picked, False if not.
+
     """
     return [len(np.where(M[col_name]!=0)[0])<boundary for col_name in M.dtype.names]
 
 #write below diffently as lambda
 def col_has_lt_threshold_unique_values(M, threshold):
+    """Pick columns that have fewer than a specified number of unique values
+
+    To be used as a 'func' argument in choose_cols_where or remove_cols_where 
+    (see module documentation)
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    boundary : int
+        If the number of nonzeros is at or above boundary unique values, the column
+        will not be picked
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if column picked, False if not.
+
+    """
     ret = []
     for name in M.dtype.names:
         col = M[name]
@@ -196,8 +235,71 @@ def col_has_lt_threshold_unique_values(M, threshold):
         ret.append(sum(vals[:-1]) < threshold) 
     return ret
 
+def choose_rows_where(M, arguments):
+    """Returns a structured array containing only rows adhering to a query
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Structured array 
+    arguments : list of dict
+        See module documentation
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array with only specified rows
+
+    """
+    to_select = np.ones(M.size, dtype=bool)
+    for arg_set in arguments:
+        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
+                                    arg_set['vals'])
+        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
+    return M[to_select]
+
+def remove_rows_where(M, arguments):
+    """Returns a structured array containing rows not adhering to a query
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Structured array 
+    arguments : list of dict
+        See module documentation
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array without specified rows
+
+    """
+    to_remove = np.ones(M.size, dtype=bool)
+    for arg_set in arguments:
+        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
+                                    arg_set['vals'])
+        to_remove = np.logical_and(to_remove, lambd(M, col_name, vals))
+    return M[np.logical_not(to_remove)]
 
 def where_all_are_true(M, arguments, generated_name=None):
+    """Appends a boolean column to M which specifies which rows pass a query
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Structured array 
+    arguments : list of dict
+        See module documentation
+    generated_name : str
+        Name to give new column. If not specified, and arbitrary name will
+        be generated
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array with extra column
+
+    """
     if generated_name is None:
         generated_name = str(uuid4())
     to_select = np.ones(M.size, dtype=bool)
@@ -207,64 +309,215 @@ def where_all_are_true(M, arguments, generated_name=None):
         to_select = np.logical_and(to_select, lambd(M, col_name, vals))
     return append_cols(M, to_select, generated_name)
 
-def choose_rows_where(M, arguments):
-    to_select = np.ones(M.size, dtype=bool)
-    for arg_set in arguments:
-        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
-                                    arg_set['vals'])
-        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
-    return M[to_select]
+def row_is_outlier(M, col_name, boundary=3.0):
+    """Picks rows that are not within some a number of deviations of the mean
 
-def remove_rows_where(M, arguments):
-    to_remove = np.ones(M.size, dtype=bool)
-    for arg_set in arguments:
-        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
-                                    arg_set['vals'])
-        to_remove = np.logical_and(to_remove, lambd(M, col_name, vals))
-    return M[np.logical_not(to_remove)]
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
 
-def row_is_outlier(M, col_name, boundary):
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : float
+        number of standard deviations from mean required to be considered
+        an outlier
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     std = np.std(M[col_name])
     mean = np.mean(M[col_name])
-    return (np.logical_or( (mean-3*std)>M[col_name], (mean+3*std)<M[col_name]) )
+    return np.logical_or(
+            (mean - boundary * std) > M[col_name], 
+            (mean + boundary * std) < M[col_name]) 
     
 def row_val_eq(M, col_name, boundary):
+    """Picks rows for which cell is equal to a specified value
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : number
+        value to which cell must be equal
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     return M[col_name] == boundary
 
 def row_val_lt(M, col_name, boundary):
-    return M[col_name] < boundary
+    """Picks rows for which cell is less than to a specified value
 
-def row_val_lt_TIME_EDITION(M, col_name, boundary):
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : number
+        value which cell must be less than
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     return M[col_name] < boundary
 
 def row_val_gt(M, col_name, boundary):
+    """Picks rows for which cell is greater than to a specified value
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : number
+        value which cell must be greater than
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     return M[col_name] > boundary
 
 def row_val_between(M, col_name, boundary):
+    """Picks rows for which cell is between the specified values
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : (number, number)
+        To pick a row, the cell must be greater than or equal to boundary[0]
+        and less than or equal to boundary[1]
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     return np.logical_and(boundary[0] <= M[col_name], M[col_name] <= boundary[1])
 
 
 def row_is_within_region(M, col_names, boundary):
+    """Picks rows for which cell is within a spacial region
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_names : list of str
+        pair of column names signifying x and y coordinates
+    boundary : array of points
+        shape which cell must be within
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
     import matplotlib.path as mplPath
     bbPath = mplPath.Path(np.array(boundary))
     return [bbPath.contains_point(point) for point in M[col_names]]
 
 def combine_cols(M, lambd, col_names, generated_name):
+    """Create a new column that is the function of existing columns
+
+    Parameters
+    ----------
+    lambd : list of np.array > np.array
+        Function that takes a list of columns and produces a single
+        column. 
+    col_names : list of str
+        Names of columns to combine
+    generated_name : str
+        Name for generated column
+    """
     new_col = lambd(*[M[name] for name in col_names])
     return append_cols(M, new_col, generated_name)
 
 @np.vectorize
 def combine_sum(*args):
+    """Returns the elementwise sum of columns
+
+    Intended to be used as the lambd argument in combine_cols
+
+    Parameters
+    ----------
+    args : list of numpy.ndarray
+
+    Returns
+    -------
+    mumpy.ndarray
+    """
     return sum(args)
 
 @np.vectorize
 def combine_mean(*args):
+    """Returns the elementwise mean average of columns
+
+    Intended to be used as the lambd argument in combine_cols
+
+    Parameters
+    ----------
+    args : list of numpy.ndarray
+
+    Returns
+    -------
+    mumpy.ndarray
+    """
     return np.mean(args)
     
 def label_encode(M):
     """
     Changes string cols to integers so that there is a 1-1 mapping between 
     strings and ints
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+
+    Returns
+    -------
+    numpy.ndarray
+
     """
 
     M = convert_to_sa(M)

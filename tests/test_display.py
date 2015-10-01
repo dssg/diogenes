@@ -135,7 +135,7 @@ J 3000.0 James
     def test_plot_box_plot(self):
         np.random.seed(0)
         data = np.random.normal(size=(1000,))
-        fig = plot_box_plot(data, col_name='box', verbose=False)
+        fig = plot_box_plot(data, title='box', verbose=False)
         self.add_fig_to_report(fig, 'plot_box_plot')
 
     def test_get_top_features(self):

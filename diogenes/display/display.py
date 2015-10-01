@@ -274,8 +274,8 @@ def plot_box_plot(col, title=None, verbose=True):
 
     fig = plt.figure()
     boxplot(col)
-    if col_name:
-        plt.title(col_name)
+    if title:
+        plt.title(title)
     #add col_name to graphn
     if verbose:
         plt.show()

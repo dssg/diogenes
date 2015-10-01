@@ -144,7 +144,7 @@ class TestArrayEmitter(unittest.TestCase):
             row_M_inc_value=1,
             row_M_expanding=False,
             clfs=DBG_std_clfs)
-        exp.make_report()
+        exp.make_report(verbose=False)
         exp.make_csv()
 
 

@@ -299,7 +299,7 @@ class ArrayEmitter(object):
         # in-memory db
         cp = self.__copy()
         conn = sqla.create_engine('sqlite://')
-        cp.__rg_table_name = utils.csv_to_sqlite(conn, csv_file_path)
+        cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col

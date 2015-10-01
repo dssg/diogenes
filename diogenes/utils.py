@@ -496,11 +496,40 @@ def __fill_by_descr(s):
     raise ValueError('Unrecognized description {}'.format(s))
 
 def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
-    """
-    approximates Pandas DataFrame.merge
+    """Does SQL-stype join between two numpy tables
+
+    Supports equality join on an arbitrary number of columns
+
+    Approximates Pandas DataFrame.merge
     http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.merge.html
-    implements a hash join 
+    Implements a hash join 
     http://blogs.msdn.com/b/craigfr/archive/2006/08/10/687630.aspx
+
+    Parameters
+    ----------
+    left : numpy.ndarray
+        left structured array to join
+    right : numpy.ndarray
+        right structured array to join
+    how : {'inner', 'outer', 'left', 'right'}
+        As in SQL, signifies whether rows on one table should be included
+        when they do not have matches in the other table.
+    left_on : str or list or str
+        names of column(s) for left table to join on. 
+        If a list, the nth entry of left_on is joined to the nth entry of 
+        right_on
+    right_on : str or list or str
+        names of column(s) for right table to join on
+        If a list, the nth entry of left_on is joined to the nth entry of 
+        right_on
+    suffixes : (str, str)
+        Suffixes to add to column names when left and right share column names
+
+    Returns
+    -------
+    numpy.ndarray
+        joined structured array
+
     """
 
     # left_on and right_on can both be strings or lists
@@ -622,6 +651,7 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
 
 EPOCH = datetime.utcfromtimestamp(0)
 def to_unix_time(dt):
+    """Converts a datetime.datetime to seconds since epoch"""
     # TODO test this
     # from
     # http://stackoverflow.com/questions/6999726/how-can-i-convert-a-datetime-object-to-milliseconds-since-epoch-unix-time-in-p
@@ -663,7 +693,27 @@ def __make_digestible_list_of_list(sa):
             res_cols.append(col)
     return it.izip(*res_cols)
 
-def csv_to_sqlite(conn, csv_path, table_name=None):
+def csv_to_sql(conn, csv_path, table_name=None):
+    """Converts a csv to a table in SQL
+    
+    Parameters
+    ----------
+    conn : sqlalchemy engine
+        Connection to database
+    csv_path : str
+        Path to csv
+    table_name : str or None
+        Name of table to add to db. if None, will use the
+        name of the csv with the .csv suffix stripped
+
+    Returns
+    -------
+    str
+        THe table name
+    """
+
+
+    # avoiding circular dependency
     from diogenes.read import open_csv
     if table_name is None:
         table_name = os.path.splitext(os.path.basename(csv_path))[0]

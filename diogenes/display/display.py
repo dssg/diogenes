@@ -133,6 +133,20 @@ def crosstab(col1, col2):
 
 
 def plot_simple_histogram(col, verbose=True):
+    """Makes a histogram of values in a column
+
+    Parameters
+    ----------
+    col : np.ndarray
+    verbose : boolean
+        iff True, display the graph
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing plot
+
+    """
     hist, bins = np.histogram(col, bins=50)
     width = 0.7 * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
@@ -145,6 +159,27 @@ def plot_simple_histogram(col, verbose=True):
 # all of the below take output from any func in grid_search or operate
 
 def plot_prec_recall(labels, score, title='Prec/Recall', verbose=True):
+    """Plot precision/recall curve
+
+    Parameters
+    ----------
+    labels : np.ndarray
+        vector of ground truth
+    score : np.ndarray
+        vector of scores assigned by classifier (i.e. 
+        clf.pred_proba(...)[-1] in sklearn)
+    title : str
+        title of plot
+    verbose : boolean
+        iff True, display the graph
+        
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing plot
+
+    """
+
     # adapted from Rayid's prec/recall code
     y_true = labels
     y_score = score
@@ -174,6 +209,26 @@ def plot_prec_recall(labels, score, title='Prec/Recall', verbose=True):
     return fig
 
 def plot_roc(labels, score, title='ROC', verbose=True):
+    """Plot ROC curve
+
+    Parameters
+    ----------
+    labels : np.ndarray
+        vector of ground truth
+    score : np.ndarray
+        vector of scores assigned by classifier (i.e. 
+        clf.pred_proba(...)[-1] in sklearn)
+    title : str
+        title of plot
+    verbose : boolean
+        iff True, display the graph
+        
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing plot
+
+    """
     # adapted from Rayid's prec/recall code
     fpr, tpr, thresholds = roc_curve(labels, score)
     fpr = fpr
@@ -199,17 +254,21 @@ def plot_roc(labels, score, title='ROC', verbose=True):
         fig.show()
     return fig
 
-def plot_box_plot(col, col_name=None, verbose=True):
+def plot_box_plot(col, title=None, verbose=True):
     """Makes a box plot for a feature
-    comment
     
     Parameters
     ----------
     col : np.array
-    
+    title : str or None
+        title of a plot
+    verbose : boolean
+        iff True, display the graph
+        
     Returns
     -------
     matplotlib.figure.Figure
+        Figure containing plot
     
     """
 

@@ -27,10 +27,97 @@ from diogenes.grid_search import partition_iterator as p_i
 import diogenes.utils as utils
 from diogenes.utils import remove_cols
 
+"""Provides classes necessary for organizing an Experiment"""
+
 def _run_trial(trial):
     return trial.run()
 
 class Experiment(object):
+    """Class to execute and organize grid searches.
+
+    Several of the init arguments are of type list of dict. Experiment 
+    expects these to be in a particular format:
+
+    [{CLASS_SPECIFIER: CLASS_1, 
+      CLASS_1_PARAM_1: [CLASS_1_PARAM_1_VALUE_1, CLASS_1_PARAM_1_VALUE_2, ...
+                        CLASS_1_PARAM_1_VALUE_N],
+      CLASS_1_PARAM_2: [CLASS_1_PARAM_2_VALUE_1, CLASS_1_PARAM_2_VALUE_2, ...
+                        CLASS_1_PARAM_2_VALUE_N],
+      ...
+      CLASS_1_PARAM_M: [CLASS_1_PARAM_M_VALUE_1, CLASS_1_PARAM_M_VALUE_2, ...
+                        CLASS_1_PARAM_M_VALUE_N]},
+     {CLASS_SPECIFIER: CLASS_2, 
+      CLASS_2_PARAM_1: [CLASS_2_PARAM_1_VALUE_1, CLASS_2_PARAM_1_VALUE_2, ...
+                        CLASS_2_PARAM_1_VALUE_N],
+      CLASS_2_PARAM_2: [CLASS_2_PARAM_2_VALUE_1, CLASS_2_PARAM_2_VALUE_2, ...
+                        CLASS_2_PARAM_2_VALUE_N],
+      ...
+      CLASS_2_PARAM_M: [CLASS_2_PARAM_M_VALUE_1, CLASS_2_PARAM_M_VALUE_2, ...
+                        CLASS_2_PARAM_M_VALUE_N]},
+     ...
+     {CLASS_SPECIFIER: CLASS_L, 
+      CLASS_L_PARAM_1: [CLASS_L_PARAM_1_VALUE_1, CLASS_L_PARAM_1_VALUE_2, ...
+                        CLASS_L_PARAM_1_VALUE_N],
+      CLASS_L_PARAM_2: [CLASS_L_PARAM_2_VALUE_1, CLASS_L_PARAM_2_VALUE_2, ...
+                        CLASS_L_PARAM_2_VALUE_N],
+      ...
+      CLASS_L_PARAM_M: [CLASS_L_PARAM_M_VALUE_1, CLASS_L_PARAM_M_VALUE_2, ...
+                        CLASS_L_PARAM_M_VALUE_N]}]
+
+    CLASS_SPECIFIER is a different string constant for each argument. for 
+    clfs, it is 'clf'. For subsets, it is 'subset', and for cvs it is 'cv'.
+
+    CLASS_* is a class object which will be used to either classify data
+    (in clfs), take a subset of data (in subsets) or specify train/test
+    splits (in cvs). In clfs, it should be a subclass
+    of sklearn.baseestimator.BaseEstimator. In subsets, it should be a 
+    subclass of diogenes.grid_search.subset.BaseSubsetIter. In cvs, it
+    should be a subclass of sklearn.cross_validation._PartitionIterator
+
+    CLASS_X_PARAM_* is an init argument of CLASS_X. For example, if CLASS_1
+    is sklearn.ensemble.RandomForest, CLASS_1_PARAM_1 might be the string
+    literal 'n_estimators' or the string literal 'n_features'
+
+    CLASS_X_PARAM_Y_VALUE_* is a single value to try as the argument for
+    CLASS_X_PARAM. For example, if CLASS_1_PARAM_1 is 'n_estimators',
+    then CLASS_1_PARAM_1_VALUE_1 could be 10 and CLASS_1_PARAM_1_VALUE_1
+    could be 100.
+
+    When we run the Experiment with Experiment.run, Experiment will create
+    a Trial for each element in the cartesian product of all parameters
+    for each class. if we have {'clf' : RandomForestEstimator, 
+    'n_estimators' : [10, 100], 'n_features': [3, 5]} Then there will be
+    a Trial for each of RandomForestEstimator(n_estimators=10, n_features=3),
+    RandomForestEstimator(n_estimators=100, n_features=3),
+    RandomForestEstimator(n_estimators=10, n_features=5), and
+    RandomForestEstimator(n_estimators=100, n_features=5).
+
+    For examples of how to create these arguments, look at
+    diogenes.grid_search.standard_clfs.py.
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array corresponding to features to experiment on
+    y : numpy.ndarray
+        vector of labels
+    clfs : list of dict
+        classifiers to run
+    subsets : list of dict
+        subsetting operations to perform
+    cvs : list of dict
+        directives to make train and test sets
+    trials : list or Trial or None  
+        If a number of Trials have already been run, and we just want to
+        collect them into an Experiment rather than starting from scratch,
+        Experiment can be initiazed with a list of already run Trials
+    
+    Attributes
+    ----------
+    trials : list of Trial
+        Trials corresponding to this experiment.
+
+    """
     def __init__(
             self, 
             M, 

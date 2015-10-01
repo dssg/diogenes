@@ -692,40 +692,7 @@ def feature_pairs_in_rf(rf, weight_by_depth=None, verbose=True, n=10):
     return (counts_by_pair, count_pairs_by_depth, average_depth_by_pair, 
             weighted)
 
-def html_escape(s):
-    """Returns a string with all its html-averse characters html escaped"""
-    return cgi.escape(s).encode('ascii', 'xmlcharrefreplace')
 
-def html_format(fmt, *args, **kwargs):
-    clean_args = [html_escape(str(arg)) for arg in args]
-    clean_kwargs = {key: html_escape(str(kwargs[key])) for 
-                    key in kwargs}
-    return fmt.format(*clean_args, **clean_kwargs)
-
-def np_to_html_table(sa, fout, show_shape=False):
-    if show_shape:
-        fout.write('<p>table of shape: ({},{})</p>'.format(
-            len(sa),
-            len(sa.dtype)))
-    fout.write('<p><table>\n')
-    header = '<tr>{}</tr>\n'.format(
-        ''.join(
-                [html_format(
-                    '<th>{}</th>',
-                    name) for 
-                 name in sa.dtype.names]))
-    fout.write(header)
-    data = '\n'.join(
-        ['<tr>{}</tr>'.format(
-            ''.join(
-                [html_format(
-                    '<td>{}</td>',
-                    cell) for
-                 cell in row])) for
-         row in sa])
-    fout.write(data)
-    fout.write('\n')
-    fout.write('</table></p>')
 
 class ReportError(Exception):
     pass
@@ -744,6 +711,16 @@ class Report(object):
                                             '{}.html'.format(uuid.uuid4()))
         self.__report_path = report_path
 
+    def __html_escape(self, s):
+        """Returns a string with all its html-averse characters html escaped"""
+        return cgi.escape(s).encode('ascii', 'xmlcharrefreplace')
+        
+    def __html_format(self, fmt, *args, **kwargs):
+        clean_args = [self.__html_escape(str(arg)) for arg in args]
+        clean_kwargs = {key: self.__html_escape(str(kwargs[key])) for 
+                        key in kwargs}
+        return fmt.format(*clean_args, **clean_kwargs)
+
     def to_pdf(self, options={}, verbose=True):
         # Options are pdfkit.from_url options. See
         # https://pypi.python.org/pypi/pdfkit
@@ -761,6 +738,32 @@ class Report(object):
         if verbose:
             print 'Report written to {}'.format(report_path)
         return report_path
+
+    def __np_to_html_table(self, sa, fout, show_shape=False):
+        if show_shape:
+            fout.write('<p>table of shape: ({},{})</p>'.format(
+                len(sa),
+                len(sa.dtype)))
+        fout.write('<p><table>\n')
+        header = '<tr>{}</tr>\n'.format(
+            ''.join(
+                    [self.__html_format(
+                        '<th>{}</th>',
+                        name) for 
+                     name in sa.dtype.names]))
+        fout.write(header)
+        data = '\n'.join(
+            ['<tr>{}</tr>'.format(
+                ''.join(
+                    [self.__html_format(
+                        '<td>{}</td>',
+                        cell) for
+                     cell in row])) for
+             row in sa])
+        fout.write(data)
+        fout.write('\n')
+        fout.write('</table></p>')
+
 
     def get_report_path(self):
         return os.path.abspath(self.__report_path)
@@ -798,20 +801,20 @@ class Report(object):
         return '\n</body>\n</html>\n'
 
     def add_heading(self, heading, level=2):
-        self.__objects.append(html_format(
+        self.__objects.append(self.__html_format(
             '<h{}>{}</h{}>',
             level,
             heading,
             level))
 
     def add_text(self, text):
-         self.__objects.append(html_format(
+         self.__objects.append(self.__html_format(
                     '<p>{}</p>',
                     text))
 
     def add_table(self, M):
         sio = StringIO.StringIO()
-        np_to_html_table(M, sio)
+        self.__np_to_html_table(M, sio)
         self.__objects.append(sio.getvalue())
 
     def add_fig(self, fig):

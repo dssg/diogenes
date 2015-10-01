@@ -49,10 +49,32 @@ def __open_csv_as_list(f, delimiter=',', header=True, col_names=None, return_col
     return data
 
 def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
+    """Converts a csv to a structured array
+
+    Parameters
+    ----------
+    fin : file-like object
+        file-like object containing csv
+    delimiter : str
+        Character used to delimit csv fields
+    header : bool
+        If True, assumes the first line of the csv has column names
+    col_names : list of str or None
+        If header is False, this list will be used for column names
+
+    Returns
+    -------
+    numpy.ndarray
+        structured array corresponding to the csv
+
+    If header is False and col_names is None, diogenes will assign
+    arbitrary column names
+    """
     python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
     return convert_to_sa(python_list, col_names)
 
 def utf_to_ascii(s):
+    """Converts a unicode string to an ascii string"""
     # http://stackoverflow.com/questions/4299675/python-script-to-convert-from-utf-8-to-ascii
     if isinstance(s, unicode):
         return s.encode('ascii', 'replace')
@@ -60,18 +82,25 @@ def utf_to_ascii(s):
 
 @np.vectorize
 def validate_time(date_text):
+    """Returns boolean signifying whether a string is a valid datetime"""
     return __str_to_datetime(date_text) != NOT_A_TIME
 
 def str_to_time(date_text):
+    """Returns the datetime.datetime representation of a string
+
+    Returns NOT_A_TIME if the string does not signify a valid datetime
+    """
     return __str_to_datetime(date_text)
 
 def transpose_dict_of_lists(dol):
+    """Transforms a dictionary of lists into a list of dictionaries"""
     # http://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
     return (dict(it.izip(dol, x)) for 
             x in it.product(*dol.itervalues()))
 
 
 def invert_dictionary(aDict):
+    """Transforms a dict so that keys become values and values become keys"""
     return {v: k for k, v in aDict.items()}
 
 
@@ -166,50 +195,64 @@ def __str_col_to_datetime(col):
     # If there is even one valid datetime, we're calling this a datetime col
     return (bool(valid_dtimes), col_dtimes)
 
-def cast_list_of_list_to_sa(L, col_names=None, dtype=None):
+def cast_list_of_list_to_sa(L, col_names=None):
+    """Transforms a list of lists to a numpy structured array
+
+    Parameters
+    ----------
+    L : list of lists
+        Signifies a table. Each inner list should have the same length
+    col_names : list of str or None
+        Names for columns. If unspecified, names will be arbitrarily chosen
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array
+
+    """
     n_cols = len(L[0])
     if col_names is None:
         col_names = ['f{}'.format(i) for i in xrange(n_cols)]
     dtypes = []
     cleaned_cols = []
-    if dtype is None:
-        for idx, col in enumerate(it.izip(*L)):
-            dom_type = type(max(
-                col, 
-                key=lambda cell: TYPE_PRECEDENCE[type(cell)]))
-            if dom_type in (bool, np.bool_, int, long, np.int64, float, 
-                            np.float64):
-                dtypes.append(dom_type)
-                cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
-            elif dom_type == datetime:
+    for idx, col in enumerate(it.izip(*L)):
+        dom_type = type(max(
+            col, 
+            key=lambda cell: TYPE_PRECEDENCE[type(cell)]))
+        if dom_type in (bool, np.bool_, int, long, np.int64, float, 
+                        np.float64):
+            dtypes.append(dom_type)
+            cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
+        elif dom_type == datetime:
+            dtypes.append('M8[us]')
+            cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
+        elif dom_type == np.datetime64:
+            dtypes.append('M8[us]')
+            cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
+        elif dom_type in (str, unicode, np.string_, np.unicode_): 
+            cleaned_col = map(CLEAN_FUNCTIONS[dom_type], col)
+            is_datetime, dt_col = __str_col_to_datetime(cleaned_col)
+            if is_datetime:
                 dtypes.append('M8[us]')
-                cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
-            elif dom_type == np.datetime64:
-                dtypes.append('M8[us]')
-                cleaned_cols.append(map(CLEAN_FUNCTIONS[dom_type], col))
-            elif dom_type in (str, unicode, np.string_, np.unicode_): 
-                cleaned_col = map(CLEAN_FUNCTIONS[dom_type], col)
-                is_datetime, dt_col = __str_col_to_datetime(cleaned_col)
-                if is_datetime:
-                    dtypes.append('M8[us]')
-                    cleaned_cols.append(dt_col)
-                else:
-                    max_len = max(
-                            len(max(cleaned_col, 
-                                key=lambda cell: len(dom_type(cell)))),
-                            1)
-                    dtypes.append('|{}{}'.format(
-                        STR_TYPE_LETTERS[dom_type],
-                        max_len))
-                    cleaned_cols.append(cleaned_col)
-            elif dom_type == type(None):
-                # column full of None make it a column of empty strings
-                dtypes.append('|S1')
-                cleaned_cols.append([''] * len(col))
+                cleaned_cols.append(dt_col)
             else:
-                raise ValueError(
-                        'Type of col: {} could not be determined'.format(
-                            col_names[idx]))
+                max_len = max(
+                        len(max(cleaned_col, 
+                            key=lambda cell: len(dom_type(cell)))),
+                        1)
+                dtypes.append('|{}{}'.format(
+                    STR_TYPE_LETTERS[dom_type],
+                    max_len))
+                cleaned_cols.append(cleaned_col)
+        elif dom_type == type(None):
+            # column full of None make it a column of empty strings
+            dtypes.append('|S1')
+            cleaned_cols.append([''] * len(col))
+        else:
+            raise ValueError(
+                    'Type of col: {} could not be determined'.format(
+                        col_names[idx]))
 
     return np.fromiter(it.izip(*cleaned_cols), 
                        dtype={'names': col_names, 
@@ -228,8 +271,8 @@ def convert_to_sa(M, col_names=None):
 
     Returns
     -------
-    temp : Numpy Structured array
-       This is the matrix of an appropriate type that diogenes expects.
+    np.ndarray
+       structured array
 
     """
     if is_sa(M):
@@ -313,13 +356,16 @@ def cast_np_sa_to_nd(sa):
     copying and type conversion rather than just casting. Consequently, this
     operation should be avoided for heterogeneous arrays
     Based on http://wiki.scipy.org/Cookbook/Recarray.
+
     Parameters
     ----------
     sa : numpy.ndarray
         The structured array to view
+
     Returns
     -------
     np.ndarray
+
     """
     if not is_sa(sa):
         return sa
@@ -339,17 +385,21 @@ def cast_np_sa_to_nd(sa):
     return nd
     
 def is_sa(M):
+    """Returns True iff M is a structured array"""
     return is_nd(M) and M.dtype.names is not None
 
 def is_nd(M):
+    """Returns True iff M is a numpy.ndarray"""
     return isinstance(M, np.ndarray)
 
 def distance(lat_1, lon_1, lat_2, lon_2):
-    """
-    Calculate the great circle distance between two points 
-    on the earth (specified in decimal degrees)
-    from:
+    """Calculate the great circle distance between two points on earth 
+    
+    In Kilometers
+
+    From:
     http://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+
     """
     # convert decimal degrees to radians 
 
@@ -364,11 +414,17 @@ def distance(lat_1, lon_1, lat_2, lon_2):
     return c * r
 
 def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
-    """single line description
+    """Tests whether distance between two points is less than a threshold
+
     Parameters
     ----------
-    val : float
-       miles 
+    lat1 : float
+    lon1 : float
+    lat2 : float
+    lon2 : float
+    threshold : float
+        max distance in kilometers
+
     Returns
     -------
     boolean 

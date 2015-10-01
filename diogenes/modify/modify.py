@@ -505,8 +505,7 @@ def combine_mean(*args):
     return np.mean(args)
     
 def label_encode(M):
-    """
-    Changes string cols to integers so that there is a 1-1 mapping between 
+    """Changes string cols to ints so that there is a 1-1 mapping between 
     strings and ints
 
     Parameters
@@ -534,6 +533,21 @@ def label_encode(M):
     return np.array(zip(*result_arrays), dtype=new_dtype)
 
 def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
+    """Replace values signifying missing data with some substitute
+    
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    strategy : {'mean', 'median', 'most_frequent', 'constant'}
+        method to use to replace missing data
+    missing_val : value that M uses to represent missint data. i.e.
+        numpy.nan for floats or -999 for integers
+    constant : int
+        If the 'constant' strategy is chosen, this is the value to
+        replace missing_val with
+
+    """
     # TODO support times, strings
     M = convert_to_sa(M)
 
@@ -577,11 +591,11 @@ def generate_bin(col, num_bins):
 
     Parameters
     ----------
-    col : np.array
+    col : np.ndarray
     
     Returns
     -------
-    np.array
+    np.ndarray
     
     Examples
     --------
@@ -597,15 +611,13 @@ def generate_bin(col, num_bins):
     return [int((x - minimum) / distance * num_bins) for x in col]
 
 def normalize(col, mean=None, stddev=None, return_fit=False):
-    """
-    
-    Generate a normalized column.
+    """Generate a normalized column.
     
     Normalize both mean and std dev.
     
     Parameters
     ----------
-    col : np.array
+    col : np.ndarray
     mean : float or None
         Mean to use for fit. If none, will use 0
     stddev : float or None
@@ -614,7 +626,7 @@ def normalize(col, mean=None, stddev=None, return_fit=False):
         If False, only returns fitted col
     Returns
     -------
-    np.array or (np.array, float, float)
+    np.ndarray or (np.array, float, float)
     
     """
     # see infonavit for applying to different set than we fit on
@@ -633,7 +645,20 @@ def normalize(col, mean=None, stddev=None, return_fit=False):
         return res
 
 def distance_from_point(lat_origin, lng_origin, lat_col, lng_col):
-    """ Generates a column of how far each record is from the origin"""
+    """Generates a column of how far each record is from the origin
+    
+    Parameters
+    ----------
+    lat_origin : number
+    lng_origin : number
+    lat_col : np.ndarray
+    lng_col : np.ndarray
+
+    Returns
+    -------
+    np.ndarray
+
+    """
     return distance(lat_origin, lng_origin, lat_col, lng_col)
 
 

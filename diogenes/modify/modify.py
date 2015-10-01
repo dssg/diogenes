@@ -71,6 +71,21 @@ one directive it must be in a list.
 """
 
 def choose_cols_where(M, arguments):
+    """Returns a structured array containing only columns adhering to a query
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Structured array 
+    arguments : list of dict
+        See module documentation
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array with only specified columns
+
+    """
     to_keep = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
         lambd, vals = (arg_set['func'], arg_set['vals'])
@@ -79,28 +94,97 @@ def choose_cols_where(M, arguments):
     return M[keep_col_names]
     
 def remove_cols_where(M, arguments):
+    """Returns a structured array containing columns not adhering to a query
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Structured array 
+    arguments : list of dict
+        See module documentation
+
+    Returns
+    -------
+    numpy.ndarray
+        Structured array without specified columns
+
+    """
     to_remove = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
         lambd, vals = (arg_set['func'], arg_set['vals'])
         to_remove = np.logical_and(to_remove, lambd(M,  vals))
-    remove_col_names = [col_name for col_name,included in zip(M.dtype.names, to_remove) if included] 
+    remove_col_names = [col_name for col_name,included in 
+                        zip(M.dtype.names, to_remove) if included] 
     return remove_cols(M, remove_col_names)
 
-def col_random(M, number_to_select):
+def col_random(M, boundary):
+    """Pick random columns
+
+    To be used as a 'func' argument in choose_cols_where or remove_cols_where 
+    (see module documentation)
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    boundary : int
+        number of columns to pick
+
+    """
     num_col = len(M.dtypes.names)
-    remove_these_columns = np.random.choice(num_col, number_to_select, replace=False)
+    remove_these_columns = np.random.choice(num_col, boundary, replace=False)
     indices = np.ones(num_col, dtype=bool)
     indices[remove_these_column] = False
     return indices
 
 def col_val_eq(M, boundary):
+    """Pick columns where every cell equals specified value
+
+    To be used as a 'func' argument in choose_cols_where or remove_cols_where 
+    (see module documentation)
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    boundary : number or str or bool
+        if every cell==boundary, the column will be picked
+
+    """
     return [np.all(M[col_name] == boundary) for col_name in M.dtype.names]
 
 def col_val_eq_any(M, boundary=None):
+    """Pick columns for which every cell has the same value
+
+    To be used as a 'func' argument in choose_cols_where or remove_cols_where 
+    (see module documentation)
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    boundary : None
+        ignored
+
+    """
     return [np.all(M[col_name]==M[col_name][0]) for col_name in M.dtype.names]
 
-def col_fewer_than_n_nonzero(M, boundary):
-    return [len(np.where(M[col_name]!=0)[0])<2 for col_name in M.dtype.names]
+def col_fewer_than_n_nonzero(M, boundary=2):
+    """Pick columns that have fewer than a specified number of nonzeros
+
+    To be used as a 'func' argument in choose_cols_where or remove_cols_where 
+    (see module documentation)
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    boundary : int
+        If the number of nonzeros is at or above boundary nonzeros, the column
+        will not be picked
+
+    """
+    return [len(np.where(M[col_name]!=0)[0])<boundary for col_name in M.dtype.names]
 
 #write below diffently as lambda
 def col_has_lt_threshold_unique_values(M, threshold):

@@ -433,16 +433,51 @@ def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
     return (distance(lat_1, lon_1, lat_2, lon_2) < threshold)
 
 def stack_rows(*args):
+    """Returns a structured array containing all the rows in its arguments
+    
+    Each argument must be a structured array with the same column names
+    and column types. Similar to SQL UNION
+    """
     return nprf.stack_arrays(args, usemask=False)
 
 def sa_from_cols(cols):
+    """Converts a list of columns to a structured array"""
     # TODO take col names
     return nprf.merge_arrays(cols, usemask=False)    
 
 def append_cols(M, cols, col_names):
+    """Append columns to an existing structured array
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    cols : list of numpy.ndarray
+    col_names : list of str
+        names for new columns
+
+    Returns
+    -------
+    numpy.ndarray
+        structured array with new columns
+    """
     return nprf.append_fields(M, col_names, data=cols, usemask=False)
 
 def remove_cols(M, col_names):
+    """Remove columns specified by col_names from structured array
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_names : list of str
+        names for columns to remove
+
+    Returns
+    -------
+    numpy.ndarray
+        structured array without columns
+    """
     return nprf.drop_fields(M, col_names, usemask=False)
 
 def __fill_by_descr(s):

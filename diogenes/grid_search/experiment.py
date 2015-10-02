@@ -70,7 +70,7 @@ class Experiment(object):
     CLASS_* is a class object which will be used to either classify data
     (in clfs), take a subset of data (in subsets) or specify train/test
     splits (in cvs). In clfs, it should be a subclass
-    of sklearn.baseestimator.BaseEstimator. In subsets, it should be a 
+    of sklearn.base.BaseEstimator. In subsets, it should be a 
     subclass of diogenes.grid_search.subset.BaseSubsetIter. In cvs, it
     should be a subclass of sklearn.cross_validation._PartitionIterator
 
@@ -373,6 +373,32 @@ class Experiment(object):
         dimension=None,
         return_report_object=False,
         verbose=True):
+        """Creates a pdf report of this experiment
+
+        Parameters
+        ----------
+        report_file_name : str
+            path of file for report output
+        dimension : {CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS, None}
+            If not None, will make a subreport for each unique value of
+            dimension
+        return_report_object : boolean
+            Iff True, this function returns the report file name and the
+            diogenes.display.Report object. Otherwise, just returns the report 
+            file name.
+        verbose : boolean
+            iff True, gives output about report generation
+
+        Returns
+        -------
+        str or (str, diogenes.display.Report) 
+            If return_report_object is False, returns the file name of the
+            generated report. Else, returns a tuple of the filename of the
+            generated report as well as the Report object representing the
+            report
+
+        """
+            
         # TODO make this more flexible
         from ..display import Report
         self.run()
@@ -405,6 +431,19 @@ class Experiment(object):
         return returned_report_file_name
 
     def make_csv(self, file_name='report.csv'):
+        """Creates a csv summarizing the experiment
+
+        Parameters
+        ----------
+        file_name : str
+            path of csv to be generated
+
+        Returns
+        -------
+        str
+            path of generated csv
+
+        """
         self.run()
         with open(file_name, 'w') as fout:
             writer = csv.writer(fout)
@@ -412,10 +451,6 @@ class Experiment(object):
             for trial in self.trials:
                 writer.writerows(trial.csv_rows())
         return os.path.abspath(file_name)
-
-
-
-# TODO By and large, we shouldn't be using SKLearn's internal classes.
 
 CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS = range(6)
 dimensions = (CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS)
@@ -442,6 +477,80 @@ all_cv_notes_backindex = {name: i for i, name in
                               enumerate(all_cv_notes)}
 
 class Run(object):
+    """Object encapsulating a single fitted classifier and specific data
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Homogeneous (not structured) array. The array of features.
+        If M_test is None, M contains both train and test sets. If
+        M_test is not None, M contains only the training set.
+    y : numpy.ndarray
+        Array of labels. If y_test is None, y contains both train and
+        test sets. If y_test is not None, M contains only the training
+        set.
+    col_names : list of str
+        Names of features
+    clf : sklearn.base.BaseEstimator
+        clf fitted with testing data
+    train_indices : np.ndarray or None
+        If M_test and y_test are None, The indices of M and y that 
+        comprise the training set
+    test_indices : np.ndarray or None
+        If M_test and y_test are None, The indices of M and y that 
+        comprise the testing set
+    sub_col_names : list of str
+        If subset takes a subset of columns, these are the column names
+        involved in this subset
+    sub_col_inds : np.ndarray
+        If subset takes a subset of columns, these are the indices of the
+        columns involved in this subset
+    subset_note : dict of str : ?
+        Extra information about this Run provided by the subsetter
+    cv_note : dict of str : ?
+        Extra information about this run provided by the partition iterator
+    M_test : np.ndarray or None
+        If not None, the features in the test set
+    y_test : np.ndarray or None
+        If not None, the labels in the test set
+
+    Attributes
+    ----------
+    M : numpy.ndarray
+        Homogeneous (not structured) array. The array of features.
+        If M_test is None, M contains both train and test sets. If
+        M_test is not None, M contains only the training set.
+    y : numpy.ndarray
+        Array of labels. If y_test is None, y contains both train and
+        test sets. If y_test is not None, M contains only the training
+        set.
+    col_names : list of str
+        Names of features
+    clf : sklearn.base.BaseEstimator
+        clf fitted with testing data
+    train_indices : np.ndarray or None
+        If M_test and y_test are None, The indices of M and y that 
+        comprise the training set
+    test_indices : np.ndarray or None
+        If M_test and y_test are None, The indices of M and y that 
+        comprise the testing set
+    sub_col_names : list of str
+        If subset takes a subset of columns, these are the column names
+        involved in this subset
+    sub_col_inds : np.ndarray
+        If subset takes a subset of columns, these are the indices of the
+        columns involved in this subset
+    subset_note : dict of str : ?
+        Extra information about this Run provided by the subsetter
+    cv_note : dict of str : ?
+        Extra information about this run provided by the partition iterator
+    M_test : np.ndarray or None
+        If not None, the features in the test set
+    y_test : np.ndarray or None
+        If not None, the labels in the test set
+
+    """
+
     def __init__(
         self,
         M,
@@ -494,6 +603,7 @@ class Run(object):
 
     @staticmethod
     def csv_header():
+        """Returns a portion of the header necessary in constructing the csv"""
         return (['subset_note_' + name for name in all_subset_notes] + 
                 ['cv_note_' + name for name in all_cv_notes] + 
                 ['f1_score', 'roc_auc', 'prec@1%', 'prec@2%', 'prec@5%', 
@@ -522,6 +632,7 @@ class Run(object):
                     scores)))
 
     def csv_row(self):
+        """This Run's portion of its row in produces csv"""
         return (self.__subset_note_list() +
                 self.__cv_note_list() + 
                 [self.f1_score()] + 
@@ -531,18 +642,34 @@ class Run(object):
                 self.__feat_import())
 
     def score(self):
+        """Returns score of fitted clf"""
         return self.clf.score(self.__test_M(), self.__test_y())
 
     def roc_curve(self):
+        """Returns matplotlib.figure.Figure of ROC curve"""
         from ..display import plot_roc
         return plot_roc(self.__test_y(), self.__pred_proba(), verbose=False)
 
     def prec_recall_curve(self):
+        """Returns matplotlib.figure.Figure of precision/recall curve"""
         from ..display import plot_prec_recall
         return plot_prec_recall(self.__test_y(), self.__pred_proba(), 
                                 verbose=False)
    
     def sorted_top_feat_importance(self, n = 25):
+        """Returns top feature importances
+
+        Parameters
+        ----------
+        n : int
+            number of feature importances to return
+        
+        Returns
+        -------
+        [list of str, list of floats]
+            names and scores of top features
+
+        """
         if not hasattr(self.clf, 'feature_importances_'):
             return [[], []]
         feat_imp = self.clf.feature_importances_
@@ -554,13 +681,21 @@ class Run(object):
         return [col_names, top_vals]
 
     def f1_score(self):
+        """Returns f1 score"""
         return f1_score(self.__test_y(), self.__predict())
 
     def precision_at_thresholds(self, query_thresholds):
-        """
+        """Returns precision at given thresholds
+        
         Parameters
-        query_thresholds : float
-            0 <= thresh <= 1
+        ----------
+        query_thresholds : list of float
+            for each element, 0 <= thresh <= 1
+
+        Returns
+        -------
+        list of float
+
         """
         y_true = self.__test_y()
         y_score = self.__pred_proba()
@@ -588,6 +723,7 @@ class Run(object):
                 precision_curve[::-1])
 
     def roc_auc(self):
+        """Returns area under ROC curve"""
         try:
             return roc_auc_score(self.__test_y(), self.__pred_proba())
         # If there was only one class

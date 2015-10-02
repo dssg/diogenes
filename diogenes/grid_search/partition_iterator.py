@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.cross_validation import _PartitionIterator
+# TODO By and large, we shouldn't be using SKLearn's internal classes.
 
 
 class NoCV(_PartitionIterator):

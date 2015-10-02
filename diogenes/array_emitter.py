@@ -617,18 +617,70 @@ class ArrayEmitter(object):
         """
         Generates ArrayGenerators according to some subsetting directive.
 
+        There are two ways that we determine what the train and test sets are
+        for each trial:
+
+        1. The start time/stop time interval. This is the interval used to
+           create features in the M-formatted matrix. Setting the start 
+           time/stop time of this interval is equalivalent to passing values 
+           to set_interval.  variables pertaining to this interval have the 
+           interval* prefix.
+
+        2. The rows of the M matrix to select, based on the value of some
+           column in the M matrix. Setting the start and end of this interval
+           is equivalent to passing values to select_rows_in_M. Values 
+           pertaining to this set of rows have the row_M* prefix. Taking
+           subsets over rows of M is optional, and it will only occur if
+           row_M_col_name is not None
+
         Parameters
         ----------
         label_col : str
             The name of the column containing labels
         interval_train_window_start : number or datetime
-            
+            start of training interval
+        interval_train_window_size : number or datetime
+            (Initial) size of training interval
+        interval_test_window_start : number or datetime
+            start of testing interval
+        interval_test_window_size : number or datetime
+            size of testing interval
+        interval_inc_value : datetime, timedelta, or number
+            interval to increment train and test interval
+        interval_expanding : boolean
+            whether or not the training interval is expanding
+        row_M_col_name : str or None
+            If not None, the name of the feature which will be used to select
+            different training and testing sets in addition to the interval
+
+            If None, train and testing sets will use all rows given a 
+            particular time interval
+        row_M_train_window_start : ? or None
+            Start of train window for M rows. If None, uses
+            interval_train_window_start
+        row_M_train_window_size : ? or None
+            (Initial) size of train window for M rows. If None, uses
+            interval_train_window_size
+        row_M_test_window_start : ? or None
+            Start of test window for M rows. If None, uses
+            interval_test_window_start
+        row_M_train_window_size : ? or None
+            size of test window for M rows. If None, uses
+            interval_test_window_size
+        row_M_inc_value : ? or None
+            interval to increment train and test window for M rows. If None,
+            uses interval_inc_value
+        row_M_expanding : bool
+            whether or not the training window for M rows is expanding
+        clfs : list of dict
+            classifiers and parameters to run with each train/test set. See
+            documentation for diogenes.grid_search.experiment.Experiment.
+
         Returns
         -------
-        ?
+        diogenes.grid_search.experiment.Experiment
+            Experiment collecting train/test sets that have been run
         """
-        # If user doesn't specify windows for row subsets, we assume it's the
-        # same as it is in the interval subsets
         if row_M_train_window_start is None:
             row_M_train_window_start = interval_train_window_start
         if row_M_train_window_size is None:

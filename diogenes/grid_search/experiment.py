@@ -166,12 +166,77 @@ class Experiment(object):
     def __transpose_dict_of_lists(self, dol):
         return utils.transpose_dict_of_lists(dol)
 
-    def slice_on_dimension(self, dimension, value, trials=None):
+    def slice_on_dimension(self, dimension, value):
+        """Select Trials where dimension == value
+
+        Parameters
+        ----------
+        dimension : {CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS}
+            dimension to slice on:
+
+            CLF
+                select Trials where the classifier == value
+            CLF_PARAMS
+                select Trials where the classifier parameters == value
+            SUBSET
+                select Trials where the subset iterator == value
+            SUBSET_PARAMS
+                select Trials where the subset iterator parameters == value
+            CV
+                select Trials where the cross-validation partition iterator ==
+                value
+            CV_PARAMS 
+                select Trials where the partition iterator params == value
+        value : ?
+            Value to match
+
+        Returns
+        -------
+        Experiment
+            containing only the specified Trials
+        """
         self.run()
         return self.__copy([trial for trial in self.trials if 
                             trial[dimension] == value])
 
     def iterate_over_dimension(self, dimension):
+        """Iterates over sets of Trials with respect to dimension
+
+        For example, if we iterate across CLF, each iteration will
+        include all the Trials that use a given CLF. If the experiment
+        has RandomForestClassifier and SVC trials, then  one iteration
+        will have all trials with RandomForestClassifer and the other 
+        iteration will have all trials with SVC
+
+        Parameters
+        ----------
+        dimension : {CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS}
+            dimension to iterate over:
+
+            CLF
+                iterate over Trials on classifier
+            CLF_PARAMS
+                iterate over Trials on classifier parameters
+            SUBSET
+                iterate over Trials on subset iterator
+            SUBSET_PARAMS
+                iterate over Trials on subset iterator parameters
+            CV
+                iterate over Trials on cross-validation partition iterator
+            CV_PARAMS 
+                iterate over Trials on partition iterator
+        
+        Returns
+        -------
+        iterator of (?, Experiment)
+            The first element of the tuple is the value of dimension that
+            all trials in the second element of the tuple has. 
+
+            The second element of the tuple is an Experiment contain all
+            trials where the given dimension is equal to the value in the
+            first element of the tuple.
+        """
+
         by_dim = {}
         for trial in self.trials:
             val_of_dim = trial[dimension]
@@ -184,6 +249,33 @@ class Experiment(object):
             
 
     def slice_by_best_score(self, dimension):
+        """Returns trials that have the best score across dimension
+
+        Parameters
+        ----------
+        dimension : {CLF, CLF_PARAMS, SUBSET, SUBSET_PARAMS, CV, CV_PARAMS}
+            dimension to find best trials over
+
+            CLF
+                find best Trials over classifier
+            CLF_PARAMS
+                find best Trials over classifier parameters
+            SUBSET
+                find best Trials over subset iterator
+            SUBSET_PARAMS
+                find best Trials over subset iterator parameters
+            CV
+                find best Trials over cross-validation partition iterator
+            CV_PARAMS 
+                find best Trials over partition iterator
+        
+        Returns
+        -------
+        Experiment
+            With only trials that have the best scores over the selected
+            dimension
+
+        """
         self.run()
         categories = {}
         other_dims = list(dimensions)
@@ -203,9 +295,17 @@ class Experiment(object):
         return self.__copy(result)
 
     def has_run(self):
+        """Returns boolean specifying whether this experiment has been run"""
         return self.trials is not None
 
     def run(self):
+        """Runs the experiment. Fits all classifiers
+        
+        Returns
+        -------
+        list of Trial
+            Trials with fitted classifiers
+        """
         if self.has_run():
             return self.trials
         trials = []
@@ -240,15 +340,31 @@ class Experiment(object):
         return trials
 
     def average_score(self):
+        """Get average score for all Trials in this experiment
+
+        Returns
+        -------
+        dict of Trial: float
+            Provides the average score of each trial
+        """
+
         self.run()
         return {trial: trial.average_score() for trial in self.trials}
 
     def roc_auc(self):
+        """Get average area under the roc curve for all Trials in this experiment
+
+        Returns
+        -------
+        dict of Trial: float
+            Provides the average area under the roc curve of each trial
+        """
         self.run()
         return {trial: trial.roc_auc() for trial in self.trials}
 
     @staticmethod
     def csv_header():
+        """Returns the header required to make a csv"""
         return Trial.csv_header()
 
     def make_report(

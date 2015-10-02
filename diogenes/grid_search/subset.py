@@ -4,9 +4,31 @@ from random import sample, seed, setstate, getstate
 
 import numpy as np
 
+"""This module provides different ways to take subsets of data"""
+
 class BaseSubsetIter(object):
     __metaclass__ = abc.ABCMeta
 
+    """Base class for subsetters. 
+
+    supports iteration where each iteration returns a tuple:
+
+    (np.ndarray, list of str, dict of str : ?)
+
+    The first element is the indices in the subset
+
+    The second element is the features in the subset
+
+    The third elements are extra notes about the subset
+    
+    Parameters 
+    ----------
+    y : np.ndarray
+        column to use to determine subsets
+    col_names : list of str
+        names of all features in data set
+
+    """
     def __init__(self, y, col_names):
         self._y = y
         self._col_names = col_names
@@ -21,6 +43,7 @@ class BaseSubsetIter(object):
         return 'BaseSubsetIter()'
 
 class SubsetNoSubset(BaseSubsetIter):
+    """Generates a single subset consisting of all data"""
     def __iter__(self):
         yield (np.arange(self._y.shape[0]), self._col_names, {})
 
@@ -28,6 +51,23 @@ class SubsetNoSubset(BaseSubsetIter):
         return 'SubsetNoSubset()'
 
 class SubsetRandomRowsActualDistribution(BaseSubsetIter):
+    """Generates subsets reflecting actual distribution of labels
+
+    Parameters
+    ----------
+    y : np.ndarray
+        labels in data
+    col_names : list of str
+        names of all features in data
+    subset_size : int
+        number of rows in each subset
+    n_subsets : int
+        number of subsets to pick
+    random_state : int
+        random seed
+
+    """
+    
         
     def __init__(self, y, col_names, subset_size, n_subsets=3, 
                  random_state=None):
@@ -63,6 +103,22 @@ class SubsetRandomRowsActualDistribution(BaseSubsetIter):
                 self.__random_state_seed)
 
 class SubsetRandomRowsEvenDistribution(BaseSubsetIter):
+    """Generates subsets where each label appears at about the same frequency
+
+    Parameters
+    ----------
+    y : np.ndarray
+        labels in data
+    col_names : list of str
+        names of all features in data
+    subset_size : int
+        number of rows in each subset
+    n_subsets : int
+        number of subsets to pick
+    random_state : int
+        random seed
+
+    """
         
     def __init__(self, y, col_names, subset_size, n_subsets=3, 
                  random_state=None):
@@ -98,6 +154,20 @@ class SubsetRandomRowsEvenDistribution(BaseSubsetIter):
                 self.__random_state_seed)
 
 class SubsetSweepNumRows(BaseSubsetIter):
+    """Generates subsets with varying number of rows
+
+    Parameters
+    ----------
+    y : np.ndarray
+        labels in data
+    col_names : list of str
+        names of all features in data
+    num_rows : list of int
+        number of rows in each subset
+    random_state : int
+        random seed
+
+    """
         
     def __init__(self, y, col_names, num_rows, random_state=None):
         super(SubsetSweepNumRows, self).__init__(y, col_names)
@@ -121,6 +191,22 @@ class SubsetSweepNumRows(BaseSubsetIter):
                 self.__random_state_seed)
 
 class SubsetSweepVaryStratification(BaseSubsetIter):
+    """Generates subsets with varying proportion of True and False labels
+
+    Parameters
+    ----------
+    y : np.ndarray
+        labels in data
+    col_names : list of str
+        names of all features in data
+    proportions_positive : list of float
+        proportions of positive labels in each subset
+    subset_size : int
+        number of rows in each subset
+    random_state : int
+        random seed
+
+    """
         
     def __init__(self, y, col_names, proportions_positive, subset_size, 
                  random_state=None):

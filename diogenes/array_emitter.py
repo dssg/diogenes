@@ -81,6 +81,15 @@ class ArrayEmitter(object):
     During 2006-2007, student 0's math_gpa dropped to 2.1, while his or her
     english_gpa dropped to 3.9.
 
+    If a record does not have a time frame, but can be considered to last
+    "forever" (somebody's name, for example) then the start time and end
+    time columns can be left NULL. These records will appear in all time
+    intervals
+    
+    If a record only has one time associated
+    (for example, the time that a parking tissue was issued) then either 
+    start time or stop time can be left NULL, and the other can be filled in.
+
     **M Tables**
 
     ArrayEmitter generates M formatted tables based on RG formatted tables. 
@@ -149,7 +158,7 @@ class ArrayEmitter(object):
     >>> ae = ae.set_aggregation('absences', 'MAX')
     >>> ae = ae.select_rows_in_M('math_gpa <= 3.4')
     >>> ae = ae.set_interval(2005, 2006)
-    >>> table3 = ae.to_sa()
+    >>> table3 = ae.emit_M()
 
     Gives us 
     
@@ -165,6 +174,18 @@ class ArrayEmitter(object):
 
     Notice that Table 3 is identical to Table 2, except student 1 has been
     omitted because his/her GPA is higher than 3.4.
+
+    **Note on function call semantics**
+
+    Most methods of ArrayEmitter return new ArrayEmitters rather than 
+    modifying the existing ArrayEmitter. 
+
+    Parameters
+    ----------
+    convert_to_unix_time : boolean
+        Iff true, user queries in set_interval will be translated from
+        datetimes to unix time (seconds since The Epoch). The user may wish 
+        to set this variable if the database stores times in unix time
    
     """
 
@@ -233,6 +254,10 @@ class ArrayEmitter(object):
             this is 'value'. If None, ArrayEmitter will pick the fifth
             otherwise unspecified column.
 
+        Returns
+        -------
+        ArrayGenerator
+            Copy of this ArrayGenerator which has rg_table specified
             
         Examples
         --------
@@ -289,6 +314,10 @@ class ArrayEmitter(object):
             this is 'value'. If None, ArrayEmitter will pick the fifth
             otherwise unspecified column.
 
+        Returns
+        -------
+        ArrayGenerator
+            Copy of this ArrayGenerator which has rg_table specified
 
         Examples
         --------
@@ -315,16 +344,13 @@ class ArrayEmitter(object):
     def set_aggregation(self, feature_name, method):
         """Sets the method used to aggregate across dates in a RG table.
 
-        If set_aggregation is not called for a given feature, the method will
-        default to 'AVG'
-        
         Parameters
         ----------
         feature_name : str
             Name of feature for which we are aggregating
-        method : str or list -> float
-            Method used to aggregate the feature across year. If a str, must
-            be one of:
+        method : str 
+            Method used to aggregate the feature across year. 
+            Can be one of:
 
                 * 'AVG'
                     Mean average
@@ -341,7 +367,13 @@ class ArrayEmitter(object):
                 * 'SUM'
                     Sum of results
 
-            If a function, must take a list and return a float
+            Additionally, method can be any aggregation function supported
+            by the database in which the RG table lives.
+            
+        Returns
+        -------
+        ArrayGenerator
+            Copy of this ArrayGenerator with aggregation set
 
         Examples
         --------
@@ -359,6 +391,45 @@ class ArrayEmitter(object):
         return cp
 
     def set_default_aggregation(self, method):
+        """Sets the default method used to aggregate across dates
+
+        ArrayEmitter will use the value of set_default_aggregation when
+        a method has not been set for a given feature using the
+        set_aggregation method.
+
+        When set_default_aggregation has not been called, the default
+        aggregation method is 'AVG'
+
+        Parameters
+        ----------
+        method : str 
+            Method used to aggregate features across year. 
+            Can be one of:
+
+                * 'AVG'
+                    Mean average
+
+                * 'COUNT'
+                    Number of results
+
+                * 'MAX'
+                    Largest result
+
+                * 'MIN'
+                    Smallest result 
+
+                * 'SUM'
+                    Sum of results
+
+            Additionally, method can be any aggregation function supported
+            by the database in which the RG table lives.
+
+        Returns
+        -------
+        ArrayGenerator
+            Copy of this ArrayGenerator with default aggregation set
+
+        """
         cp = self.__copy()
         cp.__default_aggregation = method
         return cp
@@ -374,7 +445,8 @@ class ArrayEmitter(object):
         where : str
             A statement required to be true about the returned table using
             at least one column name, constant values, parentheses and the 
-            operators: ==, !=, <, >, <=, >=, and, or, not.
+            operators: =, !=, <, >, <=, >=, AND, OR, NOT, and other things
+            that can appear in a SQL WHERE statement
 
         Returns
         -------
@@ -401,11 +473,9 @@ class ArrayEmitter(object):
         cp.__selections.append(where)
         return cp
 
-    def select_cols_in_M(self, where):
-        raise NotImplementedError()
-
     def set_interval(self, start_time, stop_time):
-        """
+        """Sets interval used to create M-formatted table
+
         Start times and stop times are inclusive
 
         Parameters
@@ -414,6 +484,11 @@ class ArrayEmitter(object):
             Start time of log tables to include in this sa
         stop_time : number or datetime.datetime
             Stop time of log tables to include in this sa
+
+        Returns
+        -------
+        ArrayEmitter
+            With interval set
         """
         cp = self.__copy()
         cp.__start_time = start_time
@@ -438,6 +513,8 @@ class ArrayEmitter(object):
                 col_specs[spec] = unspecified_col_names.pop(0)
 
     def get_query(self):
+        """Returns SQL query that will be used to create the M-formatted table
+        """
         start_time = self.__start_time
         stop_time = self.__stop_time
         if self.__convert_to_unix_time:
@@ -522,7 +599,7 @@ class ArrayEmitter(object):
 
     def subset_over(
             self, 
-            label_feat,
+            label_col,
             interval_train_window_start,
             interval_train_window_size,
             interval_test_window_start,
@@ -542,8 +619,10 @@ class ArrayEmitter(object):
 
         Parameters
         ----------
-        directive : ?
-        
+        label_col : str
+            The name of the column containing labels
+        interval_train_window_start : number or datetime
+            
         Returns
         -------
         ?
@@ -620,11 +699,11 @@ class ArrayEmitter(object):
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
             data_train = ae_train.emit_M()
-            M_train = utils.remove_cols(data_train, label_feat)
-            y_train = data_train[label_feat]
+            M_train = utils.remove_cols(data_train, label_col)
+            y_train = data_train[label_col]
             data_test = ae_test.emit_M()
-            M_test = utils.remove_cols(data_test, label_feat)
-            y_test = data_test[label_feat]
+            M_test = utils.remove_cols(data_test, label_col)
+            y_test = data_test[label_col]
 
             col_names = M_train.dtype.names
             M_train_nd = utils.cast_np_sa_to_nd(M_train)

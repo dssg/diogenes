@@ -3,10 +3,14 @@ import numpy as np
 from sklearn.cross_validation import _PartitionIterator
 # TODO By and large, we shouldn't be using SKLearn's internal classes.
 
+"""Custom objects used to produce train/test splits. 
+
+Also, anything in sklearn.cross_validation should work in Experiments
+
+"""
 
 class NoCV(_PartitionIterator):
-    """Cross validator that just returns the entire set as the training set
-    to begin with
+    """Partition iterator that just returns the entire set as the training set
 
     Parameters
     ----------
@@ -17,6 +21,35 @@ class NoCV(_PartitionIterator):
         yield np.array([], dtype=int)
 
 class SlidingWindowIdx(_PartitionIterator):
+    """Partition iterator that iterates across indices of array
+
+    Has a moving window of indices for the training set and a moving
+    window of indices for the testing set.
+
+    Parameters
+    ----------
+    n : int
+        Number of rows in the data
+    train_start : int
+        start index of training window
+    train_window_size : int
+        number of rows in the (initial) training window
+    test_start : int
+        start index of testing window
+    test_window_size : int
+        number of rows in testing window
+    inc_value : int
+        number of rows to increment train and test sets in each iteration
+    expanding_train : bool
+        If True, the end of the train window moves forward with each
+        iteration, but the beginning of the train window does not. 
+        Consequently, more rows are added to the training set with each
+        iteration
+
+        If False, the beginning and end of the train window both move
+        forward, so the training set remains the same size.
+
+    """
 
     def __init__(self, n, train_start, train_window_size, test_start, 
                  test_window_size, inc_value, expanding_train=False):
@@ -32,6 +65,7 @@ class SlidingWindowIdx(_PartitionIterator):
        self.__expanding_train = expanding_train
 
     def cv_note(self):
+        """dict of str providing extra info about the current iteration"""
         return {'train_start': self.__train_start,
                 'train_end': self.__train_end,
                 'test_start': self.__test_start,
@@ -56,9 +90,44 @@ class SlidingWindowIdx(_PartitionIterator):
                    test_index)
 
 class SlidingWindowValue(_PartitionIterator):
-    def __init__(self, M, col_names, col_name, train_start, train_window_size, test_start, 
+    """Partition iterator that iterates across values of a column in an array
+
+    Has a moving window of indices for the training set and a moving
+    window of indices for the testing set.
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        homogeneous (not structured) array. Feature array from which to draw
+        train and test sets
+    col_names : list of str
+        names of features in M
+    guide_col_name : str
+        name of feature to use to determine train and test sets
+    train_start : number
+        start value for guide_col_name in training window
+    train_window_size : number
+        size of the (initial) training window
+    test_start : number
+        start value for guide_col_name in testing window
+    test_window_size : number
+        size in testing window
+    inc_value : number
+        value to increment train and test sets in each iteration
+    expanding_train : bool
+        If True, the end of the train window moves forward with each
+        iteration, but the beginning of the train window does not. 
+        Consequently, more rows are added to the training set with each
+        iteration
+
+        If False, the beginning and end of the train window both move
+        forward, so the training window remains the same size.
+
+    """
+    def __init__(self, M, col_names, guide_col_name, train_start, 
+                 train_window_size, test_start, 
                  test_window_size, inc_value, expanding_train=False):
-        y = M[:,col_names.index(col_name)]
+        y = M[:,col_names.index(guide_col_name)]
         n = y.shape[0] 
         super(SlidingWindowValue, self).__init__(n)
         self.__y = y
@@ -73,6 +142,7 @@ class SlidingWindowValue(_PartitionIterator):
         self.__expanding_train = expanding_train
 
     def cv_note(self):
+        """dict of str providing extra info about the current iteration"""
         return {'train_start': self.__train_start,
                 'train_end': self.__train_end,
                 'test_start': self.__test_start,

@@ -764,6 +764,58 @@ all_cv_params_backindex = {param: i for i, param in
                            enumerate(all_cv_params)}
 
 class Trial(object):
+    """Object encapsulating all Runs for a given configuration
+    
+    Parameters
+    ----------
+    M : numpy.ndarray
+        Homogeneous (not structured) array of features
+    y : numpy.ndarray
+        Array of labels
+    col_names : list of str
+        Names of features
+    clf : sklearn.base.BaseEstimator class
+        Classifier for this trial
+    clf_params : dict of str : ?
+        init parameters for clf
+    subset : diogenes.grid_search.subset.BaseSubsetIter class
+        class of object making subsets
+    subset_params : dict of str : ?
+        init parameters for subset
+    cv : sklearn.cross_validation._PartitionIterator class
+        class used to product train and test sets
+    cv_params : dict of str : ?
+        init parameters of cv
+    runs : list of list of Run or None
+        if not None, can initialize this trial with a list of Runs
+        that have already been created.
+
+    Attributes
+    ----------
+    M : numpy.ndarray
+        Homogeneous (not structured) array of features
+    y : numpy.ndarray
+        Array of labels
+    col_names : list of str
+        Names of features
+    clf : sklearn.base.BaseEstimator class
+        Classifier for this trial
+    clf_params : dict of str : ?
+        init parameters for clf
+    subset : diogenes.grid_search.subset.BaseSubsetIter class
+        class of object making subsets
+    subset_params : dict of str : ?
+        init parameters for subset
+    cv : sklearn.cross_validation._PartitionIterator class
+        class used to product train and test sets
+    cv_params : dict of str : ?
+        init parameters of cv
+    runs : list or Run or None
+        Runs in this Trial. The outer list signifies different subsets. The
+        outer lists signify different train/test splits using the same subset
+
+    """
+
     def __init__(
         self, 
         M,
@@ -813,6 +865,7 @@ class Trial(object):
         return self.__by_dimension[arg]
 
     def has_run(self):
+        """Returns True iff this Trial has been run"""
         return self.runs is not None
 
     @staticmethod
@@ -822,6 +875,7 @@ class Trial(object):
                 full_list_item in set_sublist]
 
     def run(self):
+        """Run the Trial"""
         if self.has_run():
             return self.runs
         runs = []
@@ -874,6 +928,7 @@ class Trial(object):
 
     @staticmethod
     def csv_header():
+        """Returns portion of header used when creating csv"""
         return (['clf'] + ['clf_' + name for name in all_clf_params] +  
                 ['subset'] + ['subset_' + name for name in all_subset_params] +
                 ['cv'] + ['cv_' + name for name in all_cv_params] +
@@ -898,12 +953,14 @@ class Trial(object):
         return param_vals
 
     def csv_rows(self):
+        """Returns portions of rows used in creating csv"""
         return [[str(self.clf)] + self.__clf_param_list() + 
                 [str(self.subset)] + self.__subset_param_list() + 
                 [str(self.cv)] + self.__cv_param_list() + 
                  run.csv_row() for run in self.runs_flattened()]
 
     def average_score(self):
+        """Returns average score accross all Runs"""
         if self.__cached_ave_score is not None:
             return self.__cached_ave_score
         self.run()
@@ -912,6 +969,7 @@ class Trial(object):
         return ave_score
     
     def median_run(self):
+        """Returns Run with median score"""
         # Give or take
         #runs_with_score = [(run.score(), run) for run in self.runs]
         runs_with_score = [(run.score(), run) for run in it.chain(*self.runs)]
@@ -919,18 +977,26 @@ class Trial(object):
         return runs_with_score[len(runs_with_score) / 2][1]
 
     def runs_flattened(self):
+        """Returns list of all Runs (rather than list of list of Runs)"""
         return [run for run in it.chain(*self.runs)]
 
     # TODO These should all be average across runs rather than picking the 
     # median
 
     def roc_curve(self):
+        """Returns matplotlib.figure.Figure of roc_curve of median run"""
         return self.median_run().roc_curve()
 
     def roc_auc(self):
+        """Returns area under roc curve of median run"""
         return self.median_run().roc_auc()
 
     def prec_recall_curve(self):
+        """Returns matplotlib.figure.Figure of precision/recall curve 
+        
+        (of median run)
+        
+        """
         return self.median_run().prec_recall_curve()
 
 

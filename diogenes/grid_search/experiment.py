@@ -757,7 +757,7 @@ all_subset_params_backindex = {param: i for i, param in
 all_cv_params = sorted(['n_folds', 'indices', 'shuffle', 'random_state',
                         'train_start', 'train_window_size',
                         'test_start', 'test_window_size', 
-                        'inc_value', 'expanding_train', 'col_name',
+                        'inc_value', 'expanding_train', 'guide_col_name',
                         'col_name'])
                         
 all_cv_params_backindex = {param: i for i, param in 

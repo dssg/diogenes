@@ -132,10 +132,6 @@ class TestGridSearch(unittest.TestCase):
                 'n_folds': [2, 3]}]
         exp = per.Experiment(M, y, clfs=clfs, subsets=subsets, cvs=cvs)
         result_path = exp.make_csv()
-        ctrl_path = os.path.join(REFERENCE_PKL_PATH, 'make_csv.csv')
-        with open(result_path) as result:
-            with open(ctrl_path) as ctrl:
-                self.assertEqual(result.read(), ctrl.read())
 
     def test_report_simple(self):
         M, y = uft.generate_test_matrix(100, 5, 2, random_state=0)
@@ -217,13 +213,13 @@ class TestGridSearch(unittest.TestCase):
                  'test_start': [1999], 
                  'test_window_size': [2],
                  'inc_value': [2], 
-                 'col_name': ['year']}]
+                 'guide_col_name': ['year']}]
         exp = per.Experiment(M, y, clfs=clfs, cvs=cvs)
-        result_path = exp.make_csv()
-        ctrl_path = os.path.join(REFERENCE_PKL_PATH, 'sliding_windows.csv')
-        with open(result_path) as result:
-            with open(ctrl_path) as ctrl:
-                self.assertEqual(result.read(), ctrl.read())
+        exp.run()
+        result = {str(trial) : frozenset([str(run) for run in trial.runs]) for 
+                  trial in exp.trials}
+        self.__pkl_store(result, 'test_sliding_windows')
+        self.__compare_to_ref_pkl(result, 'test_sliding_windows')
 
 if __name__ == '__main__':
     unittest.main()

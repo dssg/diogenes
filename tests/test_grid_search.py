@@ -218,7 +218,6 @@ class TestGridSearch(unittest.TestCase):
         exp.run()
         result = {str(trial) : frozenset([str(run) for run in trial.runs]) for 
                   trial in exp.trials}
-        self.__pkl_store(result, 'test_sliding_windows')
         self.__compare_to_ref_pkl(result, 'test_sliding_windows')
 
 if __name__ == '__main__':

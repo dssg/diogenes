@@ -129,7 +129,7 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.get_rg_from_sql(conn_str, 'subset_over')
         ae = ae.set_default_aggregation('SUM')
         exp = ae.subset_over(
-            label_feat='label',
+            label_col='label',
             interval_train_window_start=2004,
             interval_train_window_size=1,
             interval_test_window_start=2006,

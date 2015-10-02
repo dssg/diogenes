@@ -1,1 +1,2 @@
-ipython nbconvert notebooks/*.ipynb --to rst
+cd notebooks
+ipython nbconvert *.ipynb --to rst

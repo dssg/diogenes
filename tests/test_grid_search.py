@@ -181,7 +181,8 @@ class TestGridSearch(unittest.TestCase):
                     'random_state': [0]}]
         exp = per.Experiment(M, y, subsets=subsets)
         exp.run()
-        result = {str(trial) : frozenset([str(run) for run in trial.runs]) for 
+        result = {str(trial) : sorted([run.subset_note for 
+            run in trial.runs_flattened()]) for 
                   trial in exp.trials}
         self.__compare_to_ref_pkl(result, 'test_subsetting')
 
@@ -216,7 +217,8 @@ class TestGridSearch(unittest.TestCase):
                  'guide_col_name': ['year']}]
         exp = per.Experiment(M, y, clfs=clfs, cvs=cvs)
         exp.run()
-        result = {str(trial) : frozenset([str(run) for run in trial.runs]) for 
+        result = {str(trial) : sorted([run.cv_note for 
+            run in trial.runs_flattened()]) for 
                   trial in exp.trials}
         self.__compare_to_ref_pkl(result, 'test_sliding_windows')
 

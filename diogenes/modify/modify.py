@@ -524,7 +524,7 @@ def label_encode(M):
     new_dtype = []
     result_arrays = []
     for (col_name, fmt) in M.dtype.descr:
-        if 'S' in fmt:
+        if 'S' in fmt or 'O' in fmt:
             result_arrays.append(le.fit_transform(M[col_name]))
             new_dtype.append((col_name, int))
         else:

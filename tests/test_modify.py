@@ -70,7 +70,7 @@ class TestModify(unittest.TestCase):
              ('b', 1, 'Tim'),
              ('b', 2, 'Martin'),
              ('c', 3, 'Martin')],
-            dtype=[('letter', 'O'), ('idx', int), ('name', 'O')])
+            dtype=[('letter', 'S1'), ('idx', int), ('name', 'S6')])
         ctrl = np.array(
             [(0, 0, 0),
              (1, 1, 1),
@@ -85,7 +85,7 @@ class TestModify(unittest.TestCase):
                       ('', -999, np.nan, 0.0),
                       ('d', 1, np.nan, 0.2),
                       ('', -999, 2.0, np.nan)],
-                     dtype=[('str', 'O'), ('int', int), ('float1', float),
+                     dtype=[('str', 'S1'), ('int', int), ('float1', float),
                             ('float2', float)])
 
         ctrl = M.copy()

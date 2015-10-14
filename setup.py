@@ -12,6 +12,5 @@ setup(
                           'matplotlib', 
                           'SQLAlchemy',
                           'joblib',
-                          'pdfkit',
-                          'pandas'),
+                          'pdfkit'),
         zip_safe=False)

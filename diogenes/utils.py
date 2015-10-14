@@ -5,7 +5,6 @@ import itertools as it
 
 import numpy as np
 import numpy.lib.recfunctions as nprf
-import pandas as pd
 import matplotlib.mlab
 from datetime import datetime
 from dateutil.parser import parse
@@ -71,15 +70,8 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
     If header is False and col_names is None, diogenes will assign
     arbitrary column names
     """
-    #python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
-    #return convert_to_sa(python_list, col_names)
-    df = pd.read_csv(
-            fin, 
-            sep=delimiter, 
-            header=0 if header else None,
-            names=col_names,
-            index_col=False)
-    return df.to_records(index=False)
+    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
+    return convert_to_sa(python_list, col_names)
 
 def utf_to_ascii(s):
     """Converts a unicode string to an ascii string"""

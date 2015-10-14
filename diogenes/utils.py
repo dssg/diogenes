@@ -1,6 +1,7 @@
 #functions included here are those that you SHOULD be able to do in python syntax but can not.
 import csv
 import os
+import sys
 import itertools as it
 
 import numpy as np
@@ -49,7 +50,8 @@ def __open_csv_as_list(f, delimiter=',', header=True, col_names=None, return_col
         return data, col_names
     return data
 
-def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
+def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None, 
+                   verbose=True, parse_datetimes=True):
     """Converts a csv to a structured array
 
     Parameters
@@ -78,8 +80,30 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
             sep=delimiter, 
             header=0 if header else None,
             names=col_names,
-            index_col=False)
-    return df.to_records(index=False)
+            index_col=False,
+            prefix='f')
+    sa = df.to_records(index=False)
+    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
+        if verbose:
+            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
+                             'This is currently slow.')
+        bag_of_cols = []
+        new_dtype = []
+        for col_name, dtype_str in sa.dtype.descr:
+            col = sa[col_name]
+            if 'O' in dtype_str:
+                if parse_datetimes:
+                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
+                    if valid_dtime_col:
+                        bag_of_cols.append(col_dtime)
+                        continue
+                max_str_len = max(len(max(col, key=len)), 1)
+                new_dtype_str = 'S{}'.format(max_str_len)
+                bag_of_cols.append(col.astype(new_dtype_str))
+                continue
+            bag_of_cols.append(col)
+        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
+    return sa
 
 def utf_to_ascii(s):
     """Converts a unicode string to an ascii string"""
@@ -199,9 +223,9 @@ def __str_to_datetime(s):
 
 def __str_col_to_datetime(col):
     col_dtimes = [__str_to_datetime(s) for s in col]
-    valid_dtimes = [dt for dt in col_dtimes if dt != NOT_A_TIME]
+    valid_dtime_col = any((dt != NOT_A_TIME for dt in col_dtimes))
     # If there is even one valid datetime, we're calling this a datetime col
-    return (bool(valid_dtimes), col_dtimes)
+    return (valid_dtime_col, col_dtimes)
 
 def cast_list_of_list_to_sa(L, col_names=None):
     """Transforms a list of lists to a numpy structured array
@@ -448,10 +472,14 @@ def stack_rows(*args):
     """
     return nprf.stack_arrays(args, usemask=False)
 
-def sa_from_cols(cols):
+def sa_from_cols(cols, col_names=None):
     """Converts a list of columns to a structured array"""
     # TODO take col names
-    return nprf.merge_arrays(cols, usemask=False)    
+    sa = nprf.merge_arrays(cols, usemask=False)    
+    if col_names is not None:
+        return sa.view(
+                dtype=[(name, dtype_str) for name, (_, dtype_str) in
+                       zip(col_names, sa.dtype.descr)])
 
 def append_cols(M, cols, col_names):
     """Append columns to an existing structured array

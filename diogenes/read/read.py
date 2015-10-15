@@ -17,7 +17,7 @@ to Numpy structured arrays.
 
 """
 
-def open_csv(path, delimiter=',', header=True, col_names=None):
+def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=True):
     """Creates a structured array from a local .csv file
 
     Parameters
@@ -30,6 +30,9 @@ def open_csv(path, delimiter=',', header=True, col_names=None):
         If True, assumes the first line of the csv has column names
     col_names : list of str or None
         If header is False, this list will be used for column names
+    parse_datetimes : bool
+        True iff strings that look like datetimes should be interpreted as
+        datetimes (slow)
 
     Returns
     -------
@@ -41,9 +44,9 @@ def open_csv(path, delimiter=',', header=True, col_names=None):
     """
 
     with open(path, 'rU') as fin:
-        return open_csv_as_sa(fin, delimiter, header, col_names)
+        return open_csv_as_sa(fin, delimiter, header, col_names, parse_datetimes)
     
-def open_csv_url(url, delimiter=',', header=True, col_names=None):
+def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetimes=True):
     """Creates a structured array from a url
 
     Parameters
@@ -56,6 +59,10 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None):
         If True, assumes the first line of the csv has column names
     col_names : list of str or None
         If header is False, this list will be used for column names
+    parse_datetimes : bool
+        True iff strings that look like datetimes should be interpreted as
+        datetimes (slow)
+
 
     Returns
     -------
@@ -66,7 +73,7 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None):
     arbitrary column names
     """
     fin = urllib2.urlopen(url)
-    sa = open_csv_as_sa(fin, delimiter, header, col_names)
+    sa = open_csv_as_sa(fin, delimiter, header, col_names, parse_datetimes)
     fin.close()
     return sa
 

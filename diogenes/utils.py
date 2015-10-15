@@ -87,6 +87,11 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
         if verbose:
             sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
                              'This is currently slow.')
+        # Change NaN's in string columns to empty strings
+        df.fillna(
+                inplace=True,
+                value={col_name : '' for col_name, dtype_desc in 
+                       df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
         bag_of_cols = []
         new_dtype = []
         for col_name, dtype_str in sa.dtype.descr:

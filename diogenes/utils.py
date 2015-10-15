@@ -207,6 +207,9 @@ def __str_to_datetime(s):
     # Invalid time if the string is too short
     # This prevents empty strings from being times
     # as well as odd short strings like 'a' 
+    if not isinstance(s, basestring):
+        return NOT_A_TIME
+    # Invalid time if not a string
     if len(s) < 6:
         return NOT_A_TIME
     # Invalid time if the string is just a number

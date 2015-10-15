@@ -82,16 +82,16 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
             names=col_names,
             index_col=False,
             prefix='f')
+    df.fillna(
+            inplace=True,
+            value={col_name : '' for col_name, dtype_desc in 
+                   df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
     sa = df.to_records(index=False)
     if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
         if verbose:
             sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
-                             'This is currently slow.')
+                             'This is currently slow.\n')
         # Change NaN's in string columns to empty strings
-        df.fillna(
-                inplace=True,
-                value={col_name : '' for col_name, dtype_desc in 
-                       df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
         bag_of_cols = []
         new_dtype = []
         for col_name, dtype_str in sa.dtype.descr:
@@ -230,7 +230,7 @@ def __str_to_datetime(s):
         return NOT_A_TIME
 
 def __str_col_to_datetime(col):
-    col_dtimes = [__str_to_datetime(s) for s in col]
+    col_dtimes = np.array([__str_to_datetime(s) for s in col], dtype='M8[us]')
     valid_dtime_col = any((dt != NOT_A_TIME for dt in col_dtimes))
     # If there is even one valid datetime, we're calling this a datetime col
     return (valid_dtime_col, col_dtimes)

@@ -328,7 +328,6 @@ class ArrayEmitter(object):
         # in-memory db
         cp = self.__copy()
         conn = sqla.create_engine('sqlite://')
-        import pdb; pdb.set_trace()
         cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col

@@ -480,6 +480,7 @@ def sa_from_cols(cols, col_names=None):
         return sa.view(
                 dtype=[(name, dtype_str) for name, (_, dtype_str) in
                        zip(col_names, sa.dtype.descr)])
+    return sa
 
 def append_cols(M, cols, col_names):
     """Append columns to an existing structured array

@@ -88,7 +88,7 @@ class TestUtils(unittest.TestCase):
         # already a structured array
         sa = np.array([(1, 1.0, 'a', datetime(2015, 01, 01)),
                        (2, 2.0, 'b', datetime(2016, 01, 01))],
-                      dtype=[('int', int), ('float', float), ('str', 'O'),
+                      dtype=[('int', int), ('float', float), ('str', 'S1'),
                              ('date', 'M8[s]')])
         self.assertTrue(np.array_equal(sa, utils.convert_to_sa(sa)))
 
@@ -128,11 +128,11 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(utils_for_tests.array_equal(ctrl, res))
 
     def test_np_dtype_is_homogeneous(self):
-        sa = np.array([(1, 'a', 2)], dtype=[('f0', int), ('f1', 'O'), 
+        sa = np.array([(1, 'a', 2)], dtype=[('f0', int), ('f1', 'S1'), 
                                             ('f2', int)])
         self.assertFalse(utils.np_dtype_is_homogeneous(sa))
 
-        sa = np.array([('aa', 'a')], dtype=[('f0', 'O'), ('f1', 'S1')])
+        sa = np.array([('aa', 'a')], dtype=[('f0', 'S2'), ('f1', 'S1')])
         self.assertFalse(utils.np_dtype_is_homogeneous(sa))
 
         sa = np.array([(1, 2, 3)], dtype=[('f0', int), ('f1', int),
@@ -216,23 +216,33 @@ class TestUtils(unittest.TestCase):
             dtype=[('f0', int), ('f1', float)])
         res = utils.sa_from_cols([col1, col2])
         self.assertTrue(np.array_equal(ctrl, res))
+        col1 = np.array(['ab', 'cd', 'ef'])
+        col2 = np.array([1, 2, 3])
+        col3 = np.array([1.0, 2.0, 3.0])
+        ctrl = np.array(
+                [('ab', 1, 1.0), ('cd', 2, 2.0), ('ef', 3, 3.0)],
+                dtype=[('str', 'S2'), ('int', int), ('float', float)])
+        res = utils.sa_from_cols(
+                [col1, col2, col3], 
+                col_names=['str', 'int', 'float'])
+        self.assertTrue(np.array_equal(ctrl, res))
 
     def test_append_cols(self):
-        M = np.array([(1, 'a'), (2, 'b')], dtype=[('int', int), ('str', 'O')])
+        M = np.array([(1, 'a'), (2, 'b')], dtype=[('int', int), ('str', 'S1')])
         col1 = np.array([1.0, 2.0])
         col2 = np.array([datetime(2015, 12, 12), datetime(2015, 12, 13)],
                         dtype='M8[us]')
         
         ctrl = np.array(
             [(1, 'a', 1.0), (2, 'b', 2.0)], 
-            dtype=[('int', int), ('str', 'O'), ('float', float)])
+            dtype=[('int', int), ('str', 'S1'), ('float', float)])
         res = utils.append_cols(M, col1, 'float')
         self.assertTrue(np.array_equal(ctrl, res))
 
         ctrl = np.array(
             [(1, 'a', 1.0, datetime(2015, 12, 12)), 
              (2, 'b', 2.0, datetime(2015, 12, 13))], 
-            dtype=[('int', int), ('str', 'O'), ('float', float),
+            dtype=[('int', int), ('str', 'S1'), ('float', float),
                    ('dt', 'M8[us]')])
         res = utils.append_cols(M, [col1, col2], ['float', 'dt'])
         self.assertTrue(np.array_equal(ctrl, res))
@@ -263,12 +273,12 @@ class TestUtils(unittest.TestCase):
                        (3, 'Samantha', 2),
                        (4, 'Augustine', 1),
                        (5, 'William', 0)], dtype=[('id', int),
-                                                  ('name', 'O'),
+                                                  ('name', 'S9'),
                                                   ('dept_id', int)])
         a2 = np.array([(0, 'accts receivable'),
                        (1, 'accts payable'),
                        (2, 'shipping')], dtype=[('id', int),
-                                                ('name', 'O')])
+                                                ('name', 'S16')])
         ctrl = pd.DataFrame(a1).merge(
                     pd.DataFrame(a2),
                     left_on='dept_id',
@@ -278,12 +288,12 @@ class TestUtils(unittest.TestCase):
 
         # test column naming rules
         a1 = np.array([(0, 'a', 1, 2, 3)], dtype=[('idx0', int),
-                                    ('name', 'O'),
+                                    ('name', 'S1'),
                                     ('a1_idx1', int),
                                     ('idx2', int),
                                     ('idx3', int)])
         a2 = np.array([(0, 'b', 1, 2, 3)], dtype=[('idx0', int),
-                                            ('name', 'O'),
+                                            ('name', 'S1'),
                                             ('a2_idx1', int),
                                             ('idx2', int),
                                             ('idx3', int)])
@@ -310,17 +320,17 @@ class TestUtils(unittest.TestCase):
              (1, 'a1_2', 2),
              (2, 'a1_3', 3),
              (3, 'a1_4', 4)], 
-            dtype=[('key', int), ('label', 'O'), ('idx', int)])
+            dtype=[('key', int), ('label', 'S4'), ('idx', int)])
         a2 = np.array(
             [(0, 'a2_0', 0),
              (1, 'a2_1', 1),
              (2, 'a2_2', 2),
              (2, 'a2_3', 3),
              (4, 'a2_4', 4)], 
-            dtype=[('key', int), ('label', 'O'), ('idx', int)])
+            dtype=[('key', int), ('label', 'S4'), ('idx', int)])
         #for how in ('inner', 'left', 'right', 'outer'):
-        merged_dtype = [('key', int), ('label_x', 'O'), ('idx_x', int),
-                        ('label_y', 'O'), ('idx_y', int)]
+        merged_dtype = [('key', int), ('label_x', 'S4'), ('idx_x', int),
+                        ('label_y', 'S4'), ('idx_y', int)]
         merge_algos = ('inner', 'left', 'right', 'outer')
         merged_data = [[(0, 'a1_0', 0, 'a2_0', 0),
                         (1, 'a1_1', 1, 'a2_1', 1),

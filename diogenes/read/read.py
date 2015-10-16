@@ -190,8 +190,7 @@ class SQLConnection(object):
         return fun_with_cache
 
     def __execute_no_cache(self, exec_fun):
-        return lambda exec_str, invalidate_cache=False: return exec_fun(
-                exec_str)
+        return lambda exec_str, invalidate_cache=False: exec_fun(exec_str)
 
     def execute(self, exec_str, invalidate_cache=False):
         """Executes a query

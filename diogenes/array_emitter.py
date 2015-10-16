@@ -1,6 +1,7 @@
 import numpy as np 
 import sqlalchemy as sqla
 from diogenes.read import open_csv
+from diogenes.read import connect_sql
 from uuid import uuid4
 from diogenes import utils
 import diogenes.grid_search.experiment as exp
@@ -268,7 +269,7 @@ class ArrayEmitter(object):
 
         """
         cp = self.__copy()
-        cp.__conn = sqla.create_engine(conn_str)
+        cp.__conn = connect_sql(conn_str)
         cp.__rg_table_name = table_name
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col
@@ -327,7 +328,7 @@ class ArrayEmitter(object):
         """
         # in-memory db
         cp = self.__copy()
-        conn = sqla.create_engine('sqlite://')
+        conn = connect_to_sql('sqlite://')
         cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col
@@ -502,7 +503,7 @@ class ArrayEmitter(object):
 
         # figure out which column is which
         sql_col_name = 'SELECT * FROM {} LIMIT 0;'.format(table_name)
-        col_names = conn.execute(sql_col_name).keys()
+        col_names = conn.execute(sql_col_name).dtype.names
         specified_col_names = [col_name for col_name in 
                                col_specs.itervalues() if col_name
                                is not None]
@@ -590,12 +591,7 @@ class ArrayEmitter(object):
             Numpy structured array constructed using the specified queries and
             subsets
         """
-        query_result = self.__conn.execute(self.get_query())
-        col_names = [utils.utf_to_ascii(col_name) for col_name in 
-                     query_result.keys()]
-        return utils.cast_list_of_list_to_sa(query_result.fetchall(), 
-                                             col_names=col_names)        
-
+        return self.__conn.execute(self.get_query())
 
     def subset_over(
             self, 

@@ -159,6 +159,10 @@ class SQLConnection(object):
         csv_file_name = os.path.join(
                 self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
+        # TODO actually treat ? in sql queries the way we're supposed to 
+        # with sql sanitization, etc
+        if repl is not None:
+            exec_str = exec_str.replace('?', '{}').format(repl)
         command = "\"\\copy ({}) TO '{}' DELIMITER ',' NULL '' CSV HEADER\"".format(
             exec_str, 
             csv_file_name)

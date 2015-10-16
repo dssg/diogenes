@@ -2,6 +2,7 @@ import csv
 import urllib2
 import os
 import cPickle
+import subprocess
 import sqlalchemy as sqla
 from datetime import datetime
 
@@ -77,7 +78,7 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetime
     fin.close()
     return sa
 
-def connect_sql(con_str, allow_caching=False, cache_dir='.'):
+def connect_sql(con_str, allow_caching=False, tmp_dir='.'):
     """Provides an SQLConnection object, which makes structured arrays from SQL
 
     Parameters
@@ -88,9 +89,9 @@ def connect_sql(con_str, allow_caching=False, cache_dir='.'):
         If True, diogenes will cache the results of each query and return
         the cached result if the same query is performed twice. If False,
         each query will be sent to the database
-    cache_dir : str
+    tmp_dir : str
         If allow_caching is True, the cached results will be stored in 
-        cache_dir
+        tmp_dir. Also where csvs will be stored for postgres servers
 
     Returns
     -------
@@ -99,7 +100,10 @@ def connect_sql(con_str, allow_caching=False, cache_dir='.'):
         arrays
 
     """
-    return SQLConnection(con_str, allow_caching, cache_dir)
+    return SQLConnection(con_str, allow_caching, tmp_dir)
+
+class SQLError(Exception):
+    pass
 
 class SQLConnection(object):
     """Connection to SQL that returns numpy structured arrays
@@ -113,47 +117,81 @@ class SQLConnection(object):
         If True, diogenes will cache the results of each query and return
         the cached result if the same query is performed twice. If False,
         each query will be sent to the database
-    cache_dir : str
+    tmp_dir : str
         If allow_caching is True, the cached results will be stored in 
-        cache_dir
+        tmp_dir. Also, where csvs will be stored for postgres servers
     """
-    def __init__(self, con_str, allow_caching=False, cache_dir='.'):
-        if con_str[:10] == 'postgresql':
+    def __init__(self, conn_str, allow_caching=False, tmp_dir='.'):
+        parsed_conn_str = sqla.engine.url.make_url(conn_str)
+        exec_fun = self.__execute_sqla
+        if parsed_conn_str.drivername == 'postgresql':
             # try for psql \COPY optimization
             if not subprocess.call('which', 'psql'):
                 # we have psql
-                pass
-        self.__engine = sqla.create_engine(con_str)
-        self.__cache_dir = cache_dir
-        if allow_caching:
-            self.execute = self.__execute_with_cache
+                psql_call = ['psql']
+                if parsed_conn_str.host:
+                    psql_call.append('-h')
+                    psql_call.append(parsed_conn_str.host)
+                if parsed_conn_str.port:
+                    psql_call.append('-p')
+                    psql_call.append(pgres_port)
+                if parsed_conn_str.database:
+                    psql_call.append('-d')
+                    psql_call.append(parsed_conn_str.database)
+                if parsed_conn_str.username:
+                    psql_call.append('-U')
+                    psql_call.append(parsed_conn_str.username)
+                if parsed_conn_str.password:
+                    os.environ['PGPASSWORD'] = '{}'.format(parsed_conn_str.password)
+                psql_call.append('-c')
+                self.__psql_call = psql_call
+                exec_fun = self.__execute_copy_command
 
-    def __execute_copy_command(self, exec_str, invalidate_cache=False):
+        self.__engine = sqla.create_engine(conn_str)
+        self.__tmp_dir = tmp_dir
+        if allow_caching:
+            self.execute = self.__execute_with_cache(exec_fun)
+        else:
+            self.execute = self.__execute_no_cache(exec_fun)
+
+    def __execute_copy_command(self, exec_str):
+        parsed_conn_str = self.__parsed_conn_str
         csv_file_name = os.path.join(
-                self.__cache_dir,
+                self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
-        command = "\COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER ".format(
+        command = "'\COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER'".format(
             exec_str, 
             csv_file_name)
-        #TODO parse conn string and make psql query, then read csv            
+        psql_call = self.__psql_call + command
+        if subprocess.call(*psql_call):
+            raise SQLError('Query failed.')
+        sa = open_csv(csv_file_name)
+        os.remove(csv_file_name)
+        return sa
 
-    def __sql_to_sa(self, exec_str):
+    def __execute_sqla(self, exec_str):
         raw_python = self.__engine.execute(exec_str)
         return cast_list_of_list_to_sa(
             raw_python.fetchall(),
             [str(key) for key in raw_python.keys()])
 
-    def __execute_with_cache(self, exec_str, invalidate_cache=False):
-        pkl_file_name = os.path.join(
-            self.__cache_dir, 
-            'diogenes_cache_{}.pkl'.format(hash(exec_str)))
-        if os.path.exists(pkl_file_name) and not invalidate_cache:
-            with open(pkl_file_name) as fin:
-                return cPickle.load(fin)
-        ret = self.__sql_to_sa(exec_str)
-        with open(pkl_file_name, 'w') as fout:
-            cPickle.dump(ret, fout)
-        return ret
+    def __execute_with_cache(self, exec_fun):
+        def fun_with_cache(exec_str, invalidate_cache=False):
+            pkl_file_name = os.path.join(
+                self.__tmp_dir, 
+                'diogenes_cache_{}.pkl'.format(hash(exec_str)))
+            if os.path.exists(pkl_file_name) and not invalidate_cache:
+                with open(pkl_file_name) as fin:
+                    return cPickle.load(fin)
+            ret = exec_fun(exec_str)
+            with open(pkl_file_name, 'w') as fout:
+                cPickle.dump(ret, fout)
+            return ret
+        return fun_with_cache
+
+    def __execute_no_cache(self, exec_fun):
+        return lambda exec_str, invalidate_cache=False: return exec_fun(
+                exec_str)
 
     def execute(self, exec_str, invalidate_cache=False):
         """Executes a query
@@ -173,7 +211,7 @@ class SQLConnection(object):
         numpy.ndarray
             Results of the query in terms of a numpy structured array
         """
-        return self.__sql_to_sa(exec_str)
+        return None
 
 
 

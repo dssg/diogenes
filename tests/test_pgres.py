@@ -28,10 +28,6 @@ class TestPgres(unittest.TestCase):
             pgres_port = os.environ['DIOGENES_PGRES_TEST_PORT']
         except KeyError:
             pgres_port = '5432'
-        if subprocess.call('which', 'psql'):
-            print 'psql not found. Skipping TestPgres'
-            cls.skip = True
-            return
         os.environ['PGPASSWORD'] = pgres_pw
         if subprocess.call('psql', '-h', pgres_host, '-d', pgres_db, '-U',
                            pgres_user, '-p', pgres_port, '-f', 

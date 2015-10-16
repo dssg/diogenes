@@ -328,7 +328,7 @@ class ArrayEmitter(object):
         """
         # in-memory db
         cp = self.__copy()
-        conn = connect_to_sql('sqlite://')
+        conn = connect_sql('sqlite://')
         cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col
@@ -502,7 +502,7 @@ class ArrayEmitter(object):
         table_name = self.__rg_table_name
 
         # figure out which column is which
-        sql_col_name = 'SELECT * FROM {} LIMIT 0;'.format(table_name)
+        sql_col_name = 'SELECT * FROM {} LIMIT 1;'.format(table_name)
         col_names = conn.execute(sql_col_name).dtype.names
         specified_col_names = [col_name for col_name in 
                                col_specs.itervalues() if col_name
@@ -695,7 +695,8 @@ class ArrayEmitter(object):
         sql_get_max_interval_end = 'SELECT MAX({}) FROM {}'.format(
                col_specs['stop_time'],
                table_name)
-        interval_end = conn.execute(sql_get_max_interval_end).fetchone()[0]
+        interval_end = conn.execute(
+                sql_get_max_interval_end)[0][0]
         if row_M_col_name is not None:
             sql_get_max_col = ("SELECT MAX({}) FROM {} "
                                "WHERE {} = '{}'").format(
@@ -703,7 +704,7 @@ class ArrayEmitter(object):
                                    table_name,
                                    col_specs['feature'],
                                    row_M_col_name)
-            row_M_end = conn.execute(sql_get_max_col).fetchone()[0]
+            row_M_end = conn.execute(sql_get_max_col)[0][0]
         else:
             row_M_end = interval_end
 

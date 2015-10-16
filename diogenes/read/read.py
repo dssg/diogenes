@@ -155,7 +155,7 @@ class SQLConnection(object):
         else:
             self.execute = self.__execute_no_cache(exec_fun)
 
-    def __execute_copy_command(self, exec_str):
+    def __execute_copy_command(self, exec_str, repl=None):
         csv_file_name = os.path.join(
                 self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
@@ -170,28 +170,38 @@ class SQLConnection(object):
         os.remove(csv_file_name)
         return sa
 
-    def __execute_sqla(self, exec_str):
-        raw_python = self.__engine.execute(exec_str)
-        return cast_list_of_list_to_sa(
-            raw_python.fetchall(),
-            [str(key) for key in raw_python.keys()])
+    def __execute_sqla(self, exec_str, repl=None):
+        if repl is not None:
+            raw_python = self.__engine.execute(exec_str, repl)
+        else:
+            raw_python = self.__engine.execute(exec_str)
+        #import pdb; pdb.set_trace()
+        try:
+            return cast_list_of_list_to_sa(
+                raw_python.fetchall(),
+                [str(key) for key in raw_python.keys()])
+        except sqla.exc.ResourceClosedError:
+            # Query didn't return results
+            return None
 
     def __execute_with_cache(self, exec_fun):
-        def fun_with_cache(exec_str, invalidate_cache=False):
+        def fun_with_cache(exec_str, repl=None, invalidate_cache=False):
             pkl_file_name = os.path.join(
                 self.__tmp_dir, 
                 'diogenes_cache_{}.pkl'.format(hash(exec_str)))
             if os.path.exists(pkl_file_name) and not invalidate_cache:
                 with open(pkl_file_name) as fin:
                     return cPickle.load(fin)
-            ret = exec_fun(exec_str)
+            ret = exec_fun(exec_str, repl)
             with open(pkl_file_name, 'w') as fout:
                 cPickle.dump(ret, fout)
             return ret
         return fun_with_cache
 
     def __execute_no_cache(self, exec_fun):
-        return lambda exec_str, invalidate_cache=False: exec_fun(exec_str)
+        return lambda exec_str, repl=None, invalidate_cache=False: exec_fun(
+                exec_str,
+                repl)
 
     def execute(self, exec_str, invalidate_cache=False):
         """Executes a query

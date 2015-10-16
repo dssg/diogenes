@@ -4,6 +4,8 @@ import subprocess
 
 import utils_for_tests as uft
 
+from diogenes import read
+
 class TestPgres(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -29,9 +31,9 @@ class TestPgres(unittest.TestCase):
         except KeyError:
             pgres_port = '5432'
         os.environ['PGPASSWORD'] = pgres_pw
-        if subprocess.call('psql', '-h', pgres_host, '-d', pgres_db, '-U',
-                           pgres_user, '-p', pgres_port, '-f', 
-                           uft.path_of_data('populate_pgres.sql')):
+        if subprocess.call(['psql', '-h', pgres_host, '-d', pgres_db, '-U',
+                            pgres_user, '-p', pgres_port, '-f', 
+                            uft.path_of_data('populate_pgres.sql')]):
             print 'Could not populate database. Skipping TestPgres'
             cls.skip = True
             return
@@ -42,16 +44,22 @@ class TestPgres(unittest.TestCase):
                 pgres_port,
                 pgres_db)
 
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls.existing_pg_pw is not None:
-            os.environ['PGPASSWORD'] = cls.existing_pg_pw
-
     def setUp(self):
         if self.skip:
             self.skipTest('Valid PGres environment not found')
 
+    def test_basic_query(self):
+        conn = read.connect_sql(self.conn_str)
+        self.assertTrue(conn.psql_optimized)
+        sa = conn.execute('SELECT * FROM employees')
+        ctrl = np.array([(1, u'Arthur', u'King', 40000.0, 2.1, 10),
+                         (2, u'Jones', u'James', 1000000.0, 1.9, 2),
+                         (3, u'The Moabite', u'Ruth', 50000.0, 1.8, 6)],
+                        dtype=[('id', '<i8'), ('last_name', '<U11'), 
+                               ('first_name', '<U5'), 
+                               ('salary', '<f8'), ('height', '<f8'), 
+                               ('usefulness', '<i8')])
+        self.assertTrue(np.array_equal(sa, ctrl))
 
 if __name__ == '__main__':
     unittest.main()

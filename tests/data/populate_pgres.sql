@@ -1,10 +1,10 @@
 BEGIN TRANSACTION;
+DROP TABLE IF EXISTS hours;
 DROP TABLE IF EXISTS employees;
 CREATE TABLE employees (id SERIAL PRIMARY KEY, last_name TEXT, first_name TEXT, salary REAL, height REAL, usefulness INTEGER);
 INSERT INTO "employees" VALUES(1,'Arthur','King',40000.0,2.1,10);
 INSERT INTO "employees" VALUES(2,'Jones','James',1000000.0,1.9,2);
 INSERT INTO "employees" VALUES(3,'The Moabite','Ruth',50000.0,1.8,6);
-DROP TABLE IF EXISTS hours;
 CREATE TABLE hours (id integer primary key,
 employee_id integer,
 time timestamp,

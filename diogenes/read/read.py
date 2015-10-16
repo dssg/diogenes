@@ -122,11 +122,12 @@ class SQLConnection(object):
         tmp_dir. Also, where csvs will be stored for postgres servers
     """
     def __init__(self, conn_str, allow_caching=False, tmp_dir='.'):
+        self.psql_optimized = False
         parsed_conn_str = sqla.engine.url.make_url(conn_str)
         exec_fun = self.__execute_sqla
         if parsed_conn_str.drivername == 'postgresql':
             # try for psql \COPY optimization
-            if not subprocess.call('which', 'psql'):
+            if not subprocess.call(['which', 'psql']):
                 # we have psql
                 psql_call = ['psql']
                 if parsed_conn_str.host:
@@ -134,7 +135,7 @@ class SQLConnection(object):
                     psql_call.append(parsed_conn_str.host)
                 if parsed_conn_str.port:
                     psql_call.append('-p')
-                    psql_call.append(pgres_port)
+                    psql_call.append(str(parsed_conn_str.port))
                 if parsed_conn_str.database:
                     psql_call.append('-d')
                     psql_call.append(parsed_conn_str.database)
@@ -146,7 +147,7 @@ class SQLConnection(object):
                 psql_call.append('-c')
                 self.__psql_call = psql_call
                 exec_fun = self.__execute_copy_command
-
+                self.psql_optimized=True
         self.__engine = sqla.create_engine(conn_str)
         self.__tmp_dir = tmp_dir
         if allow_caching:
@@ -155,15 +156,15 @@ class SQLConnection(object):
             self.execute = self.__execute_no_cache(exec_fun)
 
     def __execute_copy_command(self, exec_str):
-        parsed_conn_str = self.__parsed_conn_str
         csv_file_name = os.path.join(
                 self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
-        command = "'\COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER'".format(
+        command = "\"COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER\"".format(
             exec_str, 
             csv_file_name)
-        psql_call = self.__psql_call + command
-        if subprocess.call(*psql_call):
+        psql_call = self.__psql_call + [command]
+        print psql_call
+        if subprocess.call(psql_call):
             raise SQLError('Query failed.')
         sa = open_csv(csv_file_name)
         os.remove(csv_file_name)

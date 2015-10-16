@@ -47,6 +47,15 @@ class TestRead(unittest.TestCase):
                                ('usefulness', '<i8')])
         self.assertTrue(np.array_equal(sa, ctrl))
 
+        conn = read.connect_sql(conn_str, allow_caching=True)
+        sa = conn.execute('SELECT * FROM employees')
+        self.assertTrue(np.array_equal(sa, ctrl))
+        sa = conn.execute('SELECT id FROM employees')
+        ctrl2 = np.array([(1,), (2,), (3,)], dtype=[('id', '<i8')])
+        self.assertTrue(np.array_equal(sa, ctrl2))
+        sa = conn.execute('SELECT * FROM employees')
+        self.assertTrue(np.array_equal(sa, ctrl))
+
 if __name__ == '__main__':
     unittest.main()
 

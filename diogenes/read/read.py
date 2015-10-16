@@ -118,10 +118,24 @@ class SQLConnection(object):
         cache_dir
     """
     def __init__(self, con_str, allow_caching=False, cache_dir='.'):
+        if con_str[:10] == 'postgresql':
+            # try for psql \COPY optimization
+            if not subprocess.call('which', 'psql'):
+                # we have psql
+                pass
         self.__engine = sqla.create_engine(con_str)
         self.__cache_dir = cache_dir
         if allow_caching:
             self.execute = self.__execute_with_cache
+
+    def __execute_copy_command(self, exec_str, invalidate_cache=False):
+        csv_file_name = os.path.join(
+                self.__cache_dir,
+                'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
+        command = "\COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER ".format(
+            exec_str, 
+            csv_file_name)
+        #TODO parse conn string and make psql query, then read csv            
 
     def __sql_to_sa(self, exec_str):
         raw_python = self.__engine.execute(exec_str)

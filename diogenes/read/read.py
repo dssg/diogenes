@@ -159,12 +159,12 @@ class SQLConnection(object):
         csv_file_name = os.path.join(
                 self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
-        command = "\"COPY ({}) TO {} DELIMITER ',' NULL '' CSV HEADER\"".format(
+        command = "\"\\copy ({}) TO '{}' DELIMITER ',' NULL '' CSV HEADER\"".format(
             exec_str, 
             csv_file_name)
         psql_call = self.__psql_call + [command]
-        print psql_call
-        if subprocess.call(psql_call):
+        #if subprocess.call(psql_call):
+        if subprocess.call(' '.join(psql_call), shell=True):
             raise SQLError('Query failed.')
         sa = open_csv(csv_file_name)
         os.remove(csv_file_name)

@@ -96,11 +96,6 @@ class TestPgres(unittest.TestCase):
                      (2, np.nan, np.nan, np.nan, 2e-08)]
         for res, ctrl_dat in zip((res1, res2, res3), (ctrl1_dat, ctrl2_dat, 
                                                       ctrl3_dat)):
-            print res
-            print res.dtype
-            print
-            print ctrl_dat
-            print ctrl_dtype
             self.assertTrue(uft.array_equal(
                 res, 
                 np.array(ctrl_dat, dtype=ctrl_dtype), idx_col='id'))  

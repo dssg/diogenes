@@ -6,7 +6,8 @@ test_modules = ['test_read',
                 'test_modify',
                 'test_display',
                 'test_grid_search',
-                'test_array_emitter']
+                'test_array_emitter',
+                'test_pgres']
 
 if __name__ == '__main__':
     suite = unittest.defaultTestLoader.loadTestsFromNames(test_modules)

@@ -55,17 +55,33 @@ def array_equal(M1, M2, eps=1e-5, idx_col=None):
     if frozenset_M1_names != frozenset_M2_names:
         return False
     M2_reordered = M2[list(M1.dtype.names)]
-    if M1.dtype != M2_reordered.dtype:
+    for (_, M1_dtype_str), (_, M2_dtype_str) in zip(M1.dtype.descr, 
+                                                    M2_reordered.dtype.descr):
+        if M1_dtype_str == M2_dtype_str:
+            continue
+        # Special case if one of them is 'O' and the other is 'S'
+        if 'S' in M1_dtype_str and 'O' in M2_dtype_str:
+            continue
+        if 'O' in M1_dtype_str and 'S' in M2_dtype_str:
+            continue
         return False
     if idx_col is not None:
-        idx_backindices = {}
-        for row_num, idx in enumerate(M1[idx_col]):
-            idx_backindices[idx] = row_num
-        if len(idx_backindices) != M1.shape[0]:
+        M1_idx_col = M1[idx_col]
+        M2_idx_col = M2[idx_col]
+        M1_idx_backindices = {}
+        for row_num, idx in enumerate(M1_idx_col):
+            M1_idx_backindices[idx] = row_num
+        if len(M1_idx_backindices) != M1.shape[0]:
             raise ValueError('idx_col does not have unique indices in M1')
-        new_M2_order = [idx_backindices[idx] for idx in M2[idx_col]]
-        if len(frozenset(new_M2_order)) != M2.shape[0]:
+        M2_idx_backindices = {}
+        for row_num, idx in enumerate(M2_idx_col):
+            M2_idx_backindices[idx] = row_num
+        if len(M2_idx_backindices) != M1.shape[0]:
             raise ValueError('idx_col does not have unique indices in M2')
+        transitions = {}
+        for idx in M1_idx_backindices:
+            transitions[M1_idx_backindices[idx]] = M2_idx_backindices[idx]
+        new_M2_order = [transitions[i] for i in xrange(M1.shape[0])]
         M2_reordered = M2_reordered[new_M2_order]
     for col_name, col_type in M1.dtype.descr:
         M1_col = M1[col_name]

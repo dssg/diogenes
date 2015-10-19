@@ -6,18 +6,20 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
+import utils_for_tests as uft
+
 class TestUtils(unittest.TestCase):
-    def __sa_check(self, sa1, sa2):
-        # This works even if both rows and columns are in different
-        # orders in the two arrays
-        frozenset_sa1_names = frozenset(sa1.dtype.names)
-        frozenset_sa2_names = frozenset(sa2.dtype.names)
-        self.assertEqual(frozenset_sa1_names,
-                         frozenset_sa2_names)
-        sa2_reordered = sa2[list(sa1.dtype.names)]
-        sa1_set = {tuple(row) for row in sa1}
-        sa2_set = {tuple(row) for row in sa2_reordered}
-        self.assertEqual(sa1_set, sa2_set)
+#    def __sa_check(self, sa1, sa2):
+#        # This works even if both rows and columns are in different
+#        # orders in the two arrays
+#        frozenset_sa1_names = frozenset(sa1.dtype.names)
+#        frozenset_sa2_names = frozenset(sa2.dtype.names)
+#        self.assertEqual(frozenset_sa1_names,
+#                         frozenset_sa2_names)
+#        sa2_reordered = sa2[list(sa1.dtype.names)]
+#        sa1_set = {tuple(row) for row in sa1}
+#        sa2_set = {tuple(row) for row in sa2_reordered}
+#        self.assertEqual(sa1_set, sa2_set)
 
 
     def test_utf_to_ascii(self):
@@ -284,7 +286,7 @@ class TestUtils(unittest.TestCase):
                     left_on='dept_id',
                     right_on='id').to_records(index=False)
         res = utils.join(a1, a2, 'inner', 'dept_id', 'id')
-        self.__sa_check(ctrl, res)
+        self.assertTrue(uft.array_equal(ctrl, res, idx_col='id_x'))
 
         # test column naming rules
         a1 = np.array([(0, 'a', 1, 2, 3)], dtype=[('idx0', int),
@@ -311,7 +313,7 @@ class TestUtils(unittest.TestCase):
                 left_on=['idx0', 'a1_idx1', 'idx2'], 
                 right_on=['idx0', 'a2_idx1', 'idx2'],
                 suffixes=['_left', '_right'])
-        self.__sa_check(ctrl, res)
+        self.assertTrue(uft.array_equal(ctrl, res, idx_col='idx0'))
 
         # outer joins
         a1 = np.array(
@@ -364,7 +366,7 @@ class TestUtils(unittest.TestCase):
                     left_on='key',
                     right_on='key')
             ctrl = np.array(data, dtype=merged_dtype)
-            self.__sa_check(ctrl, res)
+            self.assertTrue(uft.array_equal(ctrl, res))
 
 
 if __name__ == '__main__':

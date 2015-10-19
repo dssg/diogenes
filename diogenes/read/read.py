@@ -156,15 +156,25 @@ class SQLConnection(object):
             self.execute = self.__execute_no_cache(exec_fun)
 
     def __execute_copy_command(self, exec_str, repl=None):
+        exec_stripped = exec_str.strip()
+        if exec_stripped()[:6].upper() != 'SELECT':
+            # Only do CSV optimization for select statements
+            return self.__execute_sqla(exec_str, repl)
+        n_semicolons = exec_stripped.count(';')
+        if n_semicolons > 1:
+            # If it's a multi-statement query, don't optimize
+            return self.__execute_sqla(exec_str, repl)
+        elif n_semicolons == 1:
+            if exec_stripped[-1] != ';':
+                # If the semicolon isn't at the end (i.e. we have a 
+                # multistatement query) don't optimize
+                return self.__execute_sqla(exec_str, repl)
+            exec_stripped = exec_stripped[:-1]
         csv_file_name = os.path.join(
                 self.__tmp_dir,
                 'diogenes_pgres_query_{}.csv'.format(hash(exec_str)))
-        # TODO actually treat ? in sql queries the way we're supposed to 
-        # with sql sanitization, etc
-        if repl is not None:
-            exec_str = exec_str.replace('?', '{}').format(repl)
         command = "\"\\copy ({}) TO '{}' DELIMITER ',' NULL '' CSV HEADER\"".format(
-            exec_str, 
+            exec_stripped, 
             csv_file_name)
         psql_call = self.__psql_call + [command]
         #if subprocess.call(psql_call):

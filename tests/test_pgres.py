@@ -103,7 +103,7 @@ class TestPgres(unittest.TestCase):
             print ctrl_dtype
             self.assertTrue(uft.array_equal(
                 res, 
-                np.array(ctrl_dat, dtype=ctrl_dtype)))  
+                np.array(ctrl_dat, dtype=ctrl_dtype), idx_col='id'))  
 
 if __name__ == '__main__':
     unittest.main()

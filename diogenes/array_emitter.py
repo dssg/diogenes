@@ -269,7 +269,7 @@ class ArrayEmitter(object):
 
         """
         cp = self.__copy()
-        cp.__conn = connect_sql(conn_str, allow_pgres_copy_optimization=False)
+        cp.__conn = connect_sql(conn_str, allow_pgres_copy_optimization=True)
         cp.__rg_table_name = table_name
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col

@@ -78,7 +78,8 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetime
     fin.close()
     return sa
 
-def connect_sql(con_str, allow_caching=False, tmp_dir='.'):
+def connect_sql(con_str, allow_caching=False, tmp_dir='.', 
+                allow_pgres_copy_optimization=True):
     """Provides an SQLConnection object, which makes structured arrays from SQL
 
     Parameters
@@ -100,7 +101,8 @@ def connect_sql(con_str, allow_caching=False, tmp_dir='.'):
         arrays
 
     """
-    return SQLConnection(con_str, allow_caching, tmp_dir)
+    return SQLConnection(con_str, allow_caching, tmp_dir,
+                         allow_pgres_copy_optimization)
 
 class SQLError(Exception):
     pass
@@ -121,11 +123,13 @@ class SQLConnection(object):
         If allow_caching is True, the cached results will be stored in 
         tmp_dir. Also, where csvs will be stored for postgres servers
     """
-    def __init__(self, conn_str, allow_caching=False, tmp_dir='.'):
+    def __init__(self, conn_str, allow_caching=False, tmp_dir='.', 
+                 allow_pgres_copy_optimization=True):
         self.psql_optimized = False
         parsed_conn_str = sqla.engine.url.make_url(conn_str)
         exec_fun = self.__execute_sqla
-        if parsed_conn_str.drivername == 'postgresql':
+        if (allow_pgres_copy_optimization and 
+            parsed_conn_str.drivername == 'postgresql'):
             # try for psql \COPY optimization
             if not subprocess.call(['which', 'psql']):
                 # we have psql
@@ -157,7 +161,7 @@ class SQLConnection(object):
 
     def __execute_copy_command(self, exec_str, repl=None):
         exec_stripped = exec_str.strip()
-        if exec_stripped()[:6].upper() != 'SELECT':
+        if exec_stripped[:6].upper() != 'SELECT':
             # Only do CSV optimization for select statements
             return self.__execute_sqla(exec_str, repl)
         n_semicolons = exec_stripped.count(';')

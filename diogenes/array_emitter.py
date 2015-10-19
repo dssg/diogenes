@@ -269,7 +269,7 @@ class ArrayEmitter(object):
 
         """
         cp = self.__copy()
-        cp.__conn = connect_sql(conn_str)
+        cp.__conn = connect_sql(conn_str, allow_pgres_copy_optimization=False)
         cp.__rg_table_name = table_name
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col
@@ -521,7 +521,17 @@ class ArrayEmitter(object):
         if self.__convert_to_unix_time:
             start_time = utils.to_unix_time(start_time)
             stop_time = utils.to_unix_time(stop_time)
-        
+        try:
+            # If times are numbers, their string representations don't have
+            # surrounding single quotes. Otherwise, they do
+            float(start_time)
+        except ValueError:
+            start_time = "'{}'".format(start_time)
+        try:
+            float(stop_time)
+        except ValueError:
+            stop_time = "'{}'".format(start_time)
+
         col_specs = self.__col_specs
         conn = self.__conn
         table_name = self.__rg_table_name
@@ -551,11 +561,11 @@ class ArrayEmitter(object):
             [("(SELECT {unit_id_col} AS id, {aggr}({val_col}) AS val FROM "
               "{table_name} WHERE "
               "{feature_col} = '{feat_name}' AND "
-              "(({start_time_col} >= '{start_time}' "
-              "  AND {start_time_col} <= '{stop_time}') "
+              "(({start_time_col} >= {start_time} "
+              "  AND {start_time_col} <= {stop_time}) "
               " OR {start_time_col} IS NULL) AND "
-              "(({stop_time_col} >= '{start_time}' "
-              "  AND {stop_time_col} <= '{stop_time}') "
+              "(({stop_time_col} >= {start_time} "
+              "  AND {stop_time_col} <= {stop_time}) "
               " OR {stop_time_col} IS NULL) "
               "GROUP BY id) {feat_name}_tbl ON "
               "id_tbl.id = {feat_name}_tbl.id) ").format(

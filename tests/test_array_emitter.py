@@ -92,6 +92,7 @@ class TestArrayEmitter(unittest.TestCase):
                      (2, np.nan, np.nan, np.nan, 2e-08)]
         for res, ctrl_dat in zip((res1, res2, res3), (ctrl1_dat, ctrl2_dat, 
                                                       ctrl3_dat)):
+            import pdb; pdb.set_trace()
             self.assertTrue(uft.array_equal(
                 res, 
                 np.array(ctrl_dat, dtype=ctrl_dtype)))  

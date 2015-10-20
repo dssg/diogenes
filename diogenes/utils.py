@@ -715,7 +715,7 @@ def __sqlite_type(np_descr):
         return 'INTEGER'
     if 'f' in np_descr:
         return 'REAL'
-    if 'S' in np_descr:
+    if 'S' in np_descr or 'O' in np_descr:
         return 'TEXT'
     if 'M' in np_descr or 'm' in np_descr:
         return 'INTEGER'

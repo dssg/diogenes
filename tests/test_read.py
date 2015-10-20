@@ -14,7 +14,7 @@ class TestRead(unittest.TestCase):
 
     def test_open_csv(self):
         csv_file = utils_for_tests.path_of_data("mixed.csv")
-        correct = np.array([(0, 'Jim', 5.6), (1, 'Jill', 5.5)],dtype=[('id', '<i8'), ('name', 'S4'), ('height', '<f8')])
+        correct = np.array([(0, 'Jim', 5.6), (1, 'Jill', 5.5)],dtype=[('id', '<i8'), ('name', 'O'), ('height', '<f8')])
         self.assertTrue(np.array_equal(read.open_csv(csv_file),correct))
 
     def test_open_csv_url(self): 

@@ -8,6 +8,7 @@ from datetime import datetime
 
 import itertools as it
 import numpy as np
+import pandas as pd
 
 from diogenes.utils import open_csv_as_sa, cast_list_of_list_to_sa
 
@@ -197,10 +198,11 @@ class SQLConnection(object):
     def __execute_sqla(self, exec_str, repl=None):
         # TODO this, but safely
         if repl is not None:
-            exec_str = exec_str.replace('?'. '{}').format(repl)
+            exec_str = exec_str.replace('?', '{}').format(repl)
         try:
-            return pd.read_sql(exec_str, self.__conn, 
-                               parse_dates=self.__parse_datetimes)
+            df =  pd.read_sql(exec_str, self.__engine, 
+                              parse_dates=self.__parse_datetimes)
+            return df.to_records(index=False)
         except sqla.exc.ResourceClosedError:
             # Query didn't return results
             return None

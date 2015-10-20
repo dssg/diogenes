@@ -41,8 +41,8 @@ class TestRead(unittest.TestCase):
         ctrl = np.array([(1, u'Arthur', u'King', 40000.0, 2.1, 10),
                          (2, u'Jones', u'James', 1000000.0, 1.9, 2),
                          (3, u'The Moabite', u'Ruth', 50000.0, 1.8, 6)],
-                        dtype=[('id', '<i8'), ('last_name', '<U11'), 
-                               ('first_name', '<U5'), 
+                        dtype=[('id', '<i8'), ('last_name', 'O'), 
+                               ('first_name', 'O'), 
                                ('salary', '<f8'), ('height', '<f8'), 
                                ('usefulness', '<i8')])
         self.assertTrue(np.array_equal(sa, ctrl))

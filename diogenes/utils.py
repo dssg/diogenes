@@ -775,7 +775,6 @@ def csv_to_sql(conn, csv_path, table_name=None,
         table_name = os.path.splitext(os.path.basename(csv_path))[0]
     sql_drop = 'DROP TABLE IF exists "{}"'.format(table_name)
     conn.execute(sql_drop)
-    print parse_datetimes
     sa = open_csv(csv_path, parse_datetimes=parse_datetimes)
     col_names = sa.dtype.names
     sqlite_types = [__sqlite_type(np_descr) for _, np_descr in sa.dtype.descr]

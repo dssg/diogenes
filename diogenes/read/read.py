@@ -45,7 +45,8 @@ def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=[
     """
 
     with open(path, 'rU') as fin:
-        return open_csv_as_sa(fin, delimiter, header, col_names, parse_datetimes)
+        return open_csv_as_sa(fin, delimiter, header, col_names, 
+                              parse_datetimes=parse_datetimes)
     
 def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetimes=[]):
     """Creates a structured array from a url
@@ -73,7 +74,8 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetime
     arbitrary column names
     """
     fin = urllib2.urlopen(url)
-    sa = open_csv_as_sa(fin, delimiter, header, col_names, parse_datetimes)
+    sa = open_csv_as_sa(fin, delimiter, header, col_names, 
+                        parse_datetimes=parse_datetimes)
     fin.close()
     return sa
 

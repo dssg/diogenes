@@ -333,7 +333,6 @@ class ArrayEmitter(object):
         # in-memory db
         cp = self.__copy()
         conn = connect_sql('sqlite://')
-        import pdb; pdb.set_trace()
         cp.__rg_table_name = utils.csv_to_sql(
                 conn, 
                 csv_file_path, 

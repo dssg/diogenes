@@ -51,7 +51,7 @@ def __open_csv_as_list(f, delimiter=',', header=True, col_names=None, return_col
     return data
 
 def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None, 
-                   verbose=True, parse_datetimes=True):
+                   verbose=True, parse_datetimes=[]):
     """Converts a csv to a structured array
 
     Parameters
@@ -86,6 +86,8 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
             inplace=True,
             value={col_name : '' for col_name, dtype_desc in 
                    df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
+    if parse_datetimes:
+        fix_pandas_datetimes(df, parse_datetimes)
     sa = df.to_records(index=False)
 #    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
 #        if verbose:
@@ -234,6 +236,14 @@ def __str_col_to_datetime(col):
     valid_dtime_col = any((dt != NOT_A_TIME for dt in col_dtimes))
     # If there is even one valid datetime, we're calling this a datetime col
     return (valid_dtime_col, col_dtimes)
+
+def fix_pandas_datetimes(df, dtime_cols):
+    for col_name in dtime_cols:
+        col = df[col_name]
+        if col.dtype == np.dtype('O'):
+            valid_dtime_col, col_dtimes = __str_col_to_datetime(col)
+            if valid_dtime_col:
+                df[col_name] = col_dtimes
 
 def cast_list_of_list_to_sa(L, col_names=None):
     """Transforms a list of lists to a numpy structured array
@@ -734,6 +744,8 @@ def __make_digestible_list_of_list(sa):
         elif 'm' in dtype or 'M' in dtype:
             res_cols.append([None if cell == NOT_A_TIME else
                              to_unix_time(cell) for cell in col])
+        elif 'S' in dtype or 'O' in dtype:
+            res_cols.append([None if cell == '' else cell for cell in col])
         else:
             res_cols.append(col)
     return it.izip(*res_cols)
@@ -765,7 +777,9 @@ def csv_to_sql(conn, csv_path, table_name=None,
         table_name = os.path.splitext(os.path.basename(csv_path))[0]
     sql_drop = 'DROP TABLE IF exists "{}"'.format(table_name)
     conn.execute(sql_drop)
+    print parse_datetimes
     sa = open_csv(csv_path, parse_datetimes=parse_datetimes)
+    import pdb; pdb.set_trace()
     col_names = sa.dtype.names
     sqlite_types = [__sqlite_type(np_descr) for _, np_descr in sa.dtype.descr]
     sql_create = 'CREATE TABLE "{}" ({})'.format(

@@ -197,19 +197,23 @@ class SQLConnection(object):
 
     def __insert_sanitize(self, item):
         # http://stackoverflow.com/questions/4187185/how-can-i-check-if-my-python-object-is-a-number
+        # TODO actually sanitize
+        if item is None:
+            return 'NULL'
         if isinstance(item, (int, long, float, complex)):
             return item
         return "'{}'".format(item)
 
 
     def __execute_sqla(self, exec_str, repl=None):
-        # TODO this, but safely
         if repl is not None:
             exec_str = exec_str.replace('?', '{}').format(
                     *[self.__insert_sanitize(item) for item in repl])
         try:
             df =  pd.read_sql(exec_str, self.__engine, 
                               parse_dates=self.__parse_datetimes)
+            if self.__parse_datetimes:
+                utils.fix_pandas_datetimes(df, self.__parse_datetimes)
             return df.to_records(index=False)
         except sqla.exc.ResourceClosedError:
             # Query didn't return results

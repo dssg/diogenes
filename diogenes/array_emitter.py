@@ -279,7 +279,8 @@ class ArrayEmitter(object):
         cp.__resolve_cols()
         return cp
 
-    def get_rg_from_csv(self, csv_file_path, unit_id_col=None, 
+    def get_rg_from_csv(self, csv_file_path, parse_datetimes=[], 
+                        unit_id_col=None, 
                         start_time_col=None, stop_time_col=None, 
                         feature_col=None, val_col=None):
         """ Get an RG-formatted table from a CSV file.
@@ -288,6 +289,9 @@ class ArrayEmitter(object):
         ----------
         csv_file_path : str
             Path of the csv file to import table from
+
+        parse_datetimes : list of col names
+            Columns that should be interpreted as datetimes
 
         unit_id_col : str or None
             The name of the column containing unique unit IDs. For example,
@@ -329,7 +333,10 @@ class ArrayEmitter(object):
         # in-memory db
         cp = self.__copy()
         conn = connect_sql('sqlite://')
-        cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
+        cp.__rg_table_name = utils.csv_to_sql(
+                conn, 
+                csv_file_path, 
+                parse_datetimes=parse_datetimes)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col

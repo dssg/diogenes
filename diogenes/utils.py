@@ -738,7 +738,8 @@ def __make_digestible_list_of_list(sa):
             res_cols.append(col)
     return it.izip(*res_cols)
 
-def csv_to_sql(conn, csv_path, table_name=None):
+def csv_to_sql(conn, csv_path, table_name=None, 
+               parse_datetimes=[]):
     """Converts a csv to a table in SQL
     
     Parameters
@@ -765,7 +766,7 @@ def csv_to_sql(conn, csv_path, table_name=None):
     sql_drop = 'DROP TABLE IF exists "{}"'.format(table_name)
     conn.execute(sql_drop)
     import pdb; pdb.set_trace()
-    sa = open_csv(csv_path)
+    sa = open_csv(csv_path, parse_datetimes=parse_datetimes)
     col_names = sa.dtype.names
     sqlite_types = [__sqlite_type(np_descr) for _, np_descr in sa.dtype.descr]
     sql_create = 'CREATE TABLE "{}" ({})'.format(

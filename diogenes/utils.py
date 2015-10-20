@@ -87,27 +87,27 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
             value={col_name : '' for col_name, dtype_desc in 
                    df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
     sa = df.to_records(index=False)
-    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
-        if verbose:
-            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
-                             'This is currently slow.\n')
-        # Change NaN's in string columns to empty strings
-        bag_of_cols = []
-        new_dtype = []
-        for col_name, dtype_str in sa.dtype.descr:
-            col = sa[col_name]
-            if 'O' in dtype_str:
-                if parse_datetimes:
-                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
-                    if valid_dtime_col:
-                        bag_of_cols.append(col_dtime)
-                        continue
-                max_str_len = max(len(max(col, key=len)), 1)
-                new_dtype_str = 'S{}'.format(max_str_len)
-                bag_of_cols.append(col.astype(new_dtype_str))
-                continue
-            bag_of_cols.append(col)
-        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
+#    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
+#        if verbose:
+#            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
+#                             'This is currently slow.\n')
+#        # Change NaN's in string columns to empty strings
+#        bag_of_cols = []
+#        new_dtype = []
+#        for col_name, dtype_str in sa.dtype.descr:
+#            col = sa[col_name]
+#            if 'O' in dtype_str:
+#                if parse_datetimes:
+#                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
+#                    if valid_dtime_col:
+#                        bag_of_cols.append(col_dtime)
+#                        continue
+#                max_str_len = max(len(max(col, key=len)), 1)
+#                new_dtype_str = 'S{}'.format(max_str_len)
+#                bag_of_cols.append(col.astype(new_dtype_str))
+#                continue
+#            bag_of_cols.append(col)
+#        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
     return sa
 
 def utf_to_ascii(s):

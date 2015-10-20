@@ -18,7 +18,7 @@ to Numpy structured arrays.
 
 """
 
-def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=True):
+def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=[]):
     """Creates a structured array from a local .csv file
 
     Parameters
@@ -31,9 +31,8 @@ def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=T
         If True, assumes the first line of the csv has column names
     col_names : list of str or None
         If header is False, this list will be used for column names
-    parse_datetimes : bool
-        True iff strings that look like datetimes should be interpreted as
-        datetimes (slow)
+    parse_datetimes : list of col names
+        Columns that should be interpreted as datetimes
 
     Returns
     -------
@@ -47,7 +46,7 @@ def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=T
     with open(path, 'rU') as fin:
         return open_csv_as_sa(fin, delimiter, header, col_names, parse_datetimes)
     
-def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetimes=True):
+def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetimes=[]):
     """Creates a structured array from a url
 
     Parameters
@@ -60,9 +59,8 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetime
         If True, assumes the first line of the csv has column names
     col_names : list of str or None
         If header is False, this list will be used for column names
-    parse_datetimes : bool
-        True iff strings that look like datetimes should be interpreted as
-        datetimes (slow)
+    parse_datetimes : list of col names
+        Columns that should be interpreted as datetimes
 
 
     Returns
@@ -79,6 +77,7 @@ def open_csv_url(url, delimiter=',', header=True, col_names=None, parse_datetime
     return sa
 
 def connect_sql(con_str, allow_caching=False, tmp_dir='.', 
+                parse_datetimes=[],
                 allow_pgres_copy_optimization=True):
     """Provides an SQLConnection object, which makes structured arrays from SQL
 
@@ -93,6 +92,8 @@ def connect_sql(con_str, allow_caching=False, tmp_dir='.',
     tmp_dir : str
         If allow_caching is True, the cached results will be stored in 
         tmp_dir. Also where csvs will be stored for postgres servers
+    parse_datetimes : list of col names
+        Columns that should be interpreted as datetimes
 
     Returns
     -------
@@ -102,6 +103,7 @@ def connect_sql(con_str, allow_caching=False, tmp_dir='.',
 
     """
     return SQLConnection(con_str, allow_caching, tmp_dir,
+                         parse_datetimes,
                          allow_pgres_copy_optimization)
 
 class SQLError(Exception):
@@ -122,9 +124,13 @@ class SQLConnection(object):
     tmp_dir : str
         If allow_caching is True, the cached results will be stored in 
         tmp_dir. Also, where csvs will be stored for postgres servers
+    parse_datetimes : list of col names
+        Columns that should be interpreted as datetimes
     """
     def __init__(self, conn_str, allow_caching=False, tmp_dir='.', 
+                 parse_datetimes=[],
                  allow_pgres_copy_optimization=True):
+        self.__parse_datetimes = parse_datetimes
         self.psql_optimized = False
         parsed_conn_str = sqla.engine.url.make_url(conn_str)
         exec_fun = self.__execute_sqla
@@ -184,20 +190,17 @@ class SQLConnection(object):
         #if subprocess.call(psql_call):
         if subprocess.call(' '.join(psql_call), shell=True):
             raise SQLError('Query failed.')
-        sa = open_csv(csv_file_name)
+        sa = open_csv(csv_file_name, parse_datetimes=self.__parse_datetimes)
         os.remove(csv_file_name)
         return sa
 
     def __execute_sqla(self, exec_str, repl=None):
+        # TODO this, but safely
         if repl is not None:
-            raw_python = self.__engine.execute(exec_str, repl)
-        else:
-            raw_python = self.__engine.execute(exec_str)
-        #import pdb; pdb.set_trace()
+            exec_str = exec_str.replace('?'. '{}').format(repl)
         try:
-            return cast_list_of_list_to_sa(
-                raw_python.fetchall(),
-                [str(key) for key in raw_python.keys()])
+            return pd.read_sql(exec_str, self.__conn, 
+                               parse_dates=self.__parse_datetimes)
         except sqla.exc.ResourceClosedError:
             # Query didn't return results
             return None

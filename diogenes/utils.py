@@ -764,6 +764,7 @@ def csv_to_sql(conn, csv_path, table_name=None):
         table_name = os.path.splitext(os.path.basename(csv_path))[0]
     sql_drop = 'DROP TABLE IF exists "{}"'.format(table_name)
     conn.execute(sql_drop)
+    import pdb; pdb.set_trace()
     sa = open_csv(csv_path)
     col_names = sa.dtype.names
     sqlite_types = [__sqlite_type(np_descr) for _, np_descr in sa.dtype.descr]
@@ -774,6 +775,7 @@ def csv_to_sql(conn, csv_path, table_name=None):
                        in zip(col_names, sqlite_types)]))
     conn.execute(sql_create)
     data = __make_digestible_list_of_list(sa)
+    import pdb; pdb.set_trace()
     sql_insert = 'INSERT INTO "{}" VALUES ({})'.format(
             table_name,
             ', '.join('?' * len(col_names)))

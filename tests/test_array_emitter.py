@@ -68,8 +68,8 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_aggregation('no_start', 'SUM')
         ae = ae.set_aggregation('no_stop', 'SUM')
         ae = ae.set_aggregation('unbounded', 'SUM')
-        import pdb; pdb.set_trace()
-        ae = ae.get_rg_from_csv(db_file, feature_col='feature')
+        ae = ae.get_rg_from_csv(db_file, feature_col='feature',
+                                parse_datetimes=['start', 'stop'])
         res1 = ae.set_interval(
             datetime(2010, 1, 1), 
             datetime(2010, 6, 30)).emit_M()
@@ -93,7 +93,6 @@ class TestArrayEmitter(unittest.TestCase):
                      (2, np.nan, np.nan, np.nan, 2e-08)]
         for res, ctrl_dat in zip((res1, res2, res3), (ctrl1_dat, ctrl2_dat, 
                                                       ctrl3_dat)):
-            import pdb; pdb.set_trace()
             self.assertTrue(uft.array_equal(
                 res, 
                 np.array(ctrl_dat, dtype=ctrl_dtype)))  

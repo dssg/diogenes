@@ -1,9 +1,11 @@
 #functions included here are those that you SHOULD be able to do in python syntax but can not.
 import csv
 import os
+import sys
 import itertools as it
 
 import numpy as np
+import pandas as pd
 import numpy.lib.recfunctions as nprf
 import matplotlib.mlab
 from datetime import datetime
@@ -48,7 +50,8 @@ def __open_csv_as_list(f, delimiter=',', header=True, col_names=None, return_col
         return data, col_names
     return data
 
-def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
+def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None, 
+                   verbose=True, parse_datetimes=[]):
     """Converts a csv to a structured array
 
     Parameters
@@ -70,8 +73,44 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None):
     If header is False and col_names is None, diogenes will assign
     arbitrary column names
     """
-    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
-    return convert_to_sa(python_list, col_names)
+#    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
+#    return convert_to_sa(python_list, col_names)
+    df = pd.read_csv(
+            fin, 
+            sep=delimiter, 
+            header=0 if header else None,
+            names=col_names,
+            index_col=False,
+            prefix='f')
+    df.fillna(
+            inplace=True,
+            value={col_name : '' for col_name, dtype_desc in 
+                   df.dtypes.iteritems() if dtype_desc == np.dtype('O')})
+    if parse_datetimes:
+        fix_pandas_datetimes(df, parse_datetimes)
+    sa = df.to_records(index=False)
+#    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
+#        if verbose:
+#            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
+#                             'This is currently slow.\n')
+#        # Change NaN's in string columns to empty strings
+#        bag_of_cols = []
+#        new_dtype = []
+#        for col_name, dtype_str in sa.dtype.descr:
+#            col = sa[col_name]
+#            if 'O' in dtype_str:
+#                if parse_datetimes:
+#                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
+#                    if valid_dtime_col:
+#                        bag_of_cols.append(col_dtime)
+#                        continue
+#                max_str_len = max(len(max(col, key=len)), 1)
+#                new_dtype_str = 'S{}'.format(max_str_len)
+#                bag_of_cols.append(col.astype(new_dtype_str))
+#                continue
+#            bag_of_cols.append(col)
+#        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
+    return sa
 
 def utf_to_ascii(s):
     """Converts a unicode string to an ascii string"""
@@ -79,6 +118,13 @@ def utf_to_ascii(s):
     if isinstance(s, unicode):
         return s.encode('ascii', 'replace')
     return s
+
+def is_not_a_time(dt):
+    """
+    True iff dt is equlivalent to numpy.datetime64('NaT') Does casting so
+    It's the correct "NOT A TIME"
+    """
+    return dt == NOT_A_TIME.astype(dt.dtype)
 
 @np.vectorize
 def validate_time(date_text):
@@ -175,6 +221,9 @@ def __str_to_datetime(s):
     # Invalid time if the string is too short
     # This prevents empty strings from being times
     # as well as odd short strings like 'a' 
+    if not isinstance(s, basestring):
+        return NOT_A_TIME
+    # Invalid time if not a string
     if len(s) < 6:
         return NOT_A_TIME
     # Invalid time if the string is just a number
@@ -190,10 +239,18 @@ def __str_to_datetime(s):
         return NOT_A_TIME
 
 def __str_col_to_datetime(col):
-    col_dtimes = [__str_to_datetime(s) for s in col]
-    valid_dtimes = [dt for dt in col_dtimes if dt != NOT_A_TIME]
+    col_dtimes = np.array([__str_to_datetime(s) for s in col], dtype='M8[us]')
+    valid_dtime_col = any((not is_not_a_time(dt) for dt in col_dtimes))
     # If there is even one valid datetime, we're calling this a datetime col
-    return (bool(valid_dtimes), col_dtimes)
+    return (valid_dtime_col, col_dtimes)
+
+def fix_pandas_datetimes(df, dtime_cols):
+    for col_name in dtime_cols:
+        col = df[col_name]
+        if col.dtype == np.dtype('O'):
+            valid_dtime_col, col_dtimes = __str_col_to_datetime(col)
+            if valid_dtime_col:
+                df[col_name] = col_dtimes
 
 def cast_list_of_list_to_sa(L, col_names=None):
     """Transforms a list of lists to a numpy structured array
@@ -332,10 +389,8 @@ def __cast_np_nd_to_sa(nd, dtype=None, col_names=None):
         dtype = np.dtype({'names': col_names,'formats': [nd_dtype for i in xrange(n_cols)]})
         return nd.reshape(nd.size).view(dtype)
     type_len = nd_dtype.itemsize
-    #import pdb; pdb.set_trace()
     if all(dtype[i] == nd_dtype for i in xrange(len(dtype))):
         return nd.reshape(nd.size).view(dtype)
-    #import pdb; pdb.set_trace()
     # if the user requests an incompatible type, we have to convert
     cols = (nd[:,i].astype(dtype[i]) for i in xrange(len(dtype))) 
     return np.array(it.izip(*cols), dtype=dtype)
@@ -440,10 +495,15 @@ def stack_rows(*args):
     """
     return nprf.stack_arrays(args, usemask=False)
 
-def sa_from_cols(cols):
+def sa_from_cols(cols, col_names=None):
     """Converts a list of columns to a structured array"""
     # TODO take col names
-    return nprf.merge_arrays(cols, usemask=False)    
+    sa = nprf.merge_arrays(cols, usemask=False)    
+    if col_names is not None:
+        return sa.view(
+                dtype=[(name, dtype_str) for name, (_, dtype_str) in
+                       zip(col_names, sa.dtype.descr)])
+    return sa
 
 def append_cols(M, cols, col_names):
     """Append columns to an existing structured array
@@ -491,6 +551,8 @@ def __fill_by_descr(s):
         return ''
     if 'U' in s:
         return u''
+    if 'O' in s:
+        return ''
     if 'M' in s or 'm' in s:
         return np.datetime64('NaT')
     raise ValueError('Unrecognized description {}'.format(s))
@@ -658,7 +720,8 @@ def to_unix_time(dt):
     # and
     # http://stackoverflow.com/questions/29753060/how-to-convert-numpy-datetime64-into-datetime
     if isinstance(dt, np.datetime64):
-        dt = dt.astype('O')
+        # TODO CRITICAL correct for datetime resolution!
+        dt = dt.astype('M8[s]').astype('O')
     if isinstance(dt, datetime):
         return (dt - EPOCH).total_seconds()
     return dt
@@ -670,7 +733,7 @@ def __sqlite_type(np_descr):
         return 'INTEGER'
     if 'f' in np_descr:
         return 'REAL'
-    if 'S' in np_descr:
+    if 'S' in np_descr or 'O' in np_descr:
         return 'TEXT'
     if 'M' in np_descr or 'm' in np_descr:
         return 'INTEGER'
@@ -689,11 +752,14 @@ def __make_digestible_list_of_list(sa):
         elif 'm' in dtype or 'M' in dtype:
             res_cols.append([None if cell == NOT_A_TIME else
                              to_unix_time(cell) for cell in col])
+        elif 'S' in dtype or 'O' in dtype:
+            res_cols.append([None if cell == '' else cell for cell in col])
         else:
             res_cols.append(col)
     return it.izip(*res_cols)
 
-def csv_to_sql(conn, csv_path, table_name=None):
+def csv_to_sql(conn, csv_path, table_name=None, 
+               parse_datetimes=[]):
     """Converts a csv to a table in SQL
     
     Parameters
@@ -719,7 +785,7 @@ def csv_to_sql(conn, csv_path, table_name=None):
         table_name = os.path.splitext(os.path.basename(csv_path))[0]
     sql_drop = 'DROP TABLE IF exists "{}"'.format(table_name)
     conn.execute(sql_drop)
-    sa = open_csv(csv_path)
+    sa = open_csv(csv_path, parse_datetimes=parse_datetimes)
     col_names = sa.dtype.names
     sqlite_types = [__sqlite_type(np_descr) for _, np_descr in sa.dtype.descr]
     sql_create = 'CREATE TABLE "{}" ({})'.format(

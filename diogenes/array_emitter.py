@@ -1,6 +1,7 @@
 import numpy as np 
 import sqlalchemy as sqla
 from diogenes.read import open_csv
+from diogenes.read import connect_sql
 from uuid import uuid4
 from diogenes import utils
 import diogenes.grid_search.experiment as exp
@@ -268,7 +269,7 @@ class ArrayEmitter(object):
 
         """
         cp = self.__copy()
-        cp.__conn = sqla.create_engine(conn_str)
+        cp.__conn = connect_sql(conn_str, allow_pgres_copy_optimization=True)
         cp.__rg_table_name = table_name
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col
@@ -278,7 +279,8 @@ class ArrayEmitter(object):
         cp.__resolve_cols()
         return cp
 
-    def get_rg_from_csv(self, csv_file_path, unit_id_col=None, 
+    def get_rg_from_csv(self, csv_file_path, parse_datetimes=[], 
+                        unit_id_col=None, 
                         start_time_col=None, stop_time_col=None, 
                         feature_col=None, val_col=None):
         """ Get an RG-formatted table from a CSV file.
@@ -287,6 +289,9 @@ class ArrayEmitter(object):
         ----------
         csv_file_path : str
             Path of the csv file to import table from
+
+        parse_datetimes : list of col names
+            Columns that should be interpreted as datetimes
 
         unit_id_col : str or None
             The name of the column containing unique unit IDs. For example,
@@ -327,8 +332,11 @@ class ArrayEmitter(object):
         """
         # in-memory db
         cp = self.__copy()
-        conn = sqla.create_engine('sqlite://')
-        cp.__rg_table_name = utils.csv_to_sql(conn, csv_file_path)
+        conn = connect_sql('sqlite://')
+        cp.__rg_table_name = utils.csv_to_sql(
+                conn, 
+                csv_file_path, 
+                parse_datetimes=parse_datetimes)
         cp.__conn = conn
         cp.__col_specs['unit_id'] = unit_id_col
         cp.__col_specs['start_time'] = start_time_col
@@ -501,8 +509,8 @@ class ArrayEmitter(object):
         table_name = self.__rg_table_name
 
         # figure out which column is which
-        sql_col_name = 'SELECT * FROM {} LIMIT 0;'.format(table_name)
-        col_names = conn.execute(sql_col_name).keys()
+        sql_col_name = 'SELECT * FROM {} LIMIT 1;'.format(table_name)
+        col_names = conn.execute(sql_col_name).dtype.names
         specified_col_names = [col_name for col_name in 
                                col_specs.itervalues() if col_name
                                is not None]
@@ -520,7 +528,17 @@ class ArrayEmitter(object):
         if self.__convert_to_unix_time:
             start_time = utils.to_unix_time(start_time)
             stop_time = utils.to_unix_time(stop_time)
-        
+        try:
+            # If times are numbers, their string representations don't have
+            # surrounding single quotes. Otherwise, they do
+            float(start_time)
+        except ValueError:
+            start_time = "'{}'".format(start_time)
+        try:
+            float(stop_time)
+        except ValueError:
+            stop_time = "'{}'".format(start_time)
+
         col_specs = self.__col_specs
         conn = self.__conn
         table_name = self.__rg_table_name
@@ -550,11 +568,11 @@ class ArrayEmitter(object):
             [("(SELECT {unit_id_col} AS id, {aggr}({val_col}) AS val FROM "
               "{table_name} WHERE "
               "{feature_col} = '{feat_name}' AND "
-              "(({start_time_col} >= '{start_time}' "
-              "  AND {start_time_col} <= '{stop_time}') "
+              "(({start_time_col} >= {start_time} "
+              "  AND {start_time_col} <= {stop_time}) "
               " OR {start_time_col} IS NULL) AND "
-              "(({stop_time_col} >= '{start_time}' "
-              "  AND {stop_time_col} <= '{stop_time}') "
+              "(({stop_time_col} >= {start_time} "
+              "  AND {stop_time_col} <= {stop_time}) "
               " OR {stop_time_col} IS NULL) "
               "GROUP BY id) {feat_name}_tbl ON "
               "id_tbl.id = {feat_name}_tbl.id) ").format(
@@ -590,12 +608,7 @@ class ArrayEmitter(object):
             Numpy structured array constructed using the specified queries and
             subsets
         """
-        query_result = self.__conn.execute(self.get_query())
-        col_names = [utils.utf_to_ascii(col_name) for col_name in 
-                     query_result.keys()]
-        return utils.cast_list_of_list_to_sa(query_result.fetchall(), 
-                                             col_names=col_names)        
-
+        return self.__conn.execute(self.get_query())
 
     def subset_over(
             self, 
@@ -699,7 +712,8 @@ class ArrayEmitter(object):
         sql_get_max_interval_end = 'SELECT MAX({}) FROM {}'.format(
                col_specs['stop_time'],
                table_name)
-        interval_end = conn.execute(sql_get_max_interval_end).fetchone()[0]
+        interval_end = conn.execute(
+                sql_get_max_interval_end)[0][0]
         if row_M_col_name is not None:
             sql_get_max_col = ("SELECT MAX({}) FROM {} "
                                "WHERE {} = '{}'").format(
@@ -707,7 +721,7 @@ class ArrayEmitter(object):
                                    table_name,
                                    col_specs['feature'],
                                    row_M_col_name)
-            row_M_end = conn.execute(sql_get_max_col).fetchone()[0]
+            row_M_end = conn.execute(sql_get_max_col)[0][0]
         else:
             row_M_end = interval_end
 

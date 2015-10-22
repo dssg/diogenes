@@ -68,7 +68,8 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_aggregation('no_start', 'SUM')
         ae = ae.set_aggregation('no_stop', 'SUM')
         ae = ae.set_aggregation('unbounded', 'SUM')
-        ae = ae.get_rg_from_csv(db_file, feature_col='feature')
+        ae = ae.get_rg_from_csv(db_file, feature_col='feature',
+                                parse_datetimes=['start', 'stop'])
         res1 = ae.set_interval(
             datetime(2010, 1, 1), 
             datetime(2010, 6, 30)).emit_M()

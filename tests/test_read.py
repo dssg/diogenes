@@ -14,7 +14,7 @@ class TestRead(unittest.TestCase):
 
     def test_open_csv(self):
         csv_file = utils_for_tests.path_of_data("mixed.csv")
-        correct = np.array([(0, 'Jim', 5.6), (1, 'Jill', 5.5)],dtype=[('id', '<i8'), ('name', 'S4'), ('height', '<f8')])
+        correct = np.array([(0, 'Jim', 5.6), (1, 'Jill', 5.5)],dtype=[('id', '<i8'), ('name', 'O'), ('height', '<f8')])
         self.assertTrue(np.array_equal(read.open_csv(csv_file),correct))
 
     def test_open_csv_url(self): 
@@ -41,10 +41,19 @@ class TestRead(unittest.TestCase):
         ctrl = np.array([(1, u'Arthur', u'King', 40000.0, 2.1, 10),
                          (2, u'Jones', u'James', 1000000.0, 1.9, 2),
                          (3, u'The Moabite', u'Ruth', 50000.0, 1.8, 6)],
-                        dtype=[('id', '<i8'), ('last_name', '<U11'), 
-                               ('first_name', '<U5'), 
+                        dtype=[('id', '<i8'), ('last_name', 'O'), 
+                               ('first_name', 'O'), 
                                ('salary', '<f8'), ('height', '<f8'), 
                                ('usefulness', '<i8')])
+        self.assertTrue(np.array_equal(sa, ctrl))
+
+        conn = read.connect_sql(conn_str, allow_caching=True)
+        sa = conn.execute('SELECT * FROM employees')
+        self.assertTrue(np.array_equal(sa, ctrl))
+        sa = conn.execute('SELECT id FROM employees')
+        ctrl2 = np.array([(1,), (2,), (3,)], dtype=[('id', '<i8')])
+        self.assertTrue(np.array_equal(sa, ctrl2))
+        sa = conn.execute('SELECT * FROM employees')
         self.assertTrue(np.array_equal(sa, ctrl))
 
 if __name__ == '__main__':

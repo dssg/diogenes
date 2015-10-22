@@ -7,7 +7,7 @@ setup(
         author='Center for Data Science and Public Policy',
         description='A grid search library for machine learning',
         packages=find_packages(),
-        install_requires=('numpy',
+        install_requires=('numpy>=1.10.1',
                           'scikit-learn', 
                           'matplotlib', 
                           'SQLAlchemy',

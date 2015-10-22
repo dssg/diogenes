@@ -544,6 +544,8 @@ def __fill_by_descr(s):
         return ''
     if 'U' in s:
         return u''
+    if 'O' in s:
+        return ''
     if 'M' in s or 'm' in s:
         return np.datetime64('NaT')
     raise ValueError('Unrecognized description {}'.format(s))

@@ -711,7 +711,8 @@ def to_unix_time(dt):
     # and
     # http://stackoverflow.com/questions/29753060/how-to-convert-numpy-datetime64-into-datetime
     if isinstance(dt, np.datetime64):
-        dt = dt.astype('O')
+        # TODO CRITICAL correct for datetime resolution!
+        dt = dt.astype('M8[s]').astype('O')
     if isinstance(dt, datetime):
         return (dt - EPOCH).total_seconds()
     return dt

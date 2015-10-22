@@ -211,6 +211,14 @@ class SQLConnection(object):
         if repl is not None:
             exec_str = exec_str.replace('?', '{}').format(
                     *[self.__insert_sanitize(item) for item in repl])
+
+        # DEBUG
+        engine = self.__engine
+        try:
+            res = engine.execute('SELECT * FROM rg_complex_dates;')
+        except Exception:
+            pass
+
         try:
             df =  pd.read_sql(exec_str, self.__engine, 
                               parse_dates=self.__parse_datetimes)

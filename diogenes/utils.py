@@ -119,6 +119,13 @@ def utf_to_ascii(s):
         return s.encode('ascii', 'replace')
     return s
 
+def is_not_a_time(dt):
+    """
+    True iff dt is equlivalent to numpy.datetime64('NaT') Does casting so
+    It's the correct "NOT A TIME"
+    """
+    return dt == NOT_A_TIME.astype(dt.dtype)
+
 @np.vectorize
 def validate_time(date_text):
     """Returns boolean signifying whether a string is a valid datetime"""
@@ -233,7 +240,7 @@ def __str_to_datetime(s):
 
 def __str_col_to_datetime(col):
     col_dtimes = np.array([__str_to_datetime(s) for s in col], dtype='M8[us]')
-    valid_dtime_col = any((dt != NOT_A_TIME for dt in col_dtimes))
+    valid_dtime_col = any((not is_not_a_time(dt) for dt in col_dtimes))
     # If there is even one valid datetime, we're calling this a datetime col
     return (valid_dtime_col, col_dtimes)
 

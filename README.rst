@@ -56,7 +56,6 @@ Example
 
     import diogenes
     import numpy as np
-    from sklearn.ensemble import RandomForestClassifier
     # Get data from Wine Quality data set
     data = diogenes.read.open_csv_url(
         'http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv',

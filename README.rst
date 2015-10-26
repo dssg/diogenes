@@ -77,6 +77,8 @@ Example
 Next Steps
 ----------
 
+Check out the `documentation <http://dssg.github.io/diogenes>`_
+
 ----
 Misc
 ----

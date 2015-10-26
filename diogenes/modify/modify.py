@@ -281,8 +281,8 @@ def remove_rows_where(M, arguments):
         to_remove = np.logical_and(to_remove, lambd(M, col_name, vals))
     return M[np.logical_not(to_remove)]
 
-def where_all_are_true(M, arguments, generated_name=None):
-    """Appends a boolean column to M which specifies which rows pass a query
+def where_all_are_true(M, arguments):
+    """Returns a boolean array which specifies which rows pass a query
 
     Parameters
     ----------
@@ -290,14 +290,11 @@ def where_all_are_true(M, arguments, generated_name=None):
         Structured array 
     arguments : list of dict
         See module documentation
-    generated_name : str
-        Name to give new column. If not specified, and arbitrary name will
-        be generated
 
     Returns
     -------
     numpy.ndarray
-        Structured array with extra column
+        boolean array specifying which rows pass a query
 
     """
     if generated_name is None:
@@ -307,7 +304,7 @@ def where_all_are_true(M, arguments, generated_name=None):
         lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
                                     arg_set['vals'])
         to_select = np.logical_and(to_select, lambd(M, col_name, vals))
-    return append_cols(M, to_select, generated_name)
+    return to_select
 
 def row_is_outlier(M, col_name, boundary=3.0):
     """Picks rows that are not within some a number of deviations of the mean
@@ -456,8 +453,8 @@ def row_is_within_region(M, col_names, boundary):
     bbPath = mplPath.Path(np.array(boundary))
     return [bbPath.contains_point(point) for point in M[col_names]]
 
-def combine_cols(M, lambd, col_names, generated_name):
-    """Create a new column that is the function of existing columns
+def combine_cols(M, lambd, col_names):
+    """Return an array that is the function of existing columns
 
     Parameters
     ----------
@@ -466,11 +463,9 @@ def combine_cols(M, lambd, col_names, generated_name):
         column. 
     col_names : list of str
         Names of columns to combine
-    generated_name : str
-        Name for generated column
     """
     new_col = lambd(*[M[name] for name in col_names])
-    return append_cols(M, new_col, generated_name)
+    return new_col
 
 @np.vectorize
 def combine_sum(*args):

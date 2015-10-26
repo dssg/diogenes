@@ -31,8 +31,9 @@ Required
 Python packages
 ---------------
 - `Python 2.7 <https://www.python.org/>`_
-- `Numpy <http://www.numpy.org/>`_
+- `Numpy 1.10.1 <http://www.numpy.org/>`_
 - `scikit-learn <http://scikit-learn.org/stable/>`_
+- `pandas <http://pandas.pydata.org/>
 - `pdfkit <https://github.com/pdfkit/pdfkit>`_
 
 Other packages
@@ -48,20 +49,44 @@ Python packages
 - `plotlib <http://matplotlib.org/>`_
 
 
-
-Other packages
---------------
-
-
 -------
 Example
 -------
+::
+
+    import diogenes
+    import numpy as np
+    from sklearn.ensemble import RandomForestClassifier
+    # Get data from Wine Quality data set
+    data = diogenes.read.open_csv_url(
+        'http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv',
+        delimiter=';')
+    # Take labels from the quality column
+    labels = data['quality']
+    # Make this a binary classification problem
+    labels = labels < np.average(labels)
+    # Remove labels from data to make feature set
+    M = diogenes.modify.remove_cols(data, 'quality')
+    # Print statistics of features
+    diogenes.display.pprint_sa(diogenes.display.describe_cols(M))
+    # Plot correlation between features
+    diogenes.display.plot_correlation_matrix(M)
+    # Set up grid search experiment using different classifiers
+    exp = diogenes.grid_search.experiment.Experiment(
+        M, 
+        labels, 
+        clfs=diogenes.grid_search.standard_clfs.std_clfs)
+    # Make a report for the experiment to find best-performing classifiers
+    exp.make_report()
 
 
 ----------
 Next Steps
 ----------
 
-my_* are included in the .gitignore.  We recommend a standard such as my_exeperiment, my_storage for local folders.
+----
+Misc
+----
+my_* are included in the .gitignore.  We recommend a standard such as my_experiment, my_storage for local folders.
 
 

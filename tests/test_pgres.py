@@ -10,6 +10,8 @@ from diogenes import read
 from diogenes import array_emitter
 
 class TestPgres(unittest.TestCase):
+
+
     @classmethod
     def setUpClass(cls):
         cls.skip = False
@@ -19,14 +21,16 @@ class TestPgres(unittest.TestCase):
             pgres_user = os.environ['DIOGENES_PGRES_TEST_USER']
             pgres_pw = os.environ['DIOGENES_PGRES_TEST_PW']
         except KeyError:
-            print ('TestPgres requires the following environmental variables '
-                   'to be defined:\n'
-                   '* DIOGENES_PGRES_TEST_HOST\n'
-                   '* DIOGENES_PGRES_TEST_DB\n'
-                   '* DIOGENES_PGRES_TEST_USER\n'
-                   '* DIOGENES_PGRES_TEST_PW\n'
-                   '* DIOGENES_PGRES_TEST_PORT (optional)\n'
-                   'At least one of these is not defined. Skipping TestPgres')
+            uft.print_in_box(
+                'Skipping TestPgres',
+                ('TestPgres requires the following environmental variables '
+                 'to be defined:\n'
+                 '* DIOGENES_PGRES_TEST_HOST\n'
+                 '* DIOGENES_PGRES_TEST_DB\n'
+                 '* DIOGENES_PGRES_TEST_USER\n'
+                 '* DIOGENES_PGRES_TEST_PW\n'
+                 '* DIOGENES_PGRES_TEST_PORT (optional)\n'
+                 'At least one of these is not defined. Skipping TestPgres'))
             cls.skip = True
             return
         try:
@@ -37,7 +41,17 @@ class TestPgres(unittest.TestCase):
         if subprocess.call(['psql', '-h', pgres_host, '-d', pgres_db, '-U',
                             pgres_user, '-p', pgres_port, '-f', 
                             uft.path_of_data('populate_pgres.sql')]):
-            print 'Could not populate database. Skipping TestPgres'
+            uft.print_in_box(
+                'Skipping TestPgres',
+                ('Could not populate database.\n'
+                 'Perhaps Postgres server is not running or the following\n'
+                 'environmental variables are defined incorrectly:\n'
+                 '* DIOGENES_PGRES_TEST_HOST\n'
+                 '* DIOGENES_PGRES_TEST_DB\n'
+                 '* DIOGENES_PGRES_TEST_USER\n'
+                 '* DIOGENES_PGRES_TEST_PW\n'
+                 '* DIOGENES_PGRES_TEST_PORT (optional)\n'
+                 'Skipping TestPgres'))
             cls.skip = True
             return
         cls.conn_str = 'postgresql://{}:{}@{}:{}/{}'.format(

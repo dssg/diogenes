@@ -137,12 +137,8 @@ class TestModify(unittest.TestCase):
 
         res = where_all_are_true(
             M, 
-            arguments,
-            'eq_to_stuff')
-        ctrl = np.array(
-            [(1, 2, 3, True), (2, 3, 4, False), (3, 4, 5, False)], 
-            dtype=[('heigh', '<i8'), ('weight', '<i8'), ('age', '<i8'),
-                   ('eq_to_stuff', '?')])
+            arguments)
+        ctrl = np.array([True, False, False])
                    
         self.assertTrue(np.array_equal(res, ctrl))
 
@@ -150,13 +146,12 @@ class TestModify(unittest.TestCase):
         M = np.array(
                 [(0, 1, 2), (3, 4, 5), (6, 7, 8)], 
                 dtype=[('f0', float), ('f1', float), ('f2', float)])
-        ctrl = np.array(
-                [(0, 1, 2, 1, 1.5), (3, 4, 5, 7, 4.5), (6, 7, 8, 13, 7.5)], 
-                dtype=[('f0', float), ('f1', float), ('f2', float), 
-                       ('sum', float), ('avg', float)])
-        M = combine_cols(M, combine_sum, ('f0', 'f1'), 'sum')
-        M = combine_cols(M, combine_mean, ('f1', 'f2'), 'avg')
-        self.assertTrue(np.array_equal(M, ctrl))
+        ctrl_sum = np.array([1, 7, 13]) 
+        ctrl_mean = np.array([1.5, 4.5, 7.5])
+        res_sum = combine_cols(M, combine_sum, ('f0', 'f1'))
+        res_mean = combine_cols(M, combine_mean, ('f1', 'f2'))
+        self.assertTrue(np.array_equal(res_sum, ctrl_sum))
+        self.assertTrue(np.array_equal(res_mean, ctrl_mean))
 
     def test_normalize(self):
         col = np.array([-2, -1, 0, 1, 2])

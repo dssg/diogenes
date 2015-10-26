@@ -1,3 +1,14 @@
+"""Provides a standard set of classifiers and params to try with Experiment
+
+Attributes
+----------
+std_clfs : list of dict
+    A set of supervised, binary classifiers
+rg_clfs : list of dict
+    A much more extensive list
+
+"""
+
 from sklearn.ensemble import (AdaBoostClassifier, 
                               RandomForestClassifier,
                               ExtraTreesClassifier,
@@ -18,16 +29,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.dummy import DummyClassifier
 
-"""Provides a standard set of classifiers and params to try with Experiment
-
-Attributes
-----------
-std_clfs : list of dict
-    A set of supervised, binary classifiers
-rg_clfs : list of dict
-    A much more extensive list
-
-"""
 
 std_clfs = [{'clf': AdaBoostClassifier, 'n_estimators': [20,50,100]}, 
             {'clf': RandomForestClassifier, 

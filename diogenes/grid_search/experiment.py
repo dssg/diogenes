@@ -1,3 +1,5 @@
+"""Provides classes necessary for organizing an Experiment"""
+
 import inspect 
 import json
 import copy
@@ -27,7 +29,6 @@ from diogenes.grid_search import partition_iterator as p_i
 import diogenes.utils as utils
 from diogenes.utils import remove_cols
 
-"""Provides classes necessary for organizing an Experiment"""
 
 def _run_trial(trial):
     return trial.run()

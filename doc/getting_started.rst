@@ -42,6 +42,7 @@ Other packages
 --------------
 
 - `wkhtmltopdf <http://wkhtmltopdf.org/>`_
+ 
 
 -------
 Example
@@ -77,9 +78,4 @@ Example
 Next Steps
 ----------
 
-----
-Misc
-----
-my_* are included in the .gitignore.  We recommend a standard such as my_experiment, my_storage for local folders.
-
-
+Check out the :doc:`user_guide`

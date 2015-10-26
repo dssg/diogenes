@@ -11,7 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+    getting_started.rst
+    user_guide.rst
 
 Indices and tables
 ==================

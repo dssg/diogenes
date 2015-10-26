@@ -1,13 +1,14 @@
-import numpy as np
-
-from sklearn.cross_validation import _PartitionIterator
-# TODO By and large, we shouldn't be using SKLearn's internal classes.
-
 """Custom objects used to produce train/test splits. 
 
 Also, anything in sklearn.cross_validation should work in Experiments
 
 """
+
+import numpy as np
+
+from sklearn.cross_validation import _PartitionIterator
+# TODO By and large, we shouldn't be using SKLearn's internal classes.
+
 
 class NoCV(_PartitionIterator):
     """Partition iterator that just returns the entire set as the training set

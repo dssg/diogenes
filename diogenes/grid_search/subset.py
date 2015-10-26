@@ -1,10 +1,10 @@
+"""This module provides different ways to take subsets of data"""
+
 import abc
 from collections import Counter
 from random import sample, seed, setstate, getstate
 
 import numpy as np
-
-"""This module provides different ways to take subsets of data"""
 
 class BaseSubsetIter(object):
     __metaclass__ = abc.ABCMeta

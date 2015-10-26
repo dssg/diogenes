@@ -1,3 +1,5 @@
+"""Tools to visualize data and display results"""
+
 import os
 import shutil
 import StringIO
@@ -24,7 +26,6 @@ import pdfkit
 from diogenes.grid_search import Experiment
 from diogenes.utils import is_sa, is_nd, cast_np_sa_to_nd, convert_to_sa, cast_list_of_list_to_sa
 
-"""Tools to visualize data and display results"""
 
 def pprint_sa(M, row_labels=None, col_labels=None):
     """Prints a nicely formatted Structured array (or similar object) to console

@@ -1,3 +1,10 @@
+"""
+
+This module provides functions that convert databases in external formats
+to Numpy structured arrays.
+
+"""
+
 import csv
 import urllib2
 import os
@@ -12,12 +19,6 @@ import pandas as pd
 
 from diogenes.utils import open_csv_as_sa, cast_list_of_list_to_sa
 
-"""
-
-This module provides functions that convert databases in external formats
-to Numpy structured arrays.
-
-"""
 
 def open_csv(path, delimiter=',', header=True, col_names=None, parse_datetimes=[]):
     """Creates a structured array from a local .csv file

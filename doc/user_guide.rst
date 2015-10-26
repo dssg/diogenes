@@ -1,4 +1,6 @@
-# Diogenes User Guide
+==========
+User Guide
+==========
 
 Diogenes is a set of tools designed to make common machine learning tasks
 easier. Diogenes is divided into several parts:

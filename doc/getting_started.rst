@@ -78,4 +78,4 @@ Example
 Next Steps
 ----------
 
-Check out the :doc:`user_guide`
+Check out the :doc:`User Guide <user_guide>`

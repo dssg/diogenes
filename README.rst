@@ -197,36 +197,6 @@ Other packages
 
 - `wkhtmltopdf <http://wkhtmltopdf.org/>`_
 
--------
-Example
--------
-::
-
-    import diogenes
-    import numpy as np
-    # Get data from Wine Quality data set
-    data = diogenes.read.open_csv_url(
-        'http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv',
-        delimiter=';')
-    # Take labels from the quality column
-    labels = data['quality']
-    # Make this a binary classification problem
-    labels = labels < np.average(labels)
-    # Remove labels from data to make feature set
-    M = diogenes.modify.remove_cols(data, 'quality')
-    # Print statistics of features
-    diogenes.display.pprint_sa(diogenes.display.describe_cols(M))
-    # Plot correlation between features
-    diogenes.display.plot_correlation_matrix(M)
-    # Set up grid search experiment using different classifiers
-    exp = diogenes.grid_search.experiment.Experiment(
-        M, 
-        labels, 
-        clfs=diogenes.grid_search.standard_clfs.std_clfs)
-    # Make a report for the experiment to find best-performing classifiers
-    exp.make_report()
-
-
 ----------
 Next Steps
 ----------

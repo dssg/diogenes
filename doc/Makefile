@@ -194,5 +194,6 @@ pseudoxml:
 
 notebooks: 
 	bash ./build_notebooks.bash
-	mkdir -p _build/html/user_guide
-	cp notebooks/*.pdf _build/html/user_guide
+	mkdir -p _build/html/user_guide/user_guide
+	cp notebooks/*.pdf _build/html/user_guide/
+	cp -r notebooks/*_files _build/html/user_guide/user_guide

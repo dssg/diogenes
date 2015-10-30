@@ -21,3 +21,5 @@ easier. Diogenes is divided into several parts:
 * :mod:`diogenes.utils` provides miscilaneous utilities--mostly for processing
   structured arrays.
 
+.. include:: notebooks/read.rst
+

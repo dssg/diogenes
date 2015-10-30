@@ -12,7 +12,9 @@ Contents:
    :maxdepth: 2
 
    getting_started.rst
-   user_guide.rst
+   user_guide/index.rst
+   user_guide/read.rst
+   user_guide/display.rst
 
 Indices and tables
 ==================

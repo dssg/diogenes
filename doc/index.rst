@@ -15,6 +15,7 @@ Contents:
    user_guide/index.rst
    user_guide/read.rst
    user_guide/display.rst
+   user_guide/modify.rst
 
 Indices and tables
 ==================

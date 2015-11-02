@@ -11,7 +11,7 @@ easier. Diogenes is divided into several parts:
   format.
 * :doc:`display` provides tools for summarizing data and the 
   performance of trained classifiers.
-* :mod:`diogenes.modify` provides tools for manipulating arrays and
+* :doc:`modify` provides tools for manipulating arrays and
   generating features.
 * :mod:`diogenes.grid_search` provides tools for finding the best classifier,
   testing classifier sensitivity to data sets, and cross-validating 

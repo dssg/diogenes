@@ -77,7 +77,13 @@ class TestModify(unittest.TestCase):
              (1, 2, 0),
              (2, 3, 0)],
             dtype=[('letter', int), ('idx', int), ('name', int)])
-        self.assertTrue(np.array_equal(ctrl, label_encode(M)))
+        ctrl_classes = {'letter': np.array(['a', 'b', 'c']),
+                        'name': np.array(['Martin', 'Tim'])}
+        new_M, classes = label_encode(M)
+        self.assertTrue(np.array_equal(ctrl, new_M))
+        self.assertEqual(ctrl_classes.keys(), classes.keys())
+        for key in ctrl_classes:
+            self.assertTrue(np.array_equal(ctrl_classes[key], classes[key]))
         
     def test_replace_missing_vals(self):
         M = np.array([('a', 0, 0.0, 0.1),

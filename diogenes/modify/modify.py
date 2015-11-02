@@ -509,22 +509,29 @@ def label_encode(M):
 
     Returns
     -------
-    numpy.ndarray
-
+    (numpy.ndarray, dict of str: array)
+        A tuple: the first element is structured array with strings mapped to
+        ints. The second element is a dictionary where keys are column names
+        and values are arrays of the strings that belong to each class, as in:
+        http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
     """
 
     M = convert_to_sa(M)
-    le = preprocessing.LabelEncoder()
     new_dtype = []
     result_arrays = []
+    classes = {}
     for (col_name, fmt) in M.dtype.descr:
         if 'S' in fmt or 'O' in fmt:
-            result_arrays.append(le.fit_transform(M[col_name]))
+            col = M[col_name]
+            le = preprocessing.LabelEncoder()
+            le.fit(col)
+            classes[col_name] = le.classes_
+            result_arrays.append(le.transform(col))
             new_dtype.append((col_name, int))
         else:
             result_arrays.append(M[col_name])
             new_dtype.append((col_name, fmt))
-    return np.array(zip(*result_arrays), dtype=new_dtype)
+    return (np.array(zip(*result_arrays), dtype=new_dtype), classes)
 
 def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
     """Replace values signifying missing data with some substitute

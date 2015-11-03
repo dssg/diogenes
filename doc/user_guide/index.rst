@@ -13,15 +13,22 @@ easier. Diogenes is divided into several parts:
   performance of trained classifiers.
 * :doc:`modify` provides tools for manipulating arrays and
   generating features.
-* :mod:`diogenes.grid_search` provides tools for finding the best classifier,
+* :doc:`grid_search` provides tools for finding the best classifier,
   testing classifier sensitivity to data sets, and cross-validating 
   classifier performance.
-* :mod:`diogenes.array_emitter` provides tools for processing and iterating
+* :doc:`array_emitter` provides tools for processing and iterating
   over "RG-formatted" (transposed) arrays.
-* :mod:`diogenes.utils` provides miscilaneous utilities--mostly for processing
+* :doc:`utils` provides miscilaneous utilities--mostly for processing
   structured arrays.
+
+Contents:
 
 .. toctree::
    :maxdepth: 2
 
-    read.rst
+   read.rst
+   display.rst
+   modify.rst
+   grid_search.rst
+   array_emitter.rst
+   utils.rst

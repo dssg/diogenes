@@ -177,7 +177,9 @@ Find the trial with the best score and make an ROC curve
 Installation
 ------------
 
-`pip install git+git://github.com/dssg/diogenes.git`
+.. code:: bash
+
+    pip install git+git://github.com/dssg/diogenes.git
 
 Required Packages
 =================
@@ -203,9 +205,5 @@ Next Steps
 
 Check out the `documentation <http://dssg.github.io/diogenes>`_
 
-----
-Misc
-----
-my_* are included in the .gitignore.  We recommend a standard such as my_experiment, my_storage for local folders.
-
+Our code is available: `here <https://github.com/dssg/diogenes>`_
 

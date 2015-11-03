@@ -196,4 +196,6 @@ notebooks:
 	bash ./build_notebooks.bash
 	mkdir -p _build/html/user_guide/user_guide
 	cp notebooks/display_sample_report.pdf _build/html/user_guide/
+	cp -r notebooks/grid_search_files _build/html/user_guide/user_guide
+	cp notebooks/grid_search_sample_report.pdf _build/html/user_guide/
 	cp -r notebooks/display_files _build/html/user_guide/user_guide

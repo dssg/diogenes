@@ -113,7 +113,10 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
     return sa
 
 def utf_to_ascii(s):
-    """Converts a unicode string to an ascii string"""
+    """Converts a unicode string to an ascii string.
+    
+    If the argument is not a unicode string, returns the argument. 
+    """
     # http://stackoverflow.com/questions/4299675/python-script-to-convert-from-utf-8-to-ascii
     if isinstance(s, unicode):
         return s.encode('ascii', 'replace')
@@ -977,6 +980,15 @@ def check_arguments(args, required_keys, optional_keys_take_lists=False,
                         key))
     return args
 
+def __col_name_to_ascii(col_name, argument_name, index):
+    converted = utf_to_ascii(col_name)
+    if not isinstance(converted, str):
+        raise ValueError('Expected unicode or ascii string for element {} of {}, got {}'.format(
+            index,
+            argument_name,
+            col_name))
+    return converted
+
 def check_col_names(col_names, argument_name='col_names', n_cols=None):
     """Makes sure that col_names is a valid list of str. 
 
@@ -998,9 +1010,29 @@ def check_col_names(col_names, argument_name='col_names', n_cols=None):
     list of str
         transformed col_names
     """
-    raise NotImplementedError
+    if isinstance(col_names, basestring):
+        col_names = [col_names]
+    if not isinstance(col_names, list):
+        raise ValueError("Expected list or string for {}".format(
+            argument_name))
+    col_names = [__col_name_to_ascii(col_name, argument_name, index) for 
+                 index, col_name in enumerate(col_names)]
+    if n_cols is not None:
+        len_col_names = len(col_names)
+        if len_col_names != n_cols:
+            raise ValueError(("Expected {} column names for argument {}, "
+                              "got {}".format(
+                                  n_cols, 
+                                  argument_name, 
+                                  len_col_names)))
+    return col_names
 
 def check_consistent(M, col=None, col_names=None, 
+                     M_argument_name='M',
+                     col_argument_name='col',
+                     col_names_argument_name='col_names',
+                     n_rows=None,
+                     n_cols=None,
                      col_names_if_M_converted=None):
     """Makes sure that input is valid and self-consistent
 
@@ -1012,4 +1044,23 @@ def check_consistent(M, col=None, col_names=None,
     5. If col_names is provided, make sure that the col_names are in M
 
     """
-    raise NotImplementedError
+    M = check_sa(M, M_argument_name, n_rows, n_cols, col_names_if_M_converted)
+    n_rows, n_cols = M.shape
+
+    if col is not None:
+        col = check_col(col, col_argument_name, N_rows)
+
+    if col_names is not None:
+        col_names = check_col_names(col_names, col_names_argument_name)
+        if not frozenset(col_names).issubset(frozenset(M.dtype.names)):
+            raise ValueError('Column names requested in argument {} are not present in '
+                             'the array provided by argument {}'.format(
+                                col_names_argument_name,
+                                M_argument_name))
+
+    ret = [M]
+    if col is not None:
+        ret.append(col)
+    if col_names is not None:
+        ret.append(col_names)
+    return ret

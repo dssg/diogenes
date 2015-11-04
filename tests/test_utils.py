@@ -1,10 +1,15 @@
 import unittest
-from diogenes import utils
-import utils_for_tests
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.base import BaseEstimator
+
+from diogenes import utils
+from diogenes import modify 
 
 import utils_for_tests as uft
 
@@ -76,7 +81,7 @@ class TestUtils(unittest.TestCase):
         conv = utils.cast_list_of_list_to_sa(
                 L, 
                 col_names=['int', 'ucode', 'float', 'long'])
-        self.assertTrue(utils_for_tests.array_equal(ctrl, conv))
+        self.assertTrue(uft.array_equal(ctrl, conv))
 
     def test_cast_list_of_list_to_sa1(self):
         test = [[1,2.,'a'],[2,4.,'b'],[4,5.,'g']]
@@ -115,7 +120,7 @@ class TestUtils(unittest.TestCase):
                          ('abc', 2, 3.4)],
                         dtype=[('f0', 'S3'), ('f1', int), ('f2', float)])
         res = utils.convert_to_sa(lol)
-        self.assertTrue(utils_for_tests.array_equal(ctrl, res))
+        self.assertTrue(uft.array_equal(ctrl, res))
 
         # list of lists with col name provided
         lol = [['hello', 1.2, datetime(2012, 1, 1), None],
@@ -127,7 +132,7 @@ class TestUtils(unittest.TestCase):
                         dtype=[('i0', 'S5'), ('i1', float), ('i2', 'M8[us]'),
                                ('i3', 'M8[us]')])
         res = utils.convert_to_sa(lol, col_names = ['i0', 'i1', 'i2', 'i3'])
-        self.assertTrue(utils_for_tests.array_equal(ctrl, res))
+        self.assertTrue(uft.array_equal(ctrl, res))
 
     def test_np_dtype_is_homogeneous(self):
         sa = np.array([(1, 'a', 2)], dtype=[('f0', int), ('f1', 'O'), 
@@ -368,6 +373,82 @@ class TestUtils(unittest.TestCase):
             ctrl = np.array(data, dtype=merged_dtype)
             self.assertTrue(uft.array_equal(ctrl, res))
 
+    def test_check_sa(self):
+        valid1 = np.array([(1, 'a'), (2, 'b'), (3, 'c')], 
+                          dtype=[('int', int), ('s', 'S0')])
+        valid2 = np.array([[1, 2, 3], [4, 5, 6]])
+        valid3 = [[1, 2, 3], [4, 5, 6]]
+        for valid in (valid1, valid2, valid3):
+            self.assertTrue(utils.is_sa(utils.check_sa(valid)))
+
+        self.assertRaises(ValueError, utils.check_sa, None)
+        self.assertRaises(ValueError, utils.check_sa, "lalala")
+
+        utils.check_sa(valid1, n_rows=3, n_cols=2)
+        self.assertRaises(ValueError, utils.check_sa, valid1, n_rows=4)
+        self.assertRaises(ValueError, utils.check_sa, valid1, n_cols=3)
+
+    def test_check_col(self):
+        valid1 = np.array([1, 2, 3, 4])
+        valid2 = np.array([[1.0], [2], [3], [4]])
+        valid3 = [3.0, 2.0, 1.8]
+        for valid in (valid1, valid2, valid3):
+            self.assertTrue(utils.is_nd(utils.check_col(valid)))
+
+        self.assertRaises(ValueError, utils.check_col, None)
+        self.assertRaises(ValueError, utils.check_col, "lalala")
+        self.assertRaises(ValueError, utils.check_col, np.array(
+            [[1, 2], [3, 4]]))
+
+        utils.check_col(valid1, n_rows=4)
+        self.assertRaises(ValueError, utils.check_col, valid1, n_rows=5)
+
+    def test_check_arguments(self):
+        row_reqs = {'func': lambda f: hasattr(f, '__call__'),
+                    'vals': None,
+                    'col_name': lambda c: isinstance(c, str)}
+        col_reqs = {'func': lambda f: hasattr(f, '__call__'),
+                    'vals': None}
+        clfs_reqs = {'clf': lambda c: isinstance(c, type) and 
+                                      issubclass(c, BaseEstimator)}
+        row_valid = [{'func': modify.row_val_eq, 'vals': 8, 'col_name': 'f0'},
+                     {'func': modify.row_val_between, 'vals': (1, 2), 
+                      'col_name' : 'f1'}]
+        col_valid = [{'func': modify.col_random, 'vals': 7},
+                     {'func': modify.col_val_eq, 'vals': 2}]
+        clfs_valid = [{'clf': RandomForestClassifier, 'n_estimators': [1, 10],
+                       'max_features': [10, 100, 1000]},
+                      {'clf': SVC, 'kernel': ['linear', 'poly']}]
+        utils.check_arguments(row_valid, row_reqs)
+        utils.check_arguments(col_valid, col_reqs)
+        utils.check_arguments(clfs_valid, clfs_reqs, 
+                optional_keys_take_lists=True)
+
+        self.assertRaises(ValueError, utils.check_arguments, 
+                          [2, row_valid[0]], row_reqs)
+        self.assertRaises(ValueError, utils.check_arguments, row_valid[0], 
+                          row_reqs)
+        row_invalid1 = [{'func': modify.row_val_eq, 'vals': 8, 
+                         'col_name': 'f0'},
+                        {'func': 7, 'vals': (1, 2), 'col_name' :
+                         'f1'}]
+        self.assertRaises(ValueError, utils.check_arguments, row_invalid1,
+                          row_reqs)
+        row_invalid2 = [{'func': modify.row_val_eq, 
+                         'vals': 8, 'col_name': 'f0'},
+                        {'func': modify.row_val_between, 'vals': (1, 2)}]
+        self.assertRaises(ValueError, utils.check_arguments, row_invalid2,
+                          row_reqs)
+        clfs_invalid1 = [{'clf': RandomForestClassifier(), 
+                          'n_estimators': [1, 10],
+                          'max_features': [10, 100, 1000]}]
+        self.assertRaises(ValueError, utils.check_arguments, clfs_invalid1,
+                          clfs_reqs, optional_keys_take_lists=True)
+        clfs_invalid2 = [{'clf': RandomForestClassifier, 
+                          'n_estimators': 1,
+                          'max_features': [10, 100, 1000]}]
+        self.assertRaises(ValueError, utils.check_arguments, clfs_invalid2,
+                          clfs_reqs, optional_keys_take_lists=True)
 
 if __name__ == '__main__':
     unittest.main()

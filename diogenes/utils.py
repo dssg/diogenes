@@ -801,3 +801,215 @@ def csv_to_sql(conn, csv_path, table_name=None,
     for row in data:
         conn.execute(sql_insert, row)
     return table_name
+
+
+def check_sa(M, argument_name='M', n_rows=None, n_cols=None, 
+             col_names_if_converted=None):
+    """Verifies that M is a structured array. Otherwise, throws an error
+
+    If M is not a structured array, but can be converted to a structured 
+    array, this function will return the converted structured array without
+    throwing an error.
+
+    Parameters
+    ----------
+    M : ?
+        Object to check
+    argument_name : str 
+        Name of variable that was supposed to be a structured array
+    n_rows : int or None
+        If not None, number or rows that M should have
+    n_cols : int or None
+        If not None, number of columns that M should have
+    col_names_if_converted : list of str or None
+        If M is converted to a structured array from a list of lists or
+        a homogeneous numpy array, the created structured array will
+        use these names for columns
+
+    Returns
+    -------
+    numpy.ndarray
+        The verified (and possibly converted) M
+    """
+    try:
+        M = convert_to_sa(M, col_names_if_converted)
+    except ValueError:
+        raise ValueError("Structured array or similar object required for "
+                         "variable '{}'. Got {} instead.".format(
+                             argument_name,
+                             type(M).__name__))
+    if n_cols is not None:
+        if len(M.dtype) != n_cols:
+            raise ValueError("Expected structred array of {} columns for "
+                             "variable '{}'. Got {} columns instead.".format(
+                                 n_cols,
+                                 argument_name,
+                                 len(M.dtype)))
+    if n_rows is not None:
+        if M.shape[0] != n_rows:
+            raise ValueError("Expected structured array of {} rows for "
+                             "variable '{}'. Got {} rows instead.".format(
+                                 n_rows,
+                                 argument_name,
+                                 M.shape[0]))
+    return M
+
+def check_col(col, argument_name='col', n_rows=None):
+    """Verifies that col is a 1-dimensional array. Otherwise, throws an error
+
+    If col is not a numpy array, but is an iterable that can be converted to
+    an array, the conversion will be performed and an error will not be
+    thrown.
+
+    Parameters
+    ----------
+    col : ?
+        Object to check
+    argument_name : str
+        Name of variable that was supposed to be a 1-dimensional array
+    n_rows : int or None
+        If not None, number or rows that col should have
+
+    Returns
+    -------
+    np.ndarray
+        The verified (and possibly converted) col
+
+    """
+    if not is_nd(col):
+        # I would wrap this in try/catch, but as far as I can tell numpy
+        # always succeeds in doing this. If we pass something weird, the
+        # hope is that it will be a 0-dimensional object and it will get
+        # caught later
+        col = np.array(col)
+
+    if col.ndim < 1:
+        raise ValueError("Expected 1-dimensional array-like object for "
+                         "variable '{}'. Got 0-dimensional object "
+                         "instead.".format(argument_name))
+    if col.ndim > 1 and any([dim > 1 for dim in col.shape[1:]]):
+        raise ValueError("Expected 1-dimensional array-like object or "
+                         "column vector for variable '{}'. Instead got "
+                         "object of shape {}".format(
+                             argument_name,
+                             col.shape))
+    if n_rows is not None:
+        if col.shape[0] != n_rows:
+            raise ValueError("Expected 1-d array of {} rows for "
+                             "variable '{}'. Got {} rows instead.".format(
+                                 n_rows,
+                                 argument_name,
+                                 col.shape[0]))
+    return col
+
+def check_arguments(args, required_keys, optional_keys_take_lists=False,
+                    argument_name='arguments'):
+    """Verifies that args adheres to the "arguments" format.
+
+    The arguments format is the format expected by "arguments" in, for
+    example, diogenes.modify.choose_cols_where, 
+    diogenes.modify.remove_rows_where, diogenes.modify.where_all_are_true,
+    and diogenes.grid_search.experiment.Experiment. If args does not
+    adhere to this format, raises a ValueError
+
+    Parameters
+    ----------
+    args : list of dict
+        Arguments to verify
+    required_keys : dict of str : ((? -> bool) or None)
+        A dictionary specifying which keys will be required in each
+        dict in args. If a value in required_keys is not None, it should be
+        a lambda that takes the argument passed to the key in args and returns
+        a bool signifying whether or not the input is valid for that 
+        required key. For example, if every dict in args requires the key
+        'func' and the argument for that key must be callable, you could pass:
+
+            required_keys = {'func': lambda f: hasattr(f, '__call__')}
+
+        If a key in required_keys has the value None, then the corresponding
+        key in args will not be verified.
+    argument_name : str
+        Name of variable that was supposed to be in argument format
+    optional_keys_take_lists : bool
+        Iff True, will make sure that arguments for keys in args that are
+        not required_keys have values that are lists. This is a consolation
+        to diogenes.grid_search.Experiment
+
+    Returns
+    -------
+    list of dict
+        The verified args
+    """
+    if not isinstance(args, list):
+        raise ValueError("Variable '{}' Must be a list of dictionaries."
+                         "".format(
+                             argument_name))
+    
+    for idx, directive in enumerate(args):
+        if not isinstance(directive, dict):
+            raise ValueError("{}[{}] is not a dictionary ".format(
+                                argument_name,
+                                idx))
+        for req_key, validate in required_keys.iteritems():
+            try:
+                val = directive[req_key]
+            except KeyError:
+                raise ValueError("{}[{}] is missing required key '{}'".format(
+                    argument_name,
+                    idx,
+                    req_key))
+            if validate is not None:
+                if not validate(val):
+                    raise ValueError("{}[{}]['{}'] value: {} is not valid "
+                                     "input".format(
+                                         argument_name,
+                                         idx,
+                                         req_key,
+                                         val))
+        if optional_keys_take_lists:
+            optional_keys = (frozenset(directive.keys()) - 
+                             frozenset(required_keys.keys()))
+            for key in optional_keys:
+                if not isinstance(directive[key], list):
+                    raise ValueError("Expected list for {}[{}]['{}']".format(
+                        argument_name,
+                        idx,
+                        key))
+    return args
+
+def check_col_names(col_names, argument_name='col_names', n_cols=None):
+    """Makes sure that col_names is a valid list of str. 
+
+    If col_names is a str, will transform it into a list of str
+
+    If any of col_names is unicode, translates to ascii
+
+    Parameters
+    ----------
+    col_names : ?
+        Object to check
+    argument_name : str
+        Name of variable that was supposed to be in col_names format
+    n_cols : None or int
+        If not None, number of entries that col_names should have
+
+    Returns
+    -------
+    list of str
+        transformed col_names
+    """
+    raise NotImplementedError
+
+def check_consistent(M, col=None, col_names=None, 
+                     col_names_if_M_converted=None):
+    """Makes sure that input is valid and self-consistent
+
+    1. Makes sure that M is a valid structured array.
+    2. If col is provided, makes sure it's a valid column.
+    3. If col is provided, makes sure that M and col have the same number of
+       rows
+    4. If col_names is provided, makes sure that col_names is a list of str
+    5. If col_names is provided, make sure that the col_names are in M
+
+    """
+    raise NotImplementedError

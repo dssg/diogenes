@@ -65,3 +65,6 @@ target/
 # vim
 *.swp
 *-e
+
+# Diogenes-particular stuff
+*.pkl

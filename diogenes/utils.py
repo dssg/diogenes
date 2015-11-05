@@ -1045,10 +1045,10 @@ def check_consistent(M, col=None, col_names=None,
 
     """
     M = check_sa(M, M_argument_name, n_rows, n_cols, col_names_if_M_converted)
-    n_rows, n_cols = M.shape
+    n_rows = M.shape[0]
 
     if col is not None:
-        col = check_col(col, col_argument_name, N_rows)
+        col = check_col(col, col_argument_name, n_rows)
 
     if col_names is not None:
         col_names = check_col_names(col_names, col_names_argument_name)

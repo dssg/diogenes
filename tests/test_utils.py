@@ -450,5 +450,29 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(ValueError, utils.check_arguments, clfs_invalid2,
                           clfs_reqs, optional_keys_take_lists=True)
 
+    def test_check_col_names(self):
+        self.assertEqual(utils.check_col_names('f0'), ['f0'])
+        utils.check_col_names(['f0', 'f1', 'f2'])
+        self.assertEqual(utils.check_col_names([u'f0', 'f1', u'f2']), ['f0', 'f1', 'f2'])
+        self.assertRaises(ValueError, utils.check_col_names, {})
+        self.assertRaises(ValueError, utils.check_col_names, ['f0', 4, 'f2'])
+
+    def test_check_consistent(self):
+        M = np.array([(1, 'a', 100), (2, 'b', 200)], dtype=[('f0', int), ('f1', 'O'), 
+                                                            ('f2', int)])
+        col = np.array([1.0, 2.0])
+        col_names = ['f0', 'f1']
+        self.assertEqual(utils.check_consistent(M, col, col_names), [M, col, col_names])
+        self.assertEqual(utils.check_consistent(M, col), [M, col])
+        self.assertEqual(utils.check_consistent(M, col_names=col_names), [M, col_names])
+        self.assertEqual(utils.check_consistent(M, col, col_names, n_rows=2, n_cols=3), 
+                         [M, col, col_names])
+        self.assertRaises(ValueError, utils.check_consistent, {})
+        self.assertRaises(ValueError, utils.check_consistent, M, n_rows=7)
+        self.assertRaises(ValueError, utils.check_consistent, M, n_cols=7)
+        self.assertRaises(ValueError, utils.check_consistent, M, col, {})
+        self.assertRaises(ValueError, utils.check_consistent, M, np.array([1.0, 2.0, 3.0]))
+        self.assertRaises(ValueError, utils.check_consistent, M, col_names=['f0', 'not_a_col'])
+
 if __name__ == '__main__':
     unittest.main()

@@ -23,8 +23,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import roc_auc_score, f1_score, precision_recall_curve
+from sklearn.base import BaseEstimator
+from sklearn.cross_validation import _PartitionIterator
 
-from diogenes.grid_search import subset
+from diogenes.grid_search import subset as s_i
 from diogenes.grid_search import partition_iterator as p_i
 import diogenes.utils as utils
 from diogenes.utils import remove_cols
@@ -124,19 +126,44 @@ class Experiment(object):
             M, 
             y, 
             clfs=[{'clf': RandomForestClassifier}], 
-            subsets=[{'subset': subset.SubsetNoSubset}], 
+            subsets=[{'subset': s_i.SubsetNoSubset}], 
             cvs=[{'cv': KFold}],
             trials=None):
         if M is not None:
-            if utils.is_sa(M):
-                self.col_names = M.dtype.names
-                self.M = utils.cast_np_sa_to_nd(M)
-            else: # assuming an nd_array
+            if utils.is_nd(M) and not utils.is_sa(M):
+                # nd_array, short circuit the usual type checking and coersion
+                if M.ndim != 2:
+                    raise ValueError('Expected 2-dimensional array for M')
                 self.M = M
                 self.col_names = ['f{}'.format(i) for i in xrange(M.shape[1])]
+                self.y = utils.check_col(y, n_rows=M.shape[0], argument_name='y')
+            else:    
+                # M is either a structured array or something that should
+                # be converted
+                (M, self.y) = utils.check_consistent(
+                        M, 
+                        y, 
+                        col_argument_name='y')
+                self.col_names = M.dtype.names
+                self.M = utils.cast_np_sa_to_nd(M)
         else:
             self.col_names = None
-        self.y = y
+        if trials is None:
+            clfs = utils.check_arguments(
+                    clfs, 
+                    {'clf': lambda clf: issubclass(clf, BaseEstimator)},
+                    optional_keys_take_lists=True,
+                    argument_name='clfs')
+            subsets = utils.check_arguments(
+                    subsets,
+                    {'subset': lambda subset: issubclass(subset, s_i.BaseSubsetIter)},
+                    optional_keys_take_lists=True,
+                    argument_name='subsets')
+            cvs = utils.check_arguments(
+                    cvs,
+                    {'cv': lambda cv: issubclass(cv, _PartitionIterator)},
+                    optional_keys_take_lists=True,
+                    argument_name='cvs')
         self.clfs = clfs
         self.subsets = subsets
         self.cvs = cvs
@@ -824,7 +851,7 @@ class Trial(object):
         col_names,
         clf=RandomForestClassifier,
         clf_params={},
-        subset=subset.SubsetNoSubset,
+        subset=s_i.SubsetNoSubset,
         subset_params={},
         cv=p_i.NoCV,
         cv_params={},

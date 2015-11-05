@@ -20,11 +20,15 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.metrics import roc_curve, roc_auc_score, precision_recall_curve
 from sklearn.tree._tree import TREE_LEAF
+from sklearn.base import BaseEstimator
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 import pdfkit
 
 from diogenes.grid_search import Experiment
 from diogenes.utils import is_sa, is_nd, cast_np_sa_to_nd, convert_to_sa, cast_list_of_list_to_sa
+from diogenes import utils
 
 
 def pprint_sa(M, row_labels=None, col_labels=None):
@@ -41,7 +45,7 @@ def pprint_sa(M, row_labels=None, col_labels=None):
         names will be used instead
         
     """
-    M = convert_to_sa(M, col_names=col_labels)
+    M = utils.check_sa(M, col_names_if_converted=col_labels)
     if row_labels is None:
         row_labels = xrange(M.shape[0])
     col_labels = M.dtype.names
@@ -78,7 +82,7 @@ def describe_cols(M):
         structured array of summary statistics for M
        
     """ 
-    M = convert_to_sa(M)           
+    M = utils.check_sa(M)           
     descr_rows = []
     for col_name, col_type in M.dtype.descr:
         if 'f' in col_type or 'i' in col_type:
@@ -116,8 +120,8 @@ def crosstab(col1, col2):
         structured array
 
     """
-    col1 = np.array(col1)
-    col2 = np.array(col2)
+    col1 = utils.check_col(col1, argument_name='col1')
+    col2 = utils.check_col(col2, argument_name='col2')
     col1_unique = np.unique(col1)
     col2_unique = np.unique(col2)
     crosstab_rows = []
@@ -148,6 +152,7 @@ def plot_simple_histogram(col, verbose=True):
         Figure containing plot
 
     """
+    col = utils.check_col(col)
     hist, bins = np.histogram(col, bins=50)
     width = 0.7 * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
@@ -180,7 +185,8 @@ def plot_prec_recall(labels, score, title='Prec/Recall', verbose=True):
         Figure containing plot
 
     """
-
+    labels = utils.check_col(labels, argument_name='labels')
+    score = utils.check_col(score, argument_name='score')
     # adapted from Rayid's prec/recall code
     y_true = labels
     y_score = score
@@ -230,6 +236,8 @@ def plot_roc(labels, score, title='ROC', verbose=True):
         Figure containing plot
 
     """
+    labels = utils.check_col(labels, argument_name='labels')
+    score = utils.check_col(score, argument_name='score')
     # adapted from Rayid's prec/recall code
     fpr, tpr, thresholds = roc_curve(labels, score)
     fpr = fpr
@@ -272,6 +280,7 @@ def plot_box_plot(col, title=None, verbose=True):
         Figure containing plot
     
     """
+    col = utils.check_col(col)
 
     fig = plt.figure()
     boxplot(col)
@@ -305,6 +314,9 @@ def get_top_features(clf, M=None, col_names=None, n=10, verbose=True):
         structured array with top feature names and scores
 
     """
+    if not isinstance(clf, BaseEstimator):
+        raise ValueError('clf must be an instance of sklearn.Base.BaseEstimator')
+
 
     scores = clf.feature_importances_
     if col_names is None:
@@ -312,6 +324,8 @@ def get_top_features(clf, M=None, col_names=None, n=10, verbose=True):
             col_names = M.dtype.names
         else:
             col_names = ['f{}'.format(i) for i in xrange(len(scores))]
+    else:
+        col_names = utils.check_col_names(col_names, n_cols = scores.shape[0])
     ranked_name_and_score = [(col_names[x], scores[x]) for x in 
                              scores.argsort()[::-1]]
     ranked_name_and_score = convert_to_sa(
@@ -342,6 +356,8 @@ def get_roc_auc(labels, score, verbose=True):
         area under the curve
 
     """
+    labels = utils.check_col(labels, argument_name='labels')
+    score = utils.check_col(score, argument_name='score')
     auc_score = roc_auc_score(labels, score)
     if verbose:
         print 'ROC AUC: {}'.format(auc_score)
@@ -366,16 +382,9 @@ def plot_correlation_matrix(M, verbose=True):
     # http://glowingpython.blogspot.com/2012/10/visualizing-correlation-matrices.html
     # TODO work on structured arrays or not
     # TODO ticks are col names
-    if is_sa(M):
-        names = M.dtype.names
-        M = cast_np_sa_to_nd(M)
-        n_cols = M.shape[1]
-    else: 
-        if is_nd(M):
-            n_cols = M.shape[1]
-        else: # list of arrays
-            n_cols = len(M[0])
-        names = ['f{}'.format(i) for i in xrange(n_cols)]
+    M = utils.check_sa(M)
+    names = M.dtype.names
+    M = cast_np_sa_to_nd(M)
     
     #set rowvar =0 for rows are items, cols are features
     cc = np.corrcoef(M, rowvar=0)
@@ -412,7 +421,7 @@ def plot_correlation_scatter_plot(M, verbose=True):
     # adapted from the excellent 
     # http://stackoverflow.com/questions/7941207/is-there-a-function-to-make-scatterplot-matrices-in-matplotlib
     
-    M = convert_to_sa(M)
+    M = utils.check_sa(M)
 
     numdata = M.shape[0]
     numvars = len(M.dtype)
@@ -474,6 +483,7 @@ def plot_kernel_density(col, verbose=True):
     #address pass entire matrix
     # TODO respect missing_val
     # TODO what does n do?
+    col = utils.check_col(col)
     x_grid = np.linspace(min(col), max(col), 1000)
 
     grid = GridSearchCV(KernelDensity(), {'bandwidth': np.linspace(0.1,1.0,30)}, cv=20) # 20-fold cross-validation
@@ -511,6 +521,7 @@ def plot_on_timeline(col, verbose=True):
     -------
     matplotlib.figure.Figure
     """
+    col = utils.check_col(col)
     # http://stackoverflow.com/questions/1574088/plotting-time-in-python-with-matplotlib
     if is_nd(col):
         col = col.astype(datetime)
@@ -561,6 +572,8 @@ def feature_pairs_in_tree(dt):
         4. The outer list describes the entire tree
 
     """
+    if not isinstance(dt, DecisionTreeClassifier):
+        raise ValueError('dt must be an sklearn.tree.DecisionTreeClassifier')
     t = dt.tree_
     feature = t.feature
     children_left = t.children_left
@@ -628,7 +641,9 @@ def feature_pairs_in_rf(rf, weight_by_depth=None, verbose=True, n=10):
            of occurences of those feature pairs weighted by depth
         
     """
-
+    if not isinstance(rf, RandomForestClassifier):
+        raise ValueError(
+            'rf must be an sklearn.Ensemble.RandomForestClassifier')
 
     pairs_by_est = [feature_pairs_in_tree(est) for est in rf.estimators_]
     pairs_by_depth = [list(it.chain(*pair_list)) for pair_list in 
@@ -863,6 +878,7 @@ class Report(object):
 
     def add_table(self, M):
         """Adds structured array to report"""
+        M = utils.check_sa(M)
         sio = StringIO.StringIO()
         self.__np_to_html_table(M, sio)
         self.__objects.append(sio.getvalue())

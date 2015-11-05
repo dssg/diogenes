@@ -73,8 +73,6 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
     If header is False and col_names is None, diogenes will assign
     arbitrary column names
     """
-#    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
-#    return convert_to_sa(python_list, col_names)
     df = pd.read_csv(
             fin, 
             sep=delimiter, 
@@ -89,31 +87,13 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
     if parse_datetimes:
         fix_pandas_datetimes(df, parse_datetimes)
     sa = df.to_records(index=False)
-#    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
-#        if verbose:
-#            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
-#                             'This is currently slow.\n')
-#        # Change NaN's in string columns to empty strings
-#        bag_of_cols = []
-#        new_dtype = []
-#        for col_name, dtype_str in sa.dtype.descr:
-#            col = sa[col_name]
-#            if 'O' in dtype_str:
-#                if parse_datetimes:
-#                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
-#                    if valid_dtime_col:
-#                        bag_of_cols.append(col_dtime)
-#                        continue
-#                max_str_len = max(len(max(col, key=len)), 1)
-#                new_dtype_str = 'S{}'.format(max_str_len)
-#                bag_of_cols.append(col.astype(new_dtype_str))
-#                continue
-#            bag_of_cols.append(col)
-#        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
     return sa
 
 def utf_to_ascii(s):
-    """Converts a unicode string to an ascii string"""
+    """Converts a unicode string to an ascii string.
+    
+    If the argument is not a unicode string, returns the argument. 
+    """
     # http://stackoverflow.com/questions/4299675/python-script-to-convert-from-utf-8-to-ascii
     if isinstance(s, unicode):
         return s.encode('ascii', 'replace')
@@ -487,19 +467,39 @@ def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
     """
     return (distance(lat_1, lon_1, lat_2, lon_2) < threshold)
 
-def stack_rows(*args):
+def stack_rows(args):
     """Returns a structured array containing all the rows in its arguments
     
     Each argument must be a structured array with the same column names
     and column types. Similar to SQL UNION
     """
+    if len(args) > 0:
+        M0 = check_sa(args[0], argument_name='args[0]')
+        dtype0 = M0.dtype
+        checked_args = [M0]
+        for idx, M in enumerate(args[1:]):
+            M = check_sa(M)
+            if dtype0 != M.dtype:
+                raise ValueError('args[{}] does not have the same dtype as '
+                                 'args[0]'.format(idx + 1))
+            checked_args.append(M)
+        args = checked_args
     return nprf.stack_arrays(args, usemask=False)
 
 def sa_from_cols(cols, col_names=None):
     """Converts a list of columns to a structured array"""
-    # TODO take col names
+    if is_nd(cols):
+        cols = [cols]
+    if len(cols) > 0:
+        col0 = check_col(cols[0], argument_name='cols[0]')
+        rows = col0.shape[0]
+        cols = [check_col(col, n_rows=rows, 
+                          argument_name='cols[{}]'.format(idx)) for
+                idx, col in enumerate(cols)]
+
     sa = nprf.merge_arrays(cols, usemask=False)    
     if col_names is not None:
+        col_names = check_col_names(col_names, n_cols=len(cols))
         return sa.view(
                 dtype=[(name, dtype_str) for name, (_, dtype_str) in
                        zip(col_names, sa.dtype.descr)])
@@ -521,6 +521,14 @@ def append_cols(M, cols, col_names):
     numpy.ndarray
         structured array with new columns
     """
+    if is_nd(cols):
+        cols = [cols]
+    M = check_sa(M)
+    cols = [check_col(
+        col, 
+        n_rows=M.shape[0], 
+        argument_name='cols[{}]'.format(idx)) for idx, col in enumerate(cols)]
+    col_names = check_col_names(col_names, n_cols=len(cols))
     return nprf.append_fields(M, col_names, data=cols, usemask=False)
 
 def remove_cols(M, col_names):
@@ -538,6 +546,7 @@ def remove_cols(M, col_names):
     numpy.ndarray
         structured array without columns
     """
+    M, col_names = check_consistent(M, col_names=col_names)
     return nprf.drop_fields(M, col_names, usemask=False)
 
 def __fill_by_descr(s):
@@ -593,6 +602,16 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
         joined structured array
 
     """
+    left, left_on = check_consistent(
+            left, 
+            col_names=left_on, 
+            M_argument_name='left',
+            col_names_argument_name='left_on')
+    right, right_on = check_consistent(
+            right, 
+            col_names=right_on,
+            M_argument_name='right',
+            col_names_argument_name='right_on')
 
     # left_on and right_on can both be strings or lists
     if isinstance(left_on, basestring):
@@ -631,7 +650,7 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
                             col_name in frozenset_left_names else
                             col_name for 
                             col_name in right_names]
-    col_names = (left_names_w_suffix + shared_on +  right_names_w_suffix)
+    col_names = (left_names_w_suffix + shared_on + right_names_w_suffix)
     col_dtypes = ([left[left_col].dtype for left_col in left_names] +
                   [left[shared_on_col].dtype for shared_on_col in shared_on] +
                   [right[right_col].dtype for right_col in right_names])
@@ -801,3 +820,263 @@ def csv_to_sql(conn, csv_path, table_name=None,
     for row in data:
         conn.execute(sql_insert, row)
     return table_name
+
+
+def check_sa(M, argument_name='M', n_rows=None, n_cols=None, 
+             col_names_if_converted=None):
+    """Verifies that M is a structured array. Otherwise, throws an error
+
+    If M is not a structured array, but can be converted to a structured 
+    array, this function will return the converted structured array without
+    throwing an error.
+
+    Parameters
+    ----------
+    M : ?
+        Object to check
+    argument_name : str 
+        Name of variable that was supposed to be a structured array
+    n_rows : int or None
+        If not None, number or rows that M should have
+    n_cols : int or None
+        If not None, number of columns that M should have
+    col_names_if_converted : list of str or None
+        If M is converted to a structured array from a list of lists or
+        a homogeneous numpy array, the created structured array will
+        use these names for columns
+
+    Returns
+    -------
+    numpy.ndarray
+        The verified (and possibly converted) M
+    """
+    try:
+        M = convert_to_sa(M, col_names_if_converted)
+    except ValueError:
+        raise ValueError("Structured array or similar object required for "
+                         "variable '{}'. Got {} instead.".format(
+                             argument_name,
+                             type(M).__name__))
+    if n_cols is not None:
+        if len(M.dtype) != n_cols:
+            raise ValueError("Expected structred array of {} columns for "
+                             "variable '{}'. Got {} columns instead.".format(
+                                 n_cols,
+                                 argument_name,
+                                 len(M.dtype)))
+    if n_rows is not None:
+        if M.shape[0] != n_rows:
+            raise ValueError("Expected structured array of {} rows for "
+                             "variable '{}'. Got {} rows instead.".format(
+                                 n_rows,
+                                 argument_name,
+                                 M.shape[0]))
+    return M
+
+def check_col(col, argument_name='col', n_rows=None):
+    """Verifies that col is a 1-dimensional array. Otherwise, throws an error
+
+    If col is not a numpy array, but is an iterable that can be converted to
+    an array, the conversion will be performed and an error will not be
+    thrown.
+
+    Parameters
+    ----------
+    col : ?
+        Object to check
+    argument_name : str
+        Name of variable that was supposed to be a 1-dimensional array
+    n_rows : int or None
+        If not None, number or rows that col should have
+
+    Returns
+    -------
+    np.ndarray
+        The verified (and possibly converted) col
+
+    """
+    if not is_nd(col):
+        # I would wrap this in try/catch, but as far as I can tell numpy
+        # always succeeds in doing this. If we pass something weird, the
+        # hope is that it will be a 0-dimensional object and it will get
+        # caught later
+        col = np.array(col)
+
+    if col.ndim < 1:
+        raise ValueError("Expected 1-dimensional array-like object for "
+                         "variable '{}'. Got 0-dimensional object "
+                         "instead.".format(argument_name))
+    if col.ndim > 1 and any([dim > 1 for dim in col.shape[1:]]):
+        raise ValueError("Expected 1-dimensional array-like object or "
+                         "column vector for variable '{}'. Instead got "
+                         "object of shape {}".format(
+                             argument_name,
+                             col.shape))
+    if n_rows is not None:
+        if col.shape[0] != n_rows:
+            raise ValueError("Expected 1-d array of {} rows for "
+                             "variable '{}'. Got {} rows instead.".format(
+                                 n_rows,
+                                 argument_name,
+                                 col.shape[0]))
+    return col
+
+def check_arguments(args, required_keys, optional_keys_take_lists=False,
+                    argument_name='arguments'):
+    """Verifies that args adheres to the "arguments" format.
+
+    The arguments format is the format expected by "arguments" in, for
+    example, diogenes.modify.choose_cols_where, 
+    diogenes.modify.remove_rows_where, diogenes.modify.where_all_are_true,
+    and diogenes.grid_search.experiment.Experiment. If args does not
+    adhere to this format, raises a ValueError
+
+    Parameters
+    ----------
+    args : list of dict
+        Arguments to verify
+    required_keys : dict of str : ((? -> bool) or None)
+        A dictionary specifying which keys will be required in each
+        dict in args. If a value in required_keys is not None, it should be
+        a lambda that takes the argument passed to the key in args and returns
+        a bool signifying whether or not the input is valid for that 
+        required key. For example, if every dict in args requires the key
+        'func' and the argument for that key must be callable, you could pass:
+
+            required_keys = {'func': lambda f: hasattr(f, '__call__')}
+
+        If a key in required_keys has the value None, then the corresponding
+        key in args will not be verified.
+    argument_name : str
+        Name of variable that was supposed to be in argument format
+    optional_keys_take_lists : bool
+        Iff True, will make sure that arguments for keys in args that are
+        not required_keys have values that are lists. This is a consolation
+        to diogenes.grid_search.Experiment
+
+    Returns
+    -------
+    list of dict
+        The verified args
+    """
+    if not isinstance(args, list):
+        raise ValueError("Variable '{}' Must be a list of dictionaries."
+                         "".format(
+                             argument_name))
+    
+    for idx, directive in enumerate(args):
+        if not isinstance(directive, dict):
+            raise ValueError("{}[{}] is not a dictionary ".format(
+                                argument_name,
+                                idx))
+        for req_key, validate in required_keys.iteritems():
+            try:
+                val = directive[req_key]
+            except KeyError:
+                raise ValueError("{}[{}] is missing required key '{}'".format(
+                    argument_name,
+                    idx,
+                    req_key))
+            if validate is not None:
+                if not validate(val):
+                    raise ValueError("{}[{}]['{}'] value: {} is not valid "
+                                     "input".format(
+                                         argument_name,
+                                         idx,
+                                         req_key,
+                                         val))
+        if optional_keys_take_lists:
+            optional_keys = (frozenset(directive.keys()) - 
+                             frozenset(required_keys.keys()))
+            for key in optional_keys:
+                if not isinstance(directive[key], list):
+                    raise ValueError("Expected list for {}[{}]['{}']".format(
+                        argument_name,
+                        idx,
+                        key))
+    return args
+
+def __col_name_to_ascii(col_name, argument_name, index):
+    converted = utf_to_ascii(col_name)
+    if not isinstance(converted, str):
+        raise ValueError('Expected unicode or ascii string for element {} of {}, got {}'.format(
+            index,
+            argument_name,
+            col_name))
+    return converted
+
+def check_col_names(col_names, argument_name='col_names', n_cols=None):
+    """Makes sure that col_names is a valid list of str. 
+
+    If col_names is a str, will transform it into a list of str
+
+    If any of col_names is unicode, translates to ascii
+
+    Parameters
+    ----------
+    col_names : ?
+        Object to check
+    argument_name : str
+        Name of variable that was supposed to be in col_names format
+    n_cols : None or int
+        If not None, number of entries that col_names should have
+
+    Returns
+    -------
+    list of str
+        transformed col_names
+    """
+    if isinstance(col_names, basestring):
+        col_names = [col_names]
+    if not (isinstance(col_names, list) or isinstance(col_names, tuple)):
+        raise ValueError("Expected list or string for {}".format(
+            argument_name))
+    col_names = [__col_name_to_ascii(col_name, argument_name, index) for 
+                 index, col_name in enumerate(col_names)]
+    if n_cols is not None:
+        len_col_names = len(col_names)
+        if len_col_names != n_cols:
+            raise ValueError(("Expected {} column names for argument {}, "
+                              "got {}".format(
+                                  n_cols, 
+                                  argument_name, 
+                                  len_col_names)))
+    return col_names
+
+def check_consistent(M, col=None, col_names=None, 
+                     M_argument_name='M',
+                     col_argument_name='col',
+                     col_names_argument_name='col_names',
+                     n_rows=None,
+                     n_cols=None,
+                     col_names_if_M_converted=None):
+    """Makes sure that input is valid and self-consistent
+
+    1. Makes sure that M is a valid structured array.
+    2. If col is provided, makes sure it's a valid column.
+    3. If col is provided, makes sure that M and col have the same number of
+       rows
+    4. If col_names is provided, makes sure that col_names is a list of str
+    5. If col_names is provided, make sure that the col_names are in M
+
+    """
+    M = check_sa(M, M_argument_name, n_rows, n_cols, col_names_if_M_converted)
+    n_rows = M.shape[0]
+
+    if col is not None:
+        col = check_col(col, col_argument_name, n_rows)
+
+    if col_names is not None:
+        col_names = check_col_names(col_names, col_names_argument_name)
+        if not frozenset(col_names).issubset(frozenset(M.dtype.names)):
+            raise ValueError('Column names requested in argument {} are not present in '
+                             'the array provided by argument {}'.format(
+                                col_names_argument_name,
+                                M_argument_name))
+
+    ret = [M]
+    if col is not None:
+        ret.append(col)
+    if col_names is not None:
+        ret.append(col_names)
+    return ret

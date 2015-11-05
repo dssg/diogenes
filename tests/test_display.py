@@ -160,6 +160,8 @@ J 3000.0 James
                  ('f0',  0.0632912268319)],
                 col_names=('feat_name', 'score'))
         self.assertTrue(uft.array_equal(ctrl, res))
+        res = dsp.get_top_features(clf, col_names=['f{}'.format(i) for i in xrange(15)], verbose=False)
+        self.assertTrue(uft.array_equal(ctrl, res))
 
     def test_get_roc_auc(self):
         M, labels = uft.generate_correlated_test_matrix(1000)

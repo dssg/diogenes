@@ -467,7 +467,7 @@ def dist_less_than(lat_1, lon_1, lat_2, lon_2, threshold):
     """
     return (distance(lat_1, lon_1, lat_2, lon_2) < threshold)
 
-def stack_rows(*args):
+def stack_rows(args):
     """Returns a structured array containing all the rows in its arguments
     
     Each argument must be a structured array with the same column names
@@ -488,12 +488,14 @@ def stack_rows(*args):
 
 def sa_from_cols(cols, col_names=None):
     """Converts a list of columns to a structured array"""
-    if len(cols > 0):
-        col0 = check_col(col0, argument_name='cols[0]')
+    if is_nd(cols):
+        cols = [cols]
+    if len(cols) > 0:
+        col0 = check_col(cols[0], argument_name='cols[0]')
         rows = col0.shape[0]
         cols = [check_col(col, n_rows=rows, 
                           argument_name='cols[{}]'.format(idx)) for
-                idx, col in cols]
+                idx, col in enumerate(cols)]
 
     sa = nprf.merge_arrays(cols, usemask=False)    
     if col_names is not None:
@@ -519,7 +521,9 @@ def append_cols(M, cols, col_names):
     numpy.ndarray
         structured array with new columns
     """
-    M = check_M(M)
+    if is_nd(cols):
+        cols = [cols]
+    M = check_sa(M)
     cols = [check_col(
         col, 
         n_rows=M.shape[0], 
@@ -598,8 +602,16 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
         joined structured array
 
     """
-    left = check_sa(left, argument_name='left')
-    right = check_sa(left, argument_name='right')
+    left, left_on = check_consistent(
+            left, 
+            col_names=left_on, 
+            M_argument_name='left',
+            col_names_argument_name='left_on')
+    right, right_on = check_consistent(
+            right, 
+            col_names=right_on,
+            M_argument_name='right',
+            col_names_argument_name='right_on')
 
     # left_on and right_on can both be strings or lists
     if isinstance(left_on, basestring):
@@ -638,7 +650,7 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
                             col_name in frozenset_left_names else
                             col_name for 
                             col_name in right_names]
-    col_names = (left_names_w_suffix + shared_on +  right_names_w_suffix)
+    col_names = (left_names_w_suffix + shared_on + right_names_w_suffix)
     col_dtypes = ([left[left_col].dtype for left_col in left_names] +
                   [left[shared_on_col].dtype for shared_on_col in shared_on] +
                   [right[right_col].dtype for right_col in right_names])

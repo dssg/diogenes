@@ -212,7 +212,7 @@ class TestUtils(unittest.TestCase):
         M2 = np.array([(3, 'c'), (4, 'd'), (5, 'e')], dtype=dtype)
         ctrl = np.array([(1, 'a'), (2, 'b'), (3, 'c'), (4, 'd'), (5, 'e')],
                         dtype=dtype)
-        res = utils.stack_rows(M1, M2)
+        res = utils.stack_rows([M1, M2])
         self.assertTrue(np.array_equal(ctrl, res))
 
     def test_from_cols(self):

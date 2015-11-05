@@ -148,19 +148,17 @@ class Experiment(object):
                 self.M = utils.cast_np_sa_to_nd(M)
         else:
             self.col_names = None
-        if clfs is not None:
+        if trials is None:
             clfs = utils.check_arguments(
                     clfs, 
                     {'clf': lambda clf: issubclass(clf, BaseEstimator)},
                     optional_keys_take_lists=True,
                     argument_name='clfs')
-        if subsets is not None:
             subsets = utils.check_arguments(
                     subsets,
                     {'subset': lambda subset: issubclass(subset, s_i.BaseSubsetIter)},
                     optional_keys_take_lists=True,
                     argument_name='subsets')
-        if cvs is not None:
             cvs = utils.check_arguments(
                     cvs,
                     {'cv': lambda cv: issubclass(cv, _PartitionIterator)},

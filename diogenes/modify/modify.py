@@ -63,13 +63,39 @@ one directive it must be in a list.
 
 from uuid import uuid4
 from collections import Counter
+import inspect
 
 import numpy as np
 from sklearn import preprocessing
 
 from diogenes.utils import (remove_cols, append_cols, distance,convert_to_sa, 
                             stack_rows, sa_from_cols, join)
+from diogenes import utils
 
+def __valid_col_select_func(f):
+    if not hasattr(f, '__call__'):
+        return False
+    argspec = inspect.getargspec(f)
+    if len(argspec.args) < 2 and argspec.varargs is None:
+        return False
+    return True
+
+def __check_args_col_select(args, argument_name='arguments'):
+    return utils.check_arguments(args, {'func': __valid_col_select_func, 'vals': None}, 
+                                 argument_name)
+
+def __valid_row_select_func(f):
+    if not hasattr(f, '__call__'):
+        return False
+    argspec = inspect.getargspec(f)
+    if len(argspec.args) < 3 and argspec.varargs is None:
+        return False
+    return True
+
+def __check_args_row_select(M, args, argument_name='arguments'):
+    return utils.check_arguments(args, {'func': __valid_col_select_func, 'vals': None, 
+                                        'col_name': lambda name: name in M.dtype.names}, 
+                                 argument_name)
 
 def choose_cols_where(M, arguments):
     """Returns a structured array containing only columns adhering to a query
@@ -87,6 +113,9 @@ def choose_cols_where(M, arguments):
         Structured array with only specified columns
 
     """
+    M = utils.check_sa(M)
+    args = __check_args_col_select(arguments)
+
     to_keep = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
         lambd, vals = (arg_set['func'], arg_set['vals'])
@@ -110,6 +139,9 @@ def remove_cols_where(M, arguments):
         Structured array without specified columns
 
     """
+    M = utils.check_sa(M)
+    args = __check_args_col_select(arguments)
+
     to_remove = np.ones(len(M.dtype), dtype=bool)
     for arg_set in arguments:
         lambd, vals = (arg_set['func'], arg_set['vals'])
@@ -252,6 +284,9 @@ def choose_rows_where(M, arguments):
         Structured array with only specified rows
 
     """
+    M = utils.check_sa(M)
+    args = __check_args_row_select(M, arguments)
+
     to_select = np.ones(M.size, dtype=bool)
     for arg_set in arguments:
         lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
@@ -275,6 +310,9 @@ def remove_rows_where(M, arguments):
         Structured array without specified rows
 
     """
+    M = utils.check_sa(M)
+    args = __check_args_row_select(M, arguments)
+
     to_remove = np.ones(M.size, dtype=bool)
     for arg_set in arguments:
         lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
@@ -298,6 +336,9 @@ def where_all_are_true(M, arguments):
         boolean array specifying which rows pass a query
 
     """
+    M = utils.check_sa(M)
+    args = __check_args_row_select(M, arguments)
+
     to_select = np.ones(M.size, dtype=bool)
     for arg_set in arguments:
         lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
@@ -463,6 +504,8 @@ def combine_cols(M, lambd, col_names):
     col_names : list of str
         Names of columns to combine
     """
+    utils.check_consistent(M, col_names=col_names)
+
     new_col = lambd(*[M[name] for name in col_names])
     return new_col
 
@@ -515,8 +558,7 @@ def label_encode(M):
         and values are arrays of the strings that belong to each class, as in:
         http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html
     """
-
-    M = convert_to_sa(M)
+    M = utils.check_sa(M)
     new_dtype = []
     result_arrays = []
     classes = {}
@@ -550,7 +592,7 @@ def replace_missing_vals(M, strategy, missing_val=np.nan, constant=0):
 
     """
     # TODO support times, strings
-    M = convert_to_sa(M)
+    M = utils.check_sa(M)
 
     if strategy not in ['mean', 'median', 'most_frequent', 'constant']:
         raise ValueError('Invalid strategy')
@@ -605,6 +647,7 @@ def generate_bin(col, num_bins):
     [0 3 0 1 2 1 2]
 
     """
+    col = utils.check_col(col)
 
     minimum = float(min(col))
     maximum = float(max(col))
@@ -635,6 +678,8 @@ def normalize(col, mean=None, stddev=None, return_fit=False):
     # Logic is from sklearn StandardScaler, but I didn't use sklearn because
     # I want to pass in mean and stddev rather than a fitted StandardScaler
     # https://github.com/scikit-learn/scikit-learn/blob/a95203b/sklearn/preprocessing/data.py#L276
+    col = utils.check_col(col)
+
     if mean is None:
         mean = np.mean(col)
     if stddev is None:
@@ -660,6 +705,9 @@ def distance_from_point(lat_origin, lng_origin, lat_col, lng_col):
     np.ndarray
 
     """
+    lat_col = utils.check_col(lat_col, argument_name='lat_col')
+    lng_col = utils.check_col(lng_col, argument_name='lng_col')
+
     return distance(lat_origin, lng_origin, lat_col, lng_col)
 
 

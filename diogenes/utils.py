@@ -1012,7 +1012,7 @@ def check_col_names(col_names, argument_name='col_names', n_cols=None):
     """
     if isinstance(col_names, basestring):
         col_names = [col_names]
-    if not isinstance(col_names, list):
+    if not (isinstance(col_names, list) or isinstance(col_names, tuple)):
         raise ValueError("Expected list or string for {}".format(
             argument_name))
     col_names = [__col_name_to_ascii(col_name, argument_name, index) for 

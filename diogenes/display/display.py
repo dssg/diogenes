@@ -186,7 +186,7 @@ def plot_prec_recall(labels, score, title='Prec/Recall', verbose=True):
 
     """
     labels = utils.check_col(labels, argument_name='labels')
-    score = utils.check_col(labels, argument_name='score')
+    score = utils.check_col(score, argument_name='score')
     # adapted from Rayid's prec/recall code
     y_true = labels
     y_score = score
@@ -237,7 +237,7 @@ def plot_roc(labels, score, title='ROC', verbose=True):
 
     """
     labels = utils.check_col(labels, argument_name='labels')
-    score = utils.check_col(labels, argument_name='score')
+    score = utils.check_col(score, argument_name='score')
     # adapted from Rayid's prec/recall code
     fpr, tpr, thresholds = roc_curve(labels, score)
     fpr = fpr
@@ -357,7 +357,7 @@ def get_roc_auc(labels, score, verbose=True):
 
     """
     labels = utils.check_col(labels, argument_name='labels')
-    score = utils.check_col(labels, argument_name='score')
+    score = utils.check_col(score, argument_name='score')
     auc_score = roc_auc_score(labels, score)
     if verbose:
         print 'ROC AUC: {}'.format(auc_score)
@@ -572,8 +572,8 @@ def feature_pairs_in_tree(dt):
         4. The outer list describes the entire tree
 
     """
-    if not isinstance(t, DecisionTreeClassifier):
-        raise ValueError('t must be an sklearn.tree.DecisionTreeClassifier')
+    if not isinstance(dt, DecisionTreeClassifier):
+        raise ValueError('dt must be an sklearn.tree.DecisionTreeClassifier')
     t = dt.tree_
     feature = t.feature
     children_left = t.children_left

@@ -199,7 +199,7 @@ class TestGridSearch(unittest.TestCase):
                       (9, 2005), 
                       (10, 2005)], dtype=[('id', int), ('year', int)])
         y = np.array([True, False, True, False, True, False, True, False,
-                      True, False])
+                      True, False, True])
         clfs = [{'clf': RandomForestClassifier,
                  'random_state': [0]}]
         cvs = [{'cv': per.SlidingWindowIdx, 

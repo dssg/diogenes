@@ -73,8 +73,6 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
     If header is False and col_names is None, diogenes will assign
     arbitrary column names
     """
-#    python_list, col_names = __open_csv_as_list(fin, delimiter, header, col_names, True)
-#    return convert_to_sa(python_list, col_names)
     df = pd.read_csv(
             fin, 
             sep=delimiter, 
@@ -89,27 +87,6 @@ def open_csv_as_sa(fin, delimiter=',', header=True, col_names=None,
     if parse_datetimes:
         fix_pandas_datetimes(df, parse_datetimes)
     sa = df.to_records(index=False)
-#    if any(['O' in dtype_str for _, dtype_str in sa.dtype.descr]):
-#        if verbose:
-#            sys.stderr.write('WARNING: Reading CSV containing non-numbers. '
-#                             'This is currently slow.\n')
-#        # Change NaN's in string columns to empty strings
-#        bag_of_cols = []
-#        new_dtype = []
-#        for col_name, dtype_str in sa.dtype.descr:
-#            col = sa[col_name]
-#            if 'O' in dtype_str:
-#                if parse_datetimes:
-#                    valid_dtime_col, col_dtime = __str_col_to_datetime(col)
-#                    if valid_dtime_col:
-#                        bag_of_cols.append(col_dtime)
-#                        continue
-#                max_str_len = max(len(max(col, key=len)), 1)
-#                new_dtype_str = 'S{}'.format(max_str_len)
-#                bag_of_cols.append(col.astype(new_dtype_str))
-#                continue
-#            bag_of_cols.append(col)
-#        sa = sa_from_cols(bag_of_cols, sa.dtype.names)
     return sa
 
 def utf_to_ascii(s):
@@ -496,13 +473,31 @@ def stack_rows(*args):
     Each argument must be a structured array with the same column names
     and column types. Similar to SQL UNION
     """
+    if len(args) > 0:
+        M0 = check_sa(args[0], argument_name='args[0]')
+        dtype0 = M0.dtype
+        checked_args = [M0]
+        for idx, M in enumerate(args[1:]):
+            M = check_sa(M)
+            if dtype0 != M.dtype:
+                raise ValueError('args[{}] does not have the same dtype as '
+                                 'args[0]'.format(idx + 1))
+            checked_args.append(M)
+        args = checked_args
     return nprf.stack_arrays(args, usemask=False)
 
 def sa_from_cols(cols, col_names=None):
     """Converts a list of columns to a structured array"""
-    # TODO take col names
+    if len(cols > 0):
+        col0 = check_col(col0, argument_name='cols[0]')
+        rows = col0.shape[0]
+        cols = [check_col(col, n_rows=rows, 
+                          argument_name='cols[{}]'.format(idx)) for
+                idx, col in cols]
+
     sa = nprf.merge_arrays(cols, usemask=False)    
     if col_names is not None:
+        col_names = check_col_names(col_names, n_cols=len(cols))
         return sa.view(
                 dtype=[(name, dtype_str) for name, (_, dtype_str) in
                        zip(col_names, sa.dtype.descr)])
@@ -524,6 +519,12 @@ def append_cols(M, cols, col_names):
     numpy.ndarray
         structured array with new columns
     """
+    M = check_M(M)
+    cols = [check_col(
+        col, 
+        n_rows=M.shape[0], 
+        argument_name='cols[{}]'.format(idx)) for idx, col in enumerate(cols)]
+    col_names = check_col_names(col_names, n_cols=len(cols))
     return nprf.append_fields(M, col_names, data=cols, usemask=False)
 
 def remove_cols(M, col_names):
@@ -541,6 +542,7 @@ def remove_cols(M, col_names):
     numpy.ndarray
         structured array without columns
     """
+    M, col_names = check_consistent(M, col_names=col_names)
     return nprf.drop_fields(M, col_names, usemask=False)
 
 def __fill_by_descr(s):
@@ -596,6 +598,8 @@ def join(left, right, how, left_on, right_on, suffixes=('_x', '_y')):
         joined structured array
 
     """
+    left = check_sa(left, argument_name='left')
+    right = check_sa(left, argument_name='right')
 
     # left_on and right_on can both be strings or lists
     if isinstance(left_on, basestring):

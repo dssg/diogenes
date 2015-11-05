@@ -128,15 +128,22 @@ class Experiment(object):
             cvs=[{'cv': KFold}],
             trials=None):
         if M is not None:
-            if utils.is_sa(M):
-                self.col_names = M.dtype.names
-                self.M = utils.cast_np_sa_to_nd(M)
-            else: # assuming an nd_array
+            if utils.is_nd(M) and not utils.is_sa(M):
+                # nd_array, short circuit the usual type checking and coersion
                 self.M = M
                 self.col_names = ['f{}'.format(i) for i in xrange(M.shape[1])]
+                self.y = utils.check_col(y, n_rows=M.shape[0], argument_name='y')
+            else:    
+                # M is either a structured array or something that should
+                # be converted
+                (self.M, self.y) = utils.check_consistent(
+                        M, 
+                        y, 
+                        col_argument_name='y')
+                self.col_names = M.dtype.names
         else:
             self.col_names = None
-        self.y = y
+        # TODO verify these args
         self.clfs = clfs
         self.subsets = subsets
         self.cvs = cvs

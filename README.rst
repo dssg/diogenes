@@ -126,7 +126,7 @@ Plot correlation between features
     fig = diogenes.display.plot_correlation_matrix(M)
 
 
-.. image:: doc/notebooks/README_files/README_14_0.png
+.. image:: doc/notebooks/README_files/README_14_1.png
 
 Arrange an experiment trying different classifiers
 
@@ -205,5 +205,4 @@ Next Steps
 
 Check out the `documentation <http://dssg.github.io/diogenes>`_
 
-Our code is available: `here <https://github.com/dssg/diogenes>`_
 

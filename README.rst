@@ -205,5 +205,4 @@ Next Steps
 
 Check out the `documentation <http://dssg.github.io/diogenes>`_
 
-Our code is available: `here <https://github.com/dssg/diogenes>`_
 

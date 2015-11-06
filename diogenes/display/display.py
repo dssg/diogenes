@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates
 from matplotlib.pylab import boxplot 
+import matplotlib
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.neighbors.kde import KernelDensity
@@ -33,6 +34,9 @@ from diogenes import utils
 if hasattr(plt, 'style'):
     # Make our plots pretty if matplotlib is new enough
     plt.style.use('ggplot')
+
+if utils.on_headless_server():
+    matplotlib.use('Agg')
 
 def pprint_sa(M, row_labels=None, col_labels=None):
     """Prints a nicely formatted Structured array (or similar object) to console

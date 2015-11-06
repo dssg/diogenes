@@ -102,7 +102,7 @@ class Experiment(object):
     ----------
     M : numpy.ndarray
         structured array corresponding to features to experiment on
-    y : numpy.ndarray
+    labels : numpy.ndarray
         vector of labels
     clfs : list of dict
         classifiers to run
@@ -124,7 +124,7 @@ class Experiment(object):
     def __init__(
             self, 
             M, 
-            y, 
+            labels, 
             clfs=[{'clf': RandomForestClassifier}], 
             subsets=[{'subset': s_i.SubsetNoSubset}], 
             cvs=[{'cv': KFold}],
@@ -136,14 +136,17 @@ class Experiment(object):
                     raise ValueError('Expected 2-dimensional array for M')
                 self.M = M
                 self.col_names = ['f{}'.format(i) for i in xrange(M.shape[1])]
-                self.y = utils.check_col(y, n_rows=M.shape[0], argument_name='y')
+                self.labels = utils.check_col(
+                        labels, 
+                        n_rows=M.shape[0], 
+                        argument_name='labels')
             else:    
                 # M is either a structured array or something that should
                 # be converted
-                (M, self.y) = utils.check_consistent(
+                (M, self.labels) = utils.check_consistent(
                         M, 
-                        y, 
-                        col_argument_name='y')
+                        labels, 
+                        col_argument_name='labels')
                 self.col_names = M.dtype.names
                 self.M = utils.cast_np_sa_to_nd(M)
         else:
@@ -185,7 +188,7 @@ class Experiment(object):
     def __copy(self, trials):
         return Experiment(
                 self.M, 
-                self.y,
+                self.labels,
                 self.clfs,
                 self.subsets,
                 self.cvs,
@@ -354,7 +357,7 @@ class Experiment(object):
                             for cv_params in self.__transpose_dict_of_lists(all_cv_ps):
                                 trial = Trial(
                                     M=self.M,
-                                    y=self.y,
+                                    labels=self.labels,
                                     col_names=self.col_names,
                                     clf=clf,
                                     clf_params=clf_params,
@@ -513,19 +516,19 @@ class Run(object):
         Homogeneous (not structured) array. The array of features.
         If M_test is None, M contains both train and test sets. If
         M_test is not None, M contains only the training set.
-    y : numpy.ndarray
-        Array of labels. If y_test is None, y contains both train and
-        test sets. If y_test is not None, M contains only the training
+    labels : numpy.ndarray
+        Array of labels. If labels_test is None, labels contains both train and
+        test sets. If labels_test is not None, M contains only the training
         set.
     col_names : list of str
         Names of features
     clf : sklearn.base.BaseEstimator
         clf fitted with testing data
     train_indices : np.ndarray or None
-        If M_test and y_test are None, The indices of M and y that 
+        If M_test and labels_test are None, The indices of M and labels that 
         comprise the training set
     test_indices : np.ndarray or None
-        If M_test and y_test are None, The indices of M and y that 
+        If M_test and labels_test are None, The indices of M and labels that 
         comprise the testing set
     sub_col_names : list of str
         If subset takes a subset of columns, these are the column names
@@ -539,7 +542,7 @@ class Run(object):
         Extra information about this run provided by the partition iterator
     M_test : np.ndarray or None
         If not None, the features in the test set
-    y_test : np.ndarray or None
+    labels_test : np.ndarray or None
         If not None, the labels in the test set
 
     Attributes
@@ -548,19 +551,19 @@ class Run(object):
         Homogeneous (not structured) array. The array of features.
         If M_test is None, M contains both train and test sets. If
         M_test is not None, M contains only the training set.
-    y : numpy.ndarray
-        Array of labels. If y_test is None, y contains both train and
-        test sets. If y_test is not None, M contains only the training
+    labels : numpy.ndarray
+        Array of labels. If labels_test is None, labels contains both train and
+        test sets. If labels_test is not None, M contains only the training
         set.
     col_names : list of str
         Names of features
     clf : sklearn.base.BaseEstimator
         clf fitted with testing data
     train_indices : np.ndarray or None
-        If M_test and y_test are None, The indices of M and y that 
+        If M_test and labels_test are None, The indices of M and labels that 
         comprise the training set
     test_indices : np.ndarray or None
-        If M_test and y_test are None, The indices of M and y that 
+        If M_test and labels_test are None, The indices of M and labels that 
         comprise the testing set
     sub_col_names : list of str
         If subset takes a subset of columns, these are the column names
@@ -574,7 +577,7 @@ class Run(object):
         Extra information about this run provided by the partition iterator
     M_test : np.ndarray or None
         If not None, the features in the test set
-    y_test : np.ndarray or None
+    labels_test : np.ndarray or None
         If not None, the labels in the test set
 
     """
@@ -582,7 +585,7 @@ class Run(object):
     def __init__(
         self,
         M,
-        y,
+        labels,
         col_names,
         clf,
         train_indices,
@@ -592,9 +595,9 @@ class Run(object):
         subset_note,
         cv_note,
         M_test=None,
-        y_test=None):
+        labels_test=None):
         self.M = M
-        self.y = y
+        self.labels = labels
         self.col_names = col_names
         self.sub_col_names = sub_col_names
         self.sub_col_inds = sub_col_inds
@@ -604,7 +607,7 @@ class Run(object):
         self.subset_note = subset_note
         self.cv_note = cv_note
         self.M_test = M_test
-        self.y_test = y_test
+        self.labels_test = labels_test
 
     def __repr__(self):
         return 'Run(clf={}, subset_note={}, cv_note={})'.format(
@@ -615,10 +618,10 @@ class Run(object):
             return self.M_test
         return self.M[np.ix_(self.test_indices, self.sub_col_inds)]
 
-    def __test_y(self):
-        if self.y_test is not None:
-            return self.y_test
-        return self.y[self.test_indices]
+    def __test_labels(self):
+        if self.labels_test is not None:
+            return self.labels_test
+        return self.labels[self.test_indices]
 
     def __pred_proba(self):
         try:
@@ -671,17 +674,20 @@ class Run(object):
 
     def score(self):
         """Returns score of fitted clf"""
-        return self.clf.score(self.__test_M(), self.__test_y())
+        return self.clf.score(self.__test_M(), self.__test_labels())
 
     def roc_curve(self):
         """Returns matplotlib.figure.Figure of ROC curve"""
         from ..display import plot_roc
-        return plot_roc(self.__test_y(), self.__pred_proba(), verbose=False)
+        return plot_roc(
+                self.__test_labels(), 
+                self.__pred_proba(), 
+                verbose=False)
 
     def prec_recall_curve(self):
         """Returns matplotlib.figure.Figure of precision/recall curve"""
         from ..display import plot_prec_recall
-        return plot_prec_recall(self.__test_y(), self.__pred_proba(), 
+        return plot_prec_recall(self.__test_labels(), self.__pred_proba(), 
                                 verbose=False)
    
     def sorted_top_feat_importance(self, n = 25):
@@ -710,7 +716,7 @@ class Run(object):
 
     def f1_score(self):
         """Returns f1 score"""
-        return f1_score(self.__test_y(), self.__predict())
+        return f1_score(self.__test_labels(), self.__predict())
 
     def precision_at_thresholds(self, query_thresholds):
         """Returns precision at given thresholds
@@ -725,18 +731,18 @@ class Run(object):
         list of float
 
         """
-        y_true = self.__test_y()
-        y_score = self.__pred_proba()
+        labels_true = self.__test_labels()
+        labels_score = self.__pred_proba()
         prec, _, thresh = precision_recall_curve(
-                y_true, 
-                y_score)
+                labels_true, 
+                labels_score)
 
         # Adopted from Rayid's code
         precision_curve = prec[:-1]
         pct_above_per_thresh = []
-        number_scored = len(y_score)
+        number_scored = len(labels_score)
         for value in thresh:
-            num_above_thresh = len(y_score[y_score>=value])
+            num_above_thresh = len(labels_score[labels_score>=value])
             pct_above_thresh = num_above_thresh / float(number_scored)
             pct_above_per_thresh.append(pct_above_thresh)
         pct_above_per_thresh = np.array(pct_above_per_thresh)
@@ -753,7 +759,7 @@ class Run(object):
     def roc_auc(self):
         """Returns area under ROC curve"""
         try:
-            return roc_auc_score(self.__test_y(), self.__pred_proba())
+            return roc_auc_score(self.__test_labels(), self.__pred_proba())
         # If there was only one class
         except ValueError:
             return 0
@@ -798,7 +804,7 @@ class Trial(object):
     ----------
     M : numpy.ndarray
         Homogeneous (not structured) array of features
-    y : numpy.ndarray
+    labels : numpy.ndarray
         Array of labels
     col_names : list of str
         Names of features
@@ -822,7 +828,7 @@ class Trial(object):
     ----------
     M : numpy.ndarray
         Homogeneous (not structured) array of features
-    y : numpy.ndarray
+    labels : numpy.ndarray
         Array of labels
     col_names : list of str
         Names of features
@@ -847,7 +853,7 @@ class Trial(object):
     def __init__(
         self, 
         M,
-        y,
+        labels,
         col_names,
         clf=RandomForestClassifier,
         clf_params={},
@@ -857,7 +863,7 @@ class Trial(object):
         cv_params={},
         runs=None):
         self.M = M
-        self.y = y
+        self.labels = labels
         self.col_names = col_names 
         self.runs = runs
         self.clf = clf
@@ -908,11 +914,11 @@ class Trial(object):
             return self.runs
         runs = []
         for subset, sub_col_names, subset_note in self.subset(
-                self.y, 
+                self.labels, 
                 self.col_names, 
                 **self.subset_params):
             runs_this_subset = []
-            y_sub = self.y[subset]
+            labels_sub = self.labels[subset]
             sub_col_inds = self.__indices_of_sublist(
                 self.col_names, 
                 sub_col_names)
@@ -922,9 +928,11 @@ class Trial(object):
             cv_kwargs = copy.deepcopy(self.cv_params)
             expected_cv_kwargs = inspect.getargspec(cv_cls.__init__).args
             if 'n' in expected_cv_kwargs:
-                cv_kwargs['n'] = y_sub.shape[0]
+                cv_kwargs['n'] = labels_sub.shape[0]
             if 'y' in expected_cv_kwargs:
-                cv_kwargs['y'] = y_sub
+                cv_kwargs['y'] = labels_sub
+            if 'labels' in expected_cv_kwargs:
+                cv_kwargs['labels'] = labels_sub
             if 'M' in expected_cv_kwargs:
                 cv_kwargs['M'] = M_sub
             if 'col_names' in expected_cv_kwargs:
@@ -936,12 +944,12 @@ class Trial(object):
                 else:
                     cv_note = {'fold': fold_idx}
                 clf_inst = self.clf(**self.clf_params)
-                clf_inst.fit(M_sub[train], y_sub[train])
+                clf_inst.fit(M_sub[train], labels_sub[train])
                 test_indices = subset[test]
                 train_indices = subset[train]
                 runs_this_subset.append(Run(
                     self.M, 
-                    self.y, 
+                    self.labels, 
                     self.col_names, 
                     clf_inst, 
                     train_indices, 
@@ -1026,9 +1034,4 @@ class Trial(object):
         
         """
         return self.median_run().prec_recall_curve()
-
-
-
-
-    
 

@@ -1080,3 +1080,7 @@ def check_consistent(M, col=None, col_names=None,
     if col_names is not None:
         ret.append(col_names)
     return ret
+
+def on_headless_server():
+    """True iff the host doesn't appear to have a display to plot to"""
+    return not os.environ.has_key('DISPLAY')

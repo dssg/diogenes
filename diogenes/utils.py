@@ -318,6 +318,9 @@ def convert_to_sa(M, col_names=None):
     if is_nd(M):
         return __cast_np_nd_to_sa(M, col_names=col_names)
 
+    if isinstance(M, pd.DataFrame):
+        return M.to_records(index=False)
+
     if isinstance(M, list):
         return cast_list_of_list_to_sa(M, col_names=col_names)
         # TODO make sure this function ^ ensures list of /lists/

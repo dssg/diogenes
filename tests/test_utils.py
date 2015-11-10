@@ -378,7 +378,8 @@ class TestUtils(unittest.TestCase):
                           dtype=[('int', int), ('s', 'S0')])
         valid2 = np.array([[1, 2, 3], [4, 5, 6]])
         valid3 = [[1, 2, 3], [4, 5, 6]]
-        for valid in (valid1, valid2, valid3):
+        valid4 = pd.DataFrame(valid1)
+        for valid in (valid1, valid2, valid3, valid4):
             self.assertTrue(utils.is_sa(utils.check_sa(valid)))
 
         self.assertRaises(ValueError, utils.check_sa, None)
@@ -392,7 +393,8 @@ class TestUtils(unittest.TestCase):
         valid1 = np.array([1, 2, 3, 4])
         valid2 = np.array([[1.0], [2], [3], [4]])
         valid3 = [3.0, 2.0, 1.8]
-        for valid in (valid1, valid2, valid3):
+        valid4 = pd.Series(valid1)
+        for valid in (valid1, valid2, valid3, valid4):
             self.assertTrue(utils.is_nd(utils.check_col(valid)))
 
         self.assertRaises(ValueError, utils.check_col, None)

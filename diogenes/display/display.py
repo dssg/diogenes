@@ -923,6 +923,7 @@ class Report(object):
         x = xrange(len(results))
         fig = plt.figure()
         plt.bar(x, y)
+        fig.set_size_inches(8, fig.get_size_inches()[1])
         maxy = max(y)
         for rank, result in enumerate(results_sorted):
             plt.text(rank, result[1], '{}'.format(result[2]))

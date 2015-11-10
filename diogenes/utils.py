@@ -299,7 +299,7 @@ def convert_to_sa(M, col_names=None):
     """Converts an list of lists or a np ndarray to a Structured Arrray
     Parameters
     ----------
-    M  : List of List or np.ndarray
+    M  : List of List or np.ndarray or pandas.Dataframe
        This is the Matrix M, that it is assumed is the basis for the ML algorithm
     col_names : list of str or None
         Column names for new sa. If M is already a structured array, col_names

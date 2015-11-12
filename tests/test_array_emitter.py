@@ -148,6 +148,32 @@ class TestArrayEmitter(unittest.TestCase):
         exp.make_report(verbose=False)
         exp.make_csv()
 
+    def test_feature_gen_lambda(self):
+        #TODO
+        db_file = uft.path_of_data('rg_subset_over.db')
+        conn_str = 'sqlite:///{}'.format(db_file)
+        ae = array_emitter.ArrayEmitter()
+        ae = ae.get_rg_from_sql(conn_str, 'subset_over')
+        ae = ae.set_default_aggregation('SUM')
+        exp = ae.subset_over(
+            label_col='label',
+            interval_train_window_start=2004,
+            interval_train_window_size=1,
+            interval_test_window_start=2006,
+            interval_test_window_size=1,
+            interval_inc_value=1,
+            interval_expanding=False,
+            row_M_col_name='cohort',
+            row_M_train_window_start=2008,
+            row_M_train_window_size=0,
+            row_M_test_window_start=2009,
+            row_M_test_window_size=0,
+            row_M_inc_value=1,
+            row_M_expanding=False,
+            clfs=DBG_std_clfs)
+        exp.make_report(verbose=False)
+        exp.make_csv()
+
 
 if __name__ == '__main__':
     unittest.main()

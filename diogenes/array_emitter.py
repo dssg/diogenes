@@ -626,7 +626,8 @@ class ArrayEmitter(object):
             row_M_test_window_size=None,
             row_M_inc_value=None,
             row_M_expanding=False,
-            clfs=[{'clf': RandomForestClassifier}]):
+            clfs=[{'clf': RandomForestClassifier}],
+            feature_gen_lambda=None):
         """
         Generates ArrayGenerators according to some subsetting directive.
 
@@ -688,6 +689,19 @@ class ArrayEmitter(object):
         clfs : list of dict
             classifiers and parameters to run with each train/test set. See
             documentation for diogenes.grid_search.experiment.Experiment.
+        feature_gen_lambda : (np.ndarray, str, ?, ?, ?, ?) -> np.ndarray or None
+            If not None,function to by applied to generated arrays before they 
+            are fit to classifiers. Must be a function of signature:
+
+            f(M, test_or_train, interval_start, interval_end, row_M_start,
+              row_M_end)
+
+            Where:
+            * M is the generated array, 
+            * test_or_train is 'test' if this is a test set or 'train' if it's
+              a train set
+            * interval_start and interval_end define the interval
+            * row_M_start and row_M_end define the rows of M that are included
 
         Returns
         -------
@@ -770,6 +784,22 @@ class ArrayEmitter(object):
             data_test = ae_test.emit_M()
             M_test = utils.remove_cols(data_test, label_col)
             y_test = data_test[label_col]
+
+            if feature_gen_lambda is not None:
+                M_train = feature_gen_lambda(
+                        M_train, 
+                        'train', 
+                        current_interval_train_start,
+                        current_interval_train_end,
+                        current_row_M_train_start,
+                        current_row_M_train_end)
+                M_test = feature_gen_lambda(
+                        M_test,
+                        'test',
+                        current_interval_test_start,
+                        current_interval_test_end,
+                        current_row_M_test_start,
+                        current_row_M_test_end)
 
             col_names = M_train.dtype.names
             M_train_nd = utils.cast_np_sa_to_nd(M_train)

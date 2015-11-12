@@ -1,10 +1,12 @@
 import unittest
+import itertools as it
 from datetime import datetime
 import numpy as np
 
 import utils_for_tests as uft
 from diogenes import array_emitter
 from diogenes.grid_search.standard_clfs import DBG_std_clfs
+from diogenes.utils import append_cols
 
 class TestArrayEmitter(unittest.TestCase):
 
@@ -149,6 +151,11 @@ class TestArrayEmitter(unittest.TestCase):
         exp.make_csv()
 
     def test_feature_gen_lambda(self):
+
+        def feature_gen(M, test_or_train, interval_start, interval_end, 
+                        row_M_start, row_M_end):
+            return append_cols(M, M['relevent_feature'] * 2 if test_or_train == 'test' 
+                               else M['relevent_feature'] * 3, 'mult')
         #TODO
         db_file = uft.path_of_data('rg_subset_over.db')
         conn_str = 'sqlite:///{}'.format(db_file)
@@ -170,9 +177,16 @@ class TestArrayEmitter(unittest.TestCase):
             row_M_test_window_size=0,
             row_M_inc_value=1,
             row_M_expanding=False,
-            clfs=DBG_std_clfs)
-        exp.make_report(verbose=False)
-        exp.make_csv()
+            clfs=DBG_std_clfs,
+            feature_gen_lambda=feature_gen)
+        for run in it.chain.from_iterable([trial.runs_flattened() for trial in exp.trials]):
+            relevent_idx = run.col_names.index('relevent_feature')
+            mult_idx = run.col_names.index('mult')
+            self.assertTrue(
+                    np.allclose(run.M[:,relevent_idx] * 3, run.M[:,mult_idx]))
+            self.assertTrue(
+                    np.allclose(run.M_test[:,relevent_idx] * 2, 
+                                run.M_test[:,mult_idx]))
 
 
 if __name__ == '__main__':

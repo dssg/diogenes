@@ -626,8 +626,8 @@ class ArrayEmitter(object):
             row_M_test_window_size=None,
             row_M_inc_value=None,
             row_M_expanding=False,
-            clfs=[{'clf': RandomForestClassifier}]),
-            feature_gen_lambda=None:
+            clfs=[{'clf': RandomForestClassifier}],
+            feature_gen_lambda=None):
         """
         Generates ArrayGenerators according to some subsetting directive.
 

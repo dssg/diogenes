@@ -950,12 +950,12 @@ def check_arguments(args, required_keys, optional_keys_take_lists=False,
 
         If a key in required_keys has the value None, then the corresponding
         key in args will not be verified.
-    argument_name : str
-        Name of variable that was supposed to be in argument format
     optional_keys_take_lists : bool
         Iff True, will make sure that arguments for keys in args that are
         not required_keys have values that are lists. This is a consolation
         to diogenes.grid_search.Experiment
+    argument_name : str
+        Name of variable that was supposed to be in argument format
 
     Returns
     -------

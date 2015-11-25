@@ -16,6 +16,7 @@ from diogenes.modify import col_val_eq
 from diogenes.modify import col_val_eq_any
 from diogenes.modify import col_fewer_than_n_nonzero
 from diogenes.modify import where_all_are_true 
+from diogenes.modify import choose_rows_where 
 from diogenes.modify import remove_rows_where
 from diogenes.modify import row_val_eq
 from diogenes.modify import row_val_lt 
@@ -144,7 +145,50 @@ class TestModify(unittest.TestCase):
         res = where_all_are_true(
             M, 
             arguments)
+
         ctrl = np.array([True, False, False])
+                   
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_choose_rows_where(self):
+        M = [[1,2,3], [2,3,4], [3,4,5]]
+        col_names = ['heigh','weight', 'age']
+        lables= [0,0,1]
+        M = diogenes.utils.cast_list_of_list_to_sa(
+            M,
+            col_names=col_names)
+
+        arguments = [{'func': row_val_eq, 'col_name': 'heigh', 'vals': 1},
+                     {'func': row_val_lt, 'col_name': 'weight', 'vals': 3},
+                     {'func': row_val_between, 'col_name': 'age', 'vals': 
+                      (3, 4)}]
+
+        res = choose_rows_where(
+            M, 
+            arguments)
+
+        ctrl = cast_list_of_list_to_sa([[1,2,3]],col_names=['heigh','weight', 'age'])
+                   
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_remove_rows_where(self):
+        M = [[1,2,3], [2,3,4], [3,4,5]]
+        col_names = ['heigh','weight', 'age']
+        lables= [0,0,1]
+        M = diogenes.utils.cast_list_of_list_to_sa(
+            M,
+            col_names=col_names)
+
+        arguments = [{'func': row_val_eq, 'col_name': 'heigh', 'vals': 1},
+                     {'func': row_val_lt, 'col_name': 'weight', 'vals': 3},
+                     {'func': row_val_between, 'col_name': 'age', 'vals': 
+                      (3, 4)}]
+
+        res = remove_rows_where(
+            M, 
+            arguments)
+
+        ctrl = cast_list_of_list_to_sa([[2,3,4],[3,4,5]],col_names=['heigh','weight', 'age'])
                    
         self.assertTrue(np.array_equal(res, ctrl))
 

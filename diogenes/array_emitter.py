@@ -878,18 +878,75 @@ def M_to_rg(conn_str, from_table, to_table, unit_id_col,
     _remove_if_present(feature_cols, unit_id_col)
     _remove_if_present(feature_cols, start_time_col)
     _remove_if_present(feature_cols, stop_time_col)
-    sql = ("INSERT INTO {to_table} (unit_id, start_time, end_time, feat, val) "
-           "SELECT {unit_id_col}, {start_time_col}, {stop_time_col}, "
-           "        '{{feat_col}}', {{feat_col}} "
-           "FROM {from_table} WHERE {{feat_col}} IS NOT NULL").format(
-                   to_table=to_table,
-                   unit_id_col=unit_id_col,
-                   start_time_col=(start_time_col if start_time_col is not None
-                                   else 'NULL'),
-                   stop_time_col=(stop_time_col if stop_time_col is not None
-                                  else 'NULL'),
-                   from_table=from_table)
+    sql_numeric = ("INSERT INTO {to_table} (unit_id, start_time, end_time, "
+                   "                        feat, val) "
+                   "SELECT {unit_id_col}, {start_time_col}, {stop_time_col}, "
+                   "        '{{feat_col}}', {{feat_col}} "
+                   "FROM {from_table} WHERE {{feat_col}} IS NOT NULL").format(
+                       to_table=to_table,
+                       unit_id_col=unit_id_col,
+                       start_time_col=(start_time_col if start_time_col is not None
+                                       else 'NULL'),
+                       stop_time_col=(stop_time_col if stop_time_col is not None
+                                      else 'NULL'),
+                       from_table=from_table)
+    sql_boolean = ("INSERT INTO {to_table} (unit_id, start_time, end_time, "
+                   "                        feat, val) "
+                   "SELECT {unit_id_col}, {start_time_col}, {stop_time_col}, "
+                   "        '{{feat_col}}', "
+                   "        CASE WHEN {{feat_col}} THEN 1 ELSE 0 END "
+                   "FROM {from_table} WHERE {{feat_col}} IS NOT NULL").format(
+                       to_table=to_table,
+                       unit_id_col=unit_id_col,
+                       start_time_col=(start_time_col if start_time_col is not None
+                                       else 'NULL'),
+                       stop_time_col=(stop_time_col if stop_time_col is not None
+                                      else 'NULL'),
+                       from_table=from_table)
+    sql_char_encode_table_name = ('{to_table}_encode_{from_table}_'
+                                  '{{feat_col}}').format(
+            from_table=from_table.replace('.', '_'),
+            to_table=to_table)
+    sql_char = ("DROP TABLE IF EXISTS {encode_table}; "
+                "CREATE TABLE {encode_table} AS "
+                "   SELECT DISTINCT {{feat_col}} AS val, "
+                "       RANK() OVER(ORDER BY {{feat_col}}) AS encoding "
+                "   FROM {from_table}; "
+                "INSERT INTO {to_table} (unit_id, start_time, end_time, "
+                "                        feat, val) "
+                "   SELECT {from_table}.{unit_id_col}, "
+                "       {start_time_col}, "
+                "       {stop_time_col}, "
+                "       '{{feat_col}}', "
+                "       {encode_table}.encoding "
+                "   FROM {from_table} JOIN {encode_table} "
+                "   ON {from_table}.{{feat_col}} = {encode_table}.val "
+                "   WHERE {from_table}.{{feat_col}} IS NOT NULL ").format(
+                       to_table=to_table,
+                       unit_id_col=unit_id_col,
+                       start_time_col=(from_table + '.' + start_time_col if 
+                                       start_time_col is not None
+                                       else 'NULL'),
+                       stop_time_col=(from_table + '.' + stop_time_col if 
+                                      stop_time_col is not None
+                                      else 'NULL'),
+                       from_table=from_table,
+                       encode_table=sql_char_encode_table_name)
+    sql_test = ("SELECT {{feat_col}} FROM {from_table} "
+                "WHERE {{feat_col}} IS NOT NULL LIMIT 1").format(
+                        from_table=from_table)
     for feat_col in feature_cols:
+        sql = sql_test.format(feat_col=feat_col)
+        type_test = conn.execute(sql)
+        type_test_char = type_test.dtype[0].char
+        if type_test_char in ('O', 'S'): # string dtype. Must encode
+            sql = sql_char.format(feat_col=feat_col)
+        elif type_test_char == '?': # boolean. Must translate to int
+            sql = sql_boolean.format(feat_col=feat_col)
+        else: # numeric dtype. Leave as is
+            sql = sql_numeric.format(feat_col=feat_col)
+        print sql
+        import pdb; pdb.set_trace()
         conn.execute(sql.format(feat_col=feat_col))
 
 

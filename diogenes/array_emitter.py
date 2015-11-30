@@ -946,7 +946,6 @@ def M_to_rg(conn_str, from_table, to_table, unit_id_col,
         else: # numeric dtype. Leave as is
             sql = sql_numeric.format(feat_col=feat_col)
         print sql
-        import pdb; pdb.set_trace()
         conn.execute(sql.format(feat_col=feat_col))
 
 

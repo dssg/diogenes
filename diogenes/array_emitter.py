@@ -857,3 +857,39 @@ class ArrayEmitter(object):
                 [{'subset': 'Array Emitter'}],
                 [{'cv': 'Array Emitter'}],
                 trials)
+
+def _remove_if_present(l, item):
+    try:
+        l.remove(item)
+    except ValueError:
+        pass
+
+def M_to_rg(conn_str, from_table, to_table, unit_id_col, 
+            start_time_col=None, stop_time_col=None, feature_cols=None):
+    conn = connect_sql(conn_str, allow_pgres_copy_optimization=True)
+    sql = ('CREATE TABLE IF NOT EXISTS {} '
+           '(row_id SERIAL PRIMARY KEY, unit_id INT, start_time TIMESTAMP, '
+           ' end_time TIMESTAMP, feat TEXT, val REAL);').format(to_table)
+    conn.execute(sql)
+    if feature_cols is None:
+        sql = 'SELECT * FROM {} LIMIT 1'.format(from_table)
+        feature_cols = conn.execute(sql).dtype.names
+    feature_cols = list(feature_cols)
+    _remove_if_present(feature_cols, unit_id_col)
+    _remove_if_present(feature_cols, start_time_col)
+    _remove_if_present(feature_cols, stop_time_col)
+    sql = ("INSERT INTO {to_table} (unit_id, start_time, end_time, feat, val) "
+           "SELECT {unit_id_col}, {start_time_col}, {stop_time_col}, "
+           "        '{{feat_col}}', {{feat_col}} "
+           "FROM {from_table} WHERE {{feat_col}} IS NOT NULL").format(
+                   to_table=to_table,
+                   unit_id_col=unit_id_col,
+                   start_time_col=(start_time_col if start_time_col is not None
+                                   else 'NULL'),
+                   stop_time_col=(stop_time_col if stop_time_col is not None
+                                  else 'NULL'),
+                   from_table=from_table)
+    for feat_col in feature_cols:
+        conn.execute(sql.format(feat_col=feat_col))
+
+

@@ -200,6 +200,9 @@ class ArrayEmitter(object):
         self.__convert_to_unix_time = convert_to_unix_time
         self.__start_time = None
         self.__stop_time = None
+        self.__label_feature = None
+        self.__label_start_time = None
+        self.__label_stop_time = None
 
     def __copy(self):
         cp = ArrayEmitter()
@@ -212,6 +215,9 @@ class ArrayEmitter(object):
         cp.__convert_to_unix_time = self.__convert_to_unix_time 
         cp.__start_time = self.__start_time
         cp.__stop_time = self.__stop_time
+        cp.__label_feature = self.__label_feature
+        cp.__label_start_time = self.__label_start_time
+        cp.__label_stop_time = self.__label_stop_time
         return cp
 
     def get_rg_from_sql(self, conn_str, table_name, unit_id_col=None, 
@@ -347,6 +353,11 @@ class ArrayEmitter(object):
         # SQLite doesn't really have datetimes, so we transparently translate
         # to unix times.
         cp.__convert_to_unix_time = True
+        return cp
+
+    def set_label_feature(self, feature_name):
+        cp = self.__copy()
+        cp.__label_feature_name = feature_name
         return cp
 
     def set_aggregation(self, feature_name, method):
@@ -502,6 +513,12 @@ class ArrayEmitter(object):
         cp.__start_time = start_time
         cp.__stop_time = stop_time
         return cp
+
+    def set_label_interval(self, start_time, stop_time):
+        cp = self.__copy()
+        cp.__label_start_time = start_time
+        cp.__label_stop_time = stop_time
+        return cp
         
     def __resolve_cols(self):
         col_specs = self.__col_specs
@@ -520,28 +537,39 @@ class ArrayEmitter(object):
             if col_specs[spec] is None:
                 col_specs[spec] = unspecified_col_names.pop(0)
 
+    def __clean_time(self, time):
+        if self.__convert_to_unix_time:
+            time = utils.to_unix_time(time)
+        try:
+            float(time)
+        except ValueError:
+            time = "'{}'".format(time)
+        return time
+
     def get_query(self):
         """Returns SQL query that will be used to create the M-formatted table
         """
-        start_time = self.__start_time
-        stop_time = self.__stop_time
-        if self.__convert_to_unix_time:
-            start_time = utils.to_unix_time(start_time)
-            stop_time = utils.to_unix_time(stop_time)
-        try:
-            # If times are numbers, their string representations don't have
-            # surrounding single quotes. Otherwise, they do
-            float(start_time)
-        except ValueError:
-            start_time = "'{}'".format(start_time)
-        try:
-            float(stop_time)
-        except ValueError:
-            stop_time = "'{}'".format(start_time)
+        start_time = self.__clean_time(self.__start_time)
+        stop_time = self.__clean_time(self.__stop_time)
 
         col_specs = self.__col_specs
         conn = self.__conn
         table_name = self.__rg_table_name
+
+        label_feature_name = self.__label_feature_name
+        label_start_time = self.__label_start_time
+        label_end_time = self.__label_end_time
+
+        if label_feature_name is not None:
+            if label_start_time is None:
+                label_start_time = start_time
+            else:
+                label_start_time = self.__clean_time(label_start_time)
+            if label_end_time is None:
+                label_end_time = end_time
+            else:
+                label_end_time = self.__clean_time(label_end_time)
+
 
         # get all features
         sql_features = 'SELECT DISTINCT {} FROM {};'.format(
@@ -582,9 +610,13 @@ class ArrayEmitter(object):
                   table_name=table_name,
                   feature_col=col_specs['feature'],
                   start_time_col=col_specs['start_time'],
-                  start_time=start_time,
+                  start_time=(label_start_time if 
+                              feat_name == label_feature_name else
+                              start_time),
                   stop_time_col=col_specs['stop_time'],
-                  stop_time=stop_time,
+                  stop_time=(label_stop_time if
+                             feat_name == label_feature_name else
+                             stop_time),
                   feat_name=feat_name) for feat_name in feat_names])
         # TODO we can probably do something more sophisticated than just 
         # throwing the user's directives in here

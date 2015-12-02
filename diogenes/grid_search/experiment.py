@@ -496,6 +496,8 @@ dimension_descr = {CLF: 'classifier',
 all_subset_notes = sorted(['sample_num', 'rows', 'prop_positive', 
                            'excluded_col', 'max_grade', 'train_interval_start',
                            'train_interval_end', 'test_interval_start', 
+                           'train_interval_label_start', 'train_interval_label_end',
+                           'test_interval_label_start', 'test_interval_label_end',
                            'test_interval_end'])
 
 all_subset_notes_backindex = {name: i for i, name in 

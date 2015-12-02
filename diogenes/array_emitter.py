@@ -651,6 +651,12 @@ class ArrayEmitter(object):
             interval_test_window_size,
             interval_inc_value,
             interval_expanding=False,
+            label_interval_train_window_start=None,
+            label_interval_train_window_size=None,
+            label_interval_test_window_start=None,
+            label_interval_test_window_size=None,
+            label_interval_inc_value=None,
+            label_interval_expanding=False,
             row_M_col_name=None,
             row_M_train_window_start=None,
             row_M_train_window_size=None,
@@ -779,24 +785,48 @@ class ArrayEmitter(object):
             for param_dict in utils.transpose_dict_of_lists(all_clf_ps):
                 trial_directives.append((clf, param_dict, []))
 
+        if label_interval_train_window_start is None:
+            label_interval_train_window_start = interval_train_window_start
+        if label_interval_train_window_size is None:
+            label_interval_train_window_size = interval_train_window_size
+        if label_interval_test_window_start is None:
+            label_interval_test_window_start = interval_test_window_start
+        if label_interval_test_window_size is None:
+            label_interval_test_window_size = interval_test_window_size
+        if label_interval_inc_value is None:
+            label_interval_inc_value = interval_inc_value
+
         current_interval_train_start = interval_train_window_start
         current_interval_train_end = (interval_train_window_start + 
                                       interval_train_window_size)
         current_interval_test_start = interval_test_window_start
         current_interval_test_end = (interval_test_window_start + 
                                       interval_test_window_size)
+        current_label_interval_train_start = label_interval_train_window_start
+        current_label_interval_train_end = (label_interval_train_window_start + 
+                                      label_interval_train_window_size)
+        current_label_interval_test_start = label_interval_test_window_start
+        current_label_interval_test_end = (label_interval_test_window_start + 
+                                      label_interval_test_window_size)
         current_row_M_train_start = row_M_train_window_start
         current_row_M_train_end = (row_M_train_window_start + 
                                       row_M_train_window_size)
         current_row_M_test_start = row_M_test_window_start
         current_row_M_test_end = (row_M_test_window_start + 
                                       row_M_test_window_size)
+        ae = self.set_label_feature(label_col)
         while (current_interval_test_end <= interval_end and
                current_row_M_test_end <= row_M_end):
-            ae_train = self.set_interval(current_interval_train_start,
+            ae_train = ae.set_interval(current_interval_train_start,
                                         current_interval_train_end)
-            ae_test = self.set_interval(current_interval_test_start,
+            ae_train = ae_train.set_label_interval(
+                    current_label_interval_train_start,
+                    current_label_interval_train_end)
+            ae_test = ae.set_interval(current_interval_test_start,
                                         current_interval_test_end)
+            ae_test = ae_test.set_label_interval(
+                    current_label_interval_test_start,
+                    current_label_interval_test_end)
             if row_M_col_name is not None:
                 ae_train = ae_train.select_rows_in_M(
                         '{col} >= {start} AND {col} <= {stop}'.format(
@@ -823,6 +853,8 @@ class ArrayEmitter(object):
                         'train', 
                         current_interval_train_start,
                         current_interval_train_end,
+                        current_interval_label_train_start,
+                        current_interval_label_train_end,
                         current_row_M_train_start,
                         current_row_M_train_end)
                 M_test = feature_gen_lambda(
@@ -830,6 +862,8 @@ class ArrayEmitter(object):
                         'test',
                         current_interval_test_start,
                         current_interval_test_end,
+                        current_interval_label_test_start,
+                        current_interval_label_test_end,
                         current_row_M_test_start,
                         current_row_M_test_end)
 
@@ -852,7 +886,11 @@ class ArrayEmitter(object):
                     {'train_interval_start': current_interval_train_start,
                      'train_interval_end': current_interval_train_end,
                      'test_interval_start': current_interval_test_start,
-                     'test_interval_end': current_interval_test_end},
+                     'test_interval_end': current_interval_test_end,
+                     'train_interval_label_start': current_interval_label_train_start,
+                     'train_interval_label_end': current_interval_label_train_end,
+                     'test_interval_label_start': current_interval_label_test_start,
+                     'test_interval_label_end': current_interval_label_test_end},
                     {'train_start': current_row_M_train_start,
                      'train_end': current_row_M_train_end,
                      'test_start': current_row_M_test_start,
@@ -865,6 +903,11 @@ class ArrayEmitter(object):
             current_interval_train_end += interval_inc_value
             current_interval_test_start += interval_inc_value
             current_interval_test_end += interval_inc_value
+            if not label_interval_expanding:
+                current_label_interval_train_start += label_interval_inc_value
+            current_label_interval_train_end += label_interval_inc_value
+            current_label_interval_test_start += label_interval_inc_value
+            current_label_interval_test_end += label_interval_inc_value
             if not row_M_expanding:
                 current_row_M_train_start += row_M_inc_value
             current_row_M_train_end += row_M_inc_value

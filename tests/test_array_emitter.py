@@ -160,7 +160,7 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.get_rg_from_sql(conn_str, 'rg_label_windows')
         ae = ae.set_default_aggregation('SUM')
         exp = ae.subset_over(
-            label_col='label',
+            label_col='inspection',
             interval_train_window_start=2000,
             interval_train_window_size=1,
             interval_test_window_start=2002,

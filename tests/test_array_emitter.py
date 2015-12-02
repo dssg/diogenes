@@ -17,13 +17,16 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.get_rg_from_sql(conn_str, 'rg_students')
         ae = ae.set_aggregation('absences', 'MAX')
         ae = ae.set_interval(2005, 2007)
+        ae = ae.set_label_feature('graduated')
+        ae = ae.set_label_interval(2009, 2009)
         res = ae.emit_M()
-        ctrl = np.array([(0, 2.2, 3.95, 8.0),
-                         (1, 3.45, np.nan, 0.0),
-                         (2, 3.4, np.nan, 96.0)],
+        ctrl = np.array([(0, 2.2, 3.95, 8.0, 1.0),
+                         (1, 3.45, np.nan, 0.0, 0.0),
+                         (2, 3.4, np.nan, 96.0, np.nan)],
                         dtype=[('id', '<i8'), ('math_gpa', '<f8'), 
                                ('english_gpa', '<f8'), 
-                               ('absences', '<f8')])
+                               ('absences', '<f8'),
+                               ('graduated', '<f8')])
         self.assertTrue(uft.array_equal(res, ctrl))
 
     def test_complex_date(self):

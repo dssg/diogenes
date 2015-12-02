@@ -200,7 +200,7 @@ class ArrayEmitter(object):
         self.__convert_to_unix_time = convert_to_unix_time
         self.__start_time = None
         self.__stop_time = None
-        self.__label_feature = None
+        self.__label_feature_name = None
         self.__label_start_time = None
         self.__label_stop_time = None
 
@@ -215,7 +215,7 @@ class ArrayEmitter(object):
         cp.__convert_to_unix_time = self.__convert_to_unix_time 
         cp.__start_time = self.__start_time
         cp.__stop_time = self.__stop_time
-        cp.__label_feature = self.__label_feature
+        cp.__label_feature_name = self.__label_feature_name
         cp.__label_start_time = self.__label_start_time
         cp.__label_stop_time = self.__label_stop_time
         return cp
@@ -558,17 +558,17 @@ class ArrayEmitter(object):
 
         label_feature_name = self.__label_feature_name
         label_start_time = self.__label_start_time
-        label_end_time = self.__label_end_time
+        label_stop_time = self.__label_stop_time
 
         if label_feature_name is not None:
             if label_start_time is None:
                 label_start_time = start_time
             else:
                 label_start_time = self.__clean_time(label_start_time)
-            if label_end_time is None:
-                label_end_time = end_time
+            if label_stop_time is None:
+                label_stop_time = end_time
             else:
-                label_end_time = self.__clean_time(label_end_time)
+                label_stop_time = self.__clean_time(label_stop_time)
 
 
         # get all features

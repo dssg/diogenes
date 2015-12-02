@@ -853,8 +853,8 @@ class ArrayEmitter(object):
                         'train', 
                         current_interval_train_start,
                         current_interval_train_end,
-                        current_interval_label_train_start,
-                        current_interval_label_train_end,
+                        current_label_interval_train_start,
+                        current_label_interval_train_end,
                         current_row_M_train_start,
                         current_row_M_train_end)
                 M_test = feature_gen_lambda(
@@ -862,8 +862,8 @@ class ArrayEmitter(object):
                         'test',
                         current_interval_test_start,
                         current_interval_test_end,
-                        current_interval_label_test_start,
-                        current_interval_label_test_end,
+                        current_label_interval_test_start,
+                        current_label_interval_test_end,
                         current_row_M_test_start,
                         current_row_M_test_end)
 
@@ -887,10 +887,10 @@ class ArrayEmitter(object):
                      'train_interval_end': current_interval_train_end,
                      'test_interval_start': current_interval_test_start,
                      'test_interval_end': current_interval_test_end,
-                     'train_interval_label_start': current_interval_label_train_start,
-                     'train_interval_label_end': current_interval_label_train_end,
-                     'test_interval_label_start': current_interval_label_test_start,
-                     'test_interval_label_end': current_interval_label_test_end},
+                     'train_label_interval_start': current_label_interval_train_start,
+                     'train_label_interval_end': current_label_interval_train_end,
+                     'test_label_interval_start': current_label_interval_test_start,
+                     'test_label_interval_end': current_label_interval_test_end},
                     {'train_start': current_row_M_train_start,
                      'train_end': current_row_M_train_end,
                      'test_start': current_row_M_test_start,

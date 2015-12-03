@@ -157,14 +157,14 @@ class TestArrayEmitter(unittest.TestCase):
         db_file = uft.path_of_data('rg_label_windows.db')
         conn_str = 'sqlite:///{}'.format(db_file)
         ae = array_emitter.ArrayEmitter()
-        ae = ae.get_rg_from_sql(conn_str, 'rg_label_windows')
+        ae = ae.get_rg_from_sql(conn_str, 'label_windows')
         ae = ae.set_default_aggregation('SUM')
         exp = ae.subset_over(
             label_col='inspection',
             interval_train_window_start=2000,
-            interval_train_window_size=1,
+            interval_train_window_size=2,
             interval_test_window_start=2002,
-            interval_test_window_size=1,
+            interval_test_window_size=2,
             interval_inc_value=1,
             interval_expanding=False,
             label_interval_train_window_start=2007,
@@ -172,9 +172,8 @@ class TestArrayEmitter(unittest.TestCase):
             label_interval_test_window_start=2009,
             label_interval_test_window_size=0,
             label_interval_inc_value=1,
-            label_interval_expanding=False,
-            clfs=DBG_std_clfs)
-        exp.make_csv()
+            label_interval_expanding=False)
+        exp.make_csv('label_window.csv')
 
     def test_feature_gen_lambda(self):
 

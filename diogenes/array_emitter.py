@@ -870,6 +870,14 @@ class ArrayEmitter(object):
             col_names = M_train.dtype.names
             M_train_nd = utils.cast_np_sa_to_nd(M_train)
             M_test_nd = utils.cast_np_sa_to_nd(M_test)
+            print 'M_train'
+            print M_train
+            print 'y_train'
+            print y_train
+            print 'M_test'
+            print M_test
+            print 'y_test'
+            print y_test
 
             for clf, params, runs in trial_directives:
                 clf_inst = clf(**params)

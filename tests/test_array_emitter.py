@@ -177,11 +177,13 @@ class TestArrayEmitter(unittest.TestCase):
 
     def test_feature_gen_lambda(self):
 
-        def feature_gen(M, test_or_train, interval_start, interval_end, 
+        def feature_gen(M, labels, test_or_train, interval_start, interval_end, 
                         label_interval_start, label_interval_end,
                         row_M_start, row_M_end):
-            return append_cols(M, M['relevent_feature'] * 2 if test_or_train == 'test' 
-                               else M['relevent_feature'] * 3, 'mult')
+            return (append_cols(M, M['relevent_feature'] * 2 if 
+                        test_or_train == 'test' 
+                        else M['relevent_feature'] * 3, 'mult'),
+                    labels)
         db_file = uft.path_of_data('rg_subset_over.db')
         conn_str = 'sqlite:///{}'.format(db_file)
         ae = array_emitter.ArrayEmitter()

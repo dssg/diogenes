@@ -542,7 +542,7 @@ class ArrayEmitter(object):
             time = utils.to_unix_time(time)
         try:
             float(time)
-        except ValueError:
+        except (ValueError, TypeError):
             time = "'{}'".format(time)
         return time
 
@@ -761,11 +761,21 @@ class ArrayEmitter(object):
         col_specs = self.__col_specs
         table_name = self.__rg_table_name
 
-        sql_get_max_interval_end = 'SELECT MAX({}) FROM {}'.format(
-               col_specs['stop_time'],
-               table_name)
+        sql_get_max_interval_end = (
+            "SELECT MAX(CASE "
+            "   WHEN {stop_time_col} > {start_time_col} THEN {stop_time_col} "
+            "   ELSE {start_time_col} "
+            "END) as max_time FROM {table_name}").format(
+               stop_time_col=col_specs['stop_time'],
+               start_time_col=col_specs['start_time'],
+               table_name=table_name)
         interval_end = conn.execute(
                 sql_get_max_interval_end)[0][0]
+        # Makesure datetime64s are the same resolution
+        if (isinstance(interval_end, np.datetime64) and 
+                isinstance(interval_test_window_start, np.datetime64)):
+            interval_end = interval_end.astype(interval_test_window_start.dtype)
+
         if row_M_col_name is not None:
             sql_get_max_col = ("SELECT MAX({}) FROM {} "
                                "WHERE {} = '{}'").format(
@@ -848,8 +858,9 @@ class ArrayEmitter(object):
             y_test = data_test[label_col]
 
             if feature_gen_lambda is not None:
-                M_train = feature_gen_lambda(
+                M_train, y_train = feature_gen_lambda(
                         M_train, 
+                        y_train,
                         'train', 
                         current_interval_train_start,
                         current_interval_train_end,
@@ -857,8 +868,9 @@ class ArrayEmitter(object):
                         current_label_interval_train_end,
                         current_row_M_train_start,
                         current_row_M_train_end)
-                M_test = feature_gen_lambda(
+                M_test, y_test = feature_gen_lambda(
                         M_test,
+                        y_test,
                         'test',
                         current_interval_test_start,
                         current_interval_test_end,
@@ -878,6 +890,7 @@ class ArrayEmitter(object):
             print M_test
             print 'y_test'
             print y_test
+            import pdb; pdb.set_trace()
 
             for clf, params, runs in trial_directives:
                 clf_inst = clf(**params)

@@ -813,7 +813,7 @@ class ArrayEmitter(object):
         current_label_interval_train_start = label_interval_train_window_start
         current_label_interval_train_end = label_interval_train_window_end
         current_label_interval_test_start = label_interval_test_window_start
-        current_label_interval_test_end = label_interval_test_window_end)
+        current_label_interval_test_end = label_interval_test_window_end
         current_row_M_train_start = row_M_train_window_start
         current_row_M_train_end = row_M_train_window_end
         current_row_M_test_start = row_M_test_window_start
@@ -877,15 +877,15 @@ class ArrayEmitter(object):
             col_names = M_train.dtype.names
             M_train_nd = utils.cast_np_sa_to_nd(M_train)
             M_test_nd = utils.cast_np_sa_to_nd(M_test)
-            print 'M_train'
-            print M_train
-            print 'y_train'
-            print y_train
-            print 'M_test'
-            print M_test
-            print 'y_test'
-            print y_test
-            import pdb; pdb.set_trace()
+            if False:
+                print 'M_train'
+                print M_train
+                print 'y_train'
+                print y_train
+                print 'M_test'
+                print M_test
+                print 'y_test'
+                print y_test
 
             for clf, params, runs in trial_directives:
                 clf_inst = clf(**params)

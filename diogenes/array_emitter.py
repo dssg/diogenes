@@ -646,22 +646,22 @@ class ArrayEmitter(object):
             self, 
             label_col,
             interval_train_window_start,
-            interval_train_window_size,
+            interval_train_window_end,
             interval_test_window_start,
-            interval_test_window_size,
+            interval_test_window_end,
             interval_inc_value,
             interval_expanding=False,
             label_interval_train_window_start=None,
-            label_interval_train_window_size=None,
+            label_interval_train_window_end=None,
             label_interval_test_window_start=None,
-            label_interval_test_window_size=None,
+            label_interval_test_window_end=None,
             label_interval_inc_value=None,
             label_interval_expanding=False,
             row_M_col_name=None,
             row_M_train_window_start=None,
-            row_M_train_window_size=None,
+            row_M_train_window_end=None,
             row_M_test_window_start=None,
-            row_M_test_window_size=None,
+            row_M_test_window_end=None,
             row_M_inc_value=None,
             row_M_expanding=False,
             clfs=[{'clf': RandomForestClassifier}],
@@ -748,12 +748,12 @@ class ArrayEmitter(object):
         """
         if row_M_train_window_start is None:
             row_M_train_window_start = interval_train_window_start
-        if row_M_train_window_size is None:
-            row_M_train_window_size = interval_train_window_size
+        if row_M_train_window_end is None:
+            row_M_train_window_end = interval_train_window_end
         if row_M_test_window_start is None:
             row_M_test_window_start = interval_test_window_start
-        if row_M_test_window_size is None:
-            row_M_test_window_size = interval_test_window_size
+        if row_M_test_window_end is None:
+            row_M_test_window_end = interval_test_window_end
         if row_M_inc_value is None:
             row_M_inc_value = interval_inc_value
 
@@ -797,36 +797,31 @@ class ArrayEmitter(object):
 
         if label_interval_train_window_start is None:
             label_interval_train_window_start = interval_train_window_start
-        if label_interval_train_window_size is None:
-            label_interval_train_window_size = interval_train_window_size
+        if label_interval_train_window_end is None:
+            label_interval_train_window_end = interval_train_window_end
         if label_interval_test_window_start is None:
             label_interval_test_window_start = interval_test_window_start
-        if label_interval_test_window_size is None:
-            label_interval_test_window_size = interval_test_window_size
+        if label_interval_test_window_end is None:
+            label_interval_test_window_end = interval_test_window_end
         if label_interval_inc_value is None:
             label_interval_inc_value = interval_inc_value
 
         current_interval_train_start = interval_train_window_start
-        current_interval_train_end = (interval_train_window_start + 
-                                      interval_train_window_size)
+        current_interval_train_end = interval_train_window_end
         current_interval_test_start = interval_test_window_start
-        current_interval_test_end = (interval_test_window_start + 
-                                      interval_test_window_size)
+        current_interval_test_end = interval_test_window_end
         current_label_interval_train_start = label_interval_train_window_start
-        current_label_interval_train_end = (label_interval_train_window_start + 
-                                      label_interval_train_window_size)
+        current_label_interval_train_end = label_interval_train_window_end
         current_label_interval_test_start = label_interval_test_window_start
-        current_label_interval_test_end = (label_interval_test_window_start + 
-                                      label_interval_test_window_size)
+        current_label_interval_test_end = label_interval_test_window_end)
         current_row_M_train_start = row_M_train_window_start
-        current_row_M_train_end = (row_M_train_window_start + 
-                                      row_M_train_window_size)
+        current_row_M_train_end = row_M_train_window_end
         current_row_M_test_start = row_M_test_window_start
-        current_row_M_test_end = (row_M_test_window_start + 
-                                      row_M_test_window_size)
+        current_row_M_test_end = row_M_test_window_end
         ae = self.set_label_feature(label_col)
         while (current_interval_test_end <= interval_end and
-               current_row_M_test_end <= row_M_end):
+               current_row_M_test_end <= row_M_end and
+               current_label_interval_test_end <= interval_end):
             ae_train = ae.set_interval(current_interval_train_start,
                                         current_interval_train_end)
             ae_train = ae_train.set_label_interval(

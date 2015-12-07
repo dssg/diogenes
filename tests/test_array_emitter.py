@@ -20,6 +20,9 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_label_feature('graduated')
         ae = ae.set_label_interval(2009, 2009)
         res = ae.emit_M()
+        print res
+        print res.dtype
+        print
         ctrl = np.array([(0, 2.2, 3.95, 8.0, 1.0),
                          (1, 3.45, np.nan, 0.0, 0.0),
                          (2, 3.4, np.nan, 96.0, np.nan)],
@@ -27,6 +30,8 @@ class TestArrayEmitter(unittest.TestCase):
                                ('english_gpa_MEAN', '<f8'), 
                                ('absences_MAX', '<f8'),
                                ('graduated_MEAN', '<f8')])
+        print ctrl
+        print ctrl.dtype
         self.assertTrue(uft.array_equal(res, ctrl))
 
     def test_complex_date(self):

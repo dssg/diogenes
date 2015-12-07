@@ -79,9 +79,9 @@ class TestArrayEmitter(unittest.TestCase):
         res3 = ae.set_interval(
             datetime(2010, 1, 1), 
             datetime(2010, 12, 31)).emit_M()
-        ctrl_dtype = [('id', '<i8'), ('bounded', '<f8'), 
-                      ('no_start', '<f8'), ('no_stop', '<f8'), 
-                      ('unbounded', '<f8')]
+        ctrl_dtype = [('id', '<i8'), ('bounded_SUM', '<f8'), 
+                      ('no_start_SUM', '<f8'), ('no_stop_SUM', '<f8'), 
+                      ('unbounded_SUM', '<f8')]
         ctrl1_dat = [(0, 1.0, 100.0, 100000.0, 1000000.0),
                      (1, 0.01, 0.001, 1e-06, 1e-07), 
                      (2, np.nan, np.nan, np.nan, 2e-08)]
@@ -115,9 +115,9 @@ class TestArrayEmitter(unittest.TestCase):
         res3 = ae.set_interval(
             datetime(2010, 1, 1), 
             datetime(2010, 12, 31)).emit_M()
-        ctrl_dtype = [('id', '<i8'), ('bounded', '<f8'), 
-                      ('no_start', '<f8'), ('no_stop', '<f8'), 
-                      ('unbounded', '<f8')]
+        ctrl_dtype = [('id', '<i8'), ('bounded_SUM', '<f8'), 
+                      ('no_start_SUM', '<f8'), ('no_stop_SUM', '<f8'), 
+                      ('unbounded_SUM', '<f8')]
         ctrl1_dat = [(0, 1.0, 100.0, 100000.0, 1000000.0),
                      (1, 0.01, 0.001, 1e-06, 1e-07), 
                      (2, np.nan, np.nan, np.nan, 2e-08)]
@@ -147,9 +147,9 @@ class TestArrayEmitter(unittest.TestCase):
         ae_1_2 = ae_1.select_rows_in_M('NOT took_ap_compsci')
         ae_2_1 = ae_2.select_rows_in_M('took_ap_compsci')
         ae_2_2 = ae_2.select_rows_in_M('NOT took_ap_compsci')
-        ctrl_dtype = [('id', '<i8'), ('math_gpa', '<f8'), 
-                      ('english_gpa', '<f8'), ('absences', '<f8'), 
-                      ('cohort', '<f8'), ('took_ap_compsci', '<f8')]
+        ctrl_dtype = [('id', '<i8'), ('math_gpa_SUM', '<f8'), 
+                      ('english_gpa_SUM', '<f8'), ('absences_SUM', '<f8'), 
+                      ('cohort_SUM', '<f8'), ('took_ap_compsci_SUM', '<f8')]
         ctrl_data = [[(0, 1.0, 1.0, 1.0, 2009.0, 1.0)],
                      [(2, 3.0, 3.0, 3.0, 2009.0, 0.0)],
                      [(1, 2.2, 2.2, 2.2, 2010.0, 1.0)],
@@ -237,7 +237,8 @@ class TestArrayEmitter(unittest.TestCase):
             row_M_expanding=False,
             clfs=DBG_std_clfs,
             feature_gen_lambda=feature_gen)
-        for run in it.chain.from_iterable([trial.runs_flattened() for trial in exp.trials]):
+        for run in it.chain.from_iterable(
+                [trial.runs_flattened() for trial in exp.trials]):
             relevent_idx = run.col_names.index('relevent_feature')
             mult_idx = run.col_names.index('mult')
             self.assertTrue(

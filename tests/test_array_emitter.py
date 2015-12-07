@@ -41,17 +41,16 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_label_feature('graduated')
         ae = ae.set_label_interval(2009, 2009)
         res = ae.emit_M()
-        print res
-        print res.dtype
         ctrl = np.array([(0, 2.2, 2.1, 2.3, 2, 3.95, 3.9, 4.0, 2, 7.0, 8.0, 1.0),
-                         (1, 3.45, 3.4, 3.5, 2, np.nan, np.nan, np.nan np.nan, 
+                         (1, 3.45, 3.4, 3.5, 2, np.nan, np.nan, np.nan, np.nan, 
                           0.0, 0.0, 0.0),
-                         (2, 3.4, np.nan, 96.0, np.nan)],
+                         (2, 3.4, 3.4, 3.4, 1.0, np.nan, np.nan, np.nan, np.nan, 
+                          14.0, 96.0, np.nan)],
                         dtype=[('id', '<i8'), 
                                ('math_gpa_AVG', '<f8'), 
                                ('math_gpa_MIN', '<f8'), 
                                ('math_gpa_MAX', '<f8'), 
-                               ('math_gpa_COUNT', '<f8'), 
+                               ('math_gpa_COUNT', '<i8'), 
                                ('english_gpa_AVG', '<f8'), 
                                ('english_gpa_MIN', '<f8'), 
                                ('english_gpa_MAX', '<f8'), 

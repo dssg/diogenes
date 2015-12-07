@@ -873,6 +873,7 @@ class ArrayEmitter(object):
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
             data_train = ae_train.emit_M()
+            # TODO remove label_col_AGGR
             M_train = utils.remove_cols(data_train, label_col)
             y_train = data_train[label_col]
             data_test = ae_test.emit_M()

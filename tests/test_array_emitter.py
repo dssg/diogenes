@@ -140,13 +140,13 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.get_rg_from_sql(conn_str, 'select_rows_in_M')
         ae = ae.set_default_aggregation('SUM')
         ae_1 = ae.set_interval(2005, 2006)
-        ae_1 = ae_1.select_rows_in_M('cohort = 2009')
+        ae_1 = ae_1.select_rows_in_M('cohort_SUM = 2009')
         ae_2 = ae.set_interval(2005, 2007)
-        ae_2 = ae_2.select_rows_in_M('cohort = 2010')
-        ae_1_1 = ae_1.select_rows_in_M('took_ap_compsci')
-        ae_1_2 = ae_1.select_rows_in_M('NOT took_ap_compsci')
-        ae_2_1 = ae_2.select_rows_in_M('took_ap_compsci')
-        ae_2_2 = ae_2.select_rows_in_M('NOT took_ap_compsci')
+        ae_2 = ae_2.select_rows_in_M('cohort_SUM = 2010')
+        ae_1_1 = ae_1.select_rows_in_M('took_ap_compsci_SUM')
+        ae_1_2 = ae_1.select_rows_in_M('NOT took_ap_compsci_SUM')
+        ae_2_1 = ae_2.select_rows_in_M('took_ap_compsci_SUM')
+        ae_2_2 = ae_2.select_rows_in_M('NOT took_ap_compsci_SUM')
         ctrl_dtype = [('id', '<i8'), ('math_gpa_SUM', '<f8'), 
                       ('english_gpa_SUM', '<f8'), ('absences_SUM', '<f8'), 
                       ('cohort_SUM', '<f8'), ('took_ap_compsci_SUM', '<f8')]
@@ -173,7 +173,7 @@ class TestArrayEmitter(unittest.TestCase):
             interval_test_window_end=2007,
             interval_inc_value=1,
             interval_expanding=False,
-            row_M_col_name='cohort',
+            row_M_col_name='cohort_SUM',
             row_M_train_window_start=2008,
             row_M_train_window_end=2008,
             row_M_test_window_start=2009,

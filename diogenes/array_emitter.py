@@ -546,6 +546,52 @@ class ArrayEmitter(object):
             time = "'{}'".format(time)
         return time
 
+    def __feature_subqueries(self, feat_name, start_time, stop_time, label_start_time,
+                           label_stop_time):
+        aggregations = self.__aggregations
+        table_name = self.__rg_table_name
+        label_feature_name = self.__label_feature_name
+        aggrs = aggregations.get(feat_name, self.__default_aggregation)
+        col_specs = self.__col_specs
+        if isinstance(aggrs, basestring):
+            aggrs = [aggrs]
+        select_clause = ', '.join(
+                ['{feat_name}_tbl.val_{aggr} as {feat_name}_{aggr}'.format(
+                    feat_name=feat_name,
+                    aggr=aggr) for aggr in aggrs])
+        from_clause_1 = "(SELECT {unit_id_col} as id, ".format(
+                unit_id_col=col_specs['unit_id'])
+        from_clause_2 = ', '.join(
+                ["{aggr}({val_col}) as val_{aggr}".format(
+                    aggr=aggr,
+                    val_col=col_specs['val']) for aggr in aggrs]) + ' '
+        from_clause_3 = ("FROM {table_name} WHERE "
+                         "{feature_col} = '{feat_name}' AND "
+                         "(({start_time_col} >= {start_time} "
+                         "  AND {start_time_col} <= {stop_time}) "
+                         " OR {start_time_col} IS NULL) AND "
+                         "(({stop_time_col} >= {start_time} "
+                         "  AND {stop_time_col} <= {stop_time}) "
+                         " OR {stop_time_col} IS NULL) "
+                         "GROUP BY id) {feat_name}_tbl ON "
+                         "id_tbl.id = {feat_name}_tbl.id) ").format(
+                             val_col=col_specs['val'],
+                             table_name=table_name,
+                             feature_col=col_specs['feature'],
+                             start_time_col=col_specs['start_time'],
+                             start_time=(label_start_time if 
+                                         feat_name == label_feature_name else
+                                         start_time),
+                             stop_time_col=col_specs['stop_time'],
+                             stop_time=(label_stop_time if
+                                        feat_name == label_feature_name else
+                                        stop_time),
+                             feat_name=feat_name)
+        return {'select': select_clause, 
+                'from': from_clause_1 + from_clause_2 + from_clause_3}
+                
+                                  
+
     def get_query(self):
         """Returns SQL query that will be used to create the M-formatted table
         """
@@ -577,47 +623,59 @@ class ArrayEmitter(object):
                 table_name)
         feat_names = [row[0] for row in conn.execute(sql_features)]
 
-        # figure out aggregations
-        aggregations = {feat_name: self.__aggregations[feat_name] if 
-                        self.__aggregations.has_key(feat_name) else
-                        self.__default_aggregation for feat_name in
-                        feat_names}
+#        # figure out aggregations
+#        aggregations = {feat_name: self.__aggregations[feat_name] if 
+#                        self.__aggregations.has_key(feat_name) else
+#                        self.__default_aggregation for feat_name in
+#                        feat_names}
+        subqueries = [self.__feature_subqueries(
+            feat_name, 
+            start_time, 
+            stop_time,
+            label_start_time,
+            label_stop_time) for feat_name in feat_names]
 
         # Now we build the complicated sql query
-        sql_select_clause = 'SELECT id_tbl.id, {} '.format(
-                ', '.join(['{0}_tbl.val AS {0}'.format(feat) for feat in 
-                           feat_names]))
+        sql_select_clause = 'SELECT id_tbl.id, '
+        sql_select_clause += ', '.join(
+                [subquery['select'] for subquery in subqueries])
+                                 
+#        sql_select_clause = 'SELECT id_tbl.id, {} '.format(
+#                ', '.join(['{0}_tbl.val AS {0}'.format(feat) for feat in 
+#                           feat_names]))
         sql_from_clause_top = ('FROM ({}SELECT DISTINCT {} AS id FROM {}) id_tbl '
                                'LEFT JOIN ').format(
                                 '(' * len(feat_names),
                                 col_specs['unit_id'],
                                 table_name)
         sql_from_clause_features = 'LEFT JOIN '.join(
-            [("(SELECT {unit_id_col} AS id, {aggr}({val_col}) AS val FROM "
-              "{table_name} WHERE "
-              "{feature_col} = '{feat_name}' AND "
-              "(({start_time_col} >= {start_time} "
-              "  AND {start_time_col} <= {stop_time}) "
-              " OR {start_time_col} IS NULL) AND "
-              "(({stop_time_col} >= {start_time} "
-              "  AND {stop_time_col} <= {stop_time}) "
-              " OR {stop_time_col} IS NULL) "
-              "GROUP BY id) {feat_name}_tbl ON "
-              "id_tbl.id = {feat_name}_tbl.id) ").format(
-                  unit_id_col=col_specs['unit_id'],
-                  aggr=aggregations[feat_name],
-                  val_col=col_specs['val'],
-                  table_name=table_name,
-                  feature_col=col_specs['feature'],
-                  start_time_col=col_specs['start_time'],
-                  start_time=(label_start_time if 
-                              feat_name == label_feature_name else
-                              start_time),
-                  stop_time_col=col_specs['stop_time'],
-                  stop_time=(label_stop_time if
-                             feat_name == label_feature_name else
-                             stop_time),
-                  feat_name=feat_name) for feat_name in feat_names])
+                [subquery['from'] for subquery in subqueries])
+#        sql_from_clause_features = 'LEFT JOIN '.join(
+#            [("(SELECT {unit_id_col} AS id, {aggr}({val_col}) AS val FROM "
+#              "{table_name} WHERE "
+#              "{feature_col} = '{feat_name}' AND "
+#              "(({start_time_col} >= {start_time} "
+#              "  AND {start_time_col} <= {stop_time}) "
+#              " OR {start_time_col} IS NULL) AND "
+#              "(({stop_time_col} >= {start_time} "
+#              "  AND {stop_time_col} <= {stop_time}) "
+#              " OR {stop_time_col} IS NULL) "
+#              "GROUP BY id) {feat_name}_tbl ON "
+#              "id_tbl.id = {feat_name}_tbl.id) ").format(
+#                  unit_id_col=col_specs['unit_id'],
+#                  aggr=aggregations[feat_name],
+#                  val_col=col_specs['val'],
+#                  table_name=table_name,
+#                  feature_col=col_specs['feature'],
+#                  start_time_col=col_specs['start_time'],
+#                  start_time=(label_start_time if 
+#                              feat_name == label_feature_name else
+#                              start_time),
+#                  stop_time_col=col_specs['stop_time'],
+#                  stop_time=(label_stop_time if
+#                             feat_name == label_feature_name else
+#                             stop_time),
+#                  feat_name=feat_name) for feat_name in feat_names])
         # TODO we can probably do something more sophisticated than just 
         # throwing the user's directives in here
         sql_where_clause = ''

@@ -24,9 +24,9 @@ class TestArrayEmitter(unittest.TestCase):
                          (1, 3.45, np.nan, 0.0, 0.0),
                          (2, 3.4, np.nan, 96.0, np.nan)],
                         dtype=[('id', '<i8'), ('math_gpa', '<f8'), 
-                               ('english_gpa', '<f8'), 
-                               ('absences', '<f8'),
-                               ('graduated', '<f8')])
+                               ('english_gpa_MEAN', '<f8'), 
+                               ('absences_MAX', '<f8'),
+                               ('graduated_MEAN', '<f8')])
         self.assertTrue(uft.array_equal(res, ctrl))
 
     def test_complex_date(self):

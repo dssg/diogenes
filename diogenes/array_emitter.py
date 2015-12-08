@@ -674,6 +674,7 @@ class ArrayEmitter(object):
             interval_test_window_start,
             interval_test_window_end,
             interval_inc_value,
+            label_col_aggr='AVG',
             interval_expanding=False,
             label_interval_train_window_start=None,
             label_interval_train_window_end=None,
@@ -682,7 +683,7 @@ class ArrayEmitter(object):
             label_interval_inc_value=None,
             label_interval_expanding=False,
             row_M_col_name=None,
-            row_M_aggr_fun='AVG',
+            row_M_col_aggr='AVG',
             row_M_train_window_start=None,
             row_M_train_window_end=None,
             row_M_test_window_start=None,
@@ -863,22 +864,23 @@ class ArrayEmitter(object):
                             col=row_M_col_name,
                             start=current_row_M_train_start,
                             stop=current_row_M_train_end,
-                            aggr=row_M_aggr_fun))
+                            aggr=row_M_col_aggr))
                 ae_test = ae_test.select_rows_in_M(
                         '{col}_{aggr} >= {start} AND {col}_{aggr} <= {stop}'.format(
                             col=row_M_col_name,
                             start=current_row_M_test_start,
                             stop=current_row_M_test_end,
-                            aggr=row_M_aggr_fun))
+                            aggr=row_M_col_aggr))
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
             data_train = ae_train.emit_M()
             # TODO remove label_col_AGGR
-            M_train = utils.remove_cols(data_train, label_col)
-            y_train = data_train[label_col]
+            label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr)
+            M_train = utils.remove_cols(data_train, label_plus_aggr)
+            y_train = data_train[label_plus_aggr]
             data_test = ae_test.emit_M()
-            M_test = utils.remove_cols(data_test, label_col)
-            y_test = data_test[label_col]
+            M_test = utils.remove_cols(data_test, label_plus_aggr)
+            y_test = data_test[label_plus_aggr]
 
             if feature_gen_lambda is not None:
                 M_train, y_train = feature_gen_lambda(

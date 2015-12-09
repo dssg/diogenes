@@ -674,7 +674,7 @@ class ArrayEmitter(object):
             interval_test_window_start,
             interval_test_window_end,
             interval_inc_value,
-            label_col_aggr='AVG',
+            label_col_aggr_of_interest='AVG',
             interval_expanding=False,
             label_interval_train_window_start=None,
             label_interval_train_window_end=None,
@@ -683,7 +683,7 @@ class ArrayEmitter(object):
             label_interval_inc_value=None,
             label_interval_expanding=False,
             row_M_col_name=None,
-            row_M_col_aggr='AVG',
+            row_M_col_aggr_of_interest='AVG',
             row_M_train_window_start=None,
             row_M_train_window_end=None,
             row_M_test_window_start=None,
@@ -864,23 +864,36 @@ class ArrayEmitter(object):
                             col=row_M_col_name,
                             start=current_row_M_train_start,
                             stop=current_row_M_train_end,
-                            aggr=row_M_col_aggr))
+                            aggr=row_M_col_aggr_of_interest))
                 ae_test = ae_test.select_rows_in_M(
                         '{col}_{aggr} >= {start} AND {col}_{aggr} <= {stop}'.format(
                             col=row_M_col_name,
                             start=current_row_M_test_start,
                             stop=current_row_M_test_end,
-                            aggr=row_M_col_aggr))
+                            aggr=row_M_col_aggr_of_interest))
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
             data_train = ae_train.emit_M()
             # TODO remove label_col_AGGR
-            label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr)
+            label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr_of_interest)
             M_train = utils.remove_cols(data_train, label_plus_aggr)
             y_train = data_train[label_plus_aggr]
             data_test = ae_test.emit_M()
             M_test = utils.remove_cols(data_test, label_plus_aggr)
             y_test = data_test[label_plus_aggr]
+
+            # if column ended up with an Object type, there is no date.
+            # remove it
+            # TODO something more elegant
+            empty_cols_train = [name for name, descr in M_train.dtype.descr
+                                if 'O' in descr]
+            empty_cols_test = [name for name, descr in M_test.dtype.descr
+                                if 'O' in descr]
+            empty_cols = list(
+                    frozenset(empty_cols_train).union(
+                    frozenset(empty_cols_test)))
+            M_train = utils.remove_cols(M_train, empty_cols)
+            M_test = utils.remove_cols(M_test, empty_cols)
 
             if feature_gen_lambda is not None:
                 M_train, y_train = feature_gen_lambda(

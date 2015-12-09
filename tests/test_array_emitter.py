@@ -167,7 +167,7 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_default_aggregation('SUM')
         exp = ae.subset_over(
             label_col='label',
-            label_col_aggr='SUM',
+            label_col_aggr_of_interest='SUM',
             interval_train_window_start=2004,
             interval_train_window_end=2005,
             interval_test_window_start=2006,
@@ -175,7 +175,7 @@ class TestArrayEmitter(unittest.TestCase):
             interval_inc_value=1,
             interval_expanding=False,
             row_M_col_name='cohort',
-            row_M_col_aggr='SUM',
+            row_M_col_aggr_of_interest='SUM',
             row_M_train_window_start=2008,
             row_M_train_window_end=2008,
             row_M_test_window_start=2009,

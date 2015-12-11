@@ -128,6 +128,10 @@ J 3000.0 James
         data = np.random.normal(size=(1000,))
         fig = plot_simple_histogram(data, verbose=False)
         self.add_fig_to_report(fig, 'plot_simple_histogram')
+        data = np.array(['a', 'b', 'a', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 
+                         'b', 'c', 'a'], dtype='O')
+        fig = plot_simple_histogram(data, verbose=False)
+        self.add_fig_to_report(fig, 'plot_simple_histogram_categorical')
 
     def test_plot_prec_recall(self):
         M, labels = uft.generate_correlated_test_matrix(1000)

@@ -113,7 +113,15 @@ J 3000.0 James
                                   ('3', int),
                                   ('4', int),
                                   ('6', int)])
-        self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+        correct_printout = """
+  col1_value 1 2 3 4 6
+0          1 1 0 1 2 0
+1          2 0 0 1 0 2
+2          7 0 1 0 0 1
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+            self.assertEqual(get_stdout().strip(), correct_printout)
 
     def test_plot_simple_histogram(self):
         np.random.seed(0)

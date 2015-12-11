@@ -845,9 +845,9 @@ class ArrayEmitter(object):
         current_row_M_test_start = row_M_test_window_start
         current_row_M_test_end = row_M_test_window_end
         ae = self.set_label_feature(label_col)
-        while (current_interval_test_end <= interval_end and
-               current_row_M_test_end <= row_M_end and
-               current_label_interval_test_end <= interval_end):
+        while (current_interval_test_start < interval_end and
+               current_row_M_test_start < row_M_end and
+               current_label_interval_test_start < interval_end):
             ae_train = ae.set_interval(current_interval_train_start,
                                         current_interval_train_end)
             ae_train = ae_train.set_label_interval(

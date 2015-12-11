@@ -21,6 +21,7 @@ from diogenes.modify import remove_rows_where
 from diogenes.modify import row_val_eq
 from diogenes.modify import row_val_lt 
 from diogenes.modify import row_val_between
+from diogenes.modify import row_is_nan
 from diogenes.modify import combine_cols
 from diogenes.modify import combine_sum
 from diogenes.modify import combine_mean 
@@ -190,6 +191,17 @@ class TestModify(unittest.TestCase):
 
         ctrl = cast_list_of_list_to_sa([[2,3,4],[3,4,5]],col_names=['heigh','weight', 'age'])
                    
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_row_is_nan(self):
+        M = np.array(
+                [(0, 1,), (1, np.nan), (2, 0), (3, np.nan), (4, 1)],
+                dtype=[('id', int), ('label', float)])
+        arguments = [{'func': row_is_nan, 'col_name': 'label', 'vals': None}]
+        res = remove_rows_where(M, arguments)
+        ctrl = np.array(
+            [(0, 1), (2, 0), (4, 1)],
+            dtype=[('id', int), ('label', float)])
         self.assertTrue(np.array_equal(res, ctrl))
 
     def test_combine_cols(self):

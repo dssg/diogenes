@@ -77,14 +77,19 @@ J 3000.0 James
                              dtype=[('Column Name', 'S2'), ('Count', int),
                                     ('Mean', float), ('Standard Dev', float),
                                     ('Minimum', int), ('Maximum', int)])
+        ctrl_printout = """
+  Column Name Count Mean  Standard Dev Minimum Maximum
+0          f0     6  3.5 1.70782512766       1       6
+1          f1     6  4.5 1.70782512766       2       7
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(uft.array_equal(ctrl_list, 
+                                            describe_cols(
+                                                test_list)))
+            self.assertEqual(get_stdout().strip(), ctrl_printout)
         self.assertTrue(uft.array_equal(ctrl_list, 
                                         describe_cols(
-                                            test_list, 
-                                            verbose=False)))
-        self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(
-                                            test_nd,
-                                            verbose=False)))
+                                            test_nd, verbose=False)))
         ctrl_sa = np.array([('id', 6, 3.5, 1.707825127659933, 1, 6),
                             ('val', 6, 4.5, 1.707825127659933, 2, 7),
                             ('name', np.nan, np.nan, np.nan, np.nan, np.nan)],

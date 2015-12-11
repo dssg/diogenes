@@ -166,11 +166,21 @@ def plot_simple_histogram(col, verbose=True):
 
     """
     col = utils.check_col(col)
-    hist, bins = np.histogram(col, bins=50)
+    override_xticks = False
+    if col.dtype.char in ('O', 'S'): # If col is strings, handle differently
+        counts = Counter(col)
+        categories = sorted(counts.keys())
+        hist = [counts[cat] for cat in categories]
+        bins = np.arange(len(categories) + 1)
+        override_xticks = True
+    else:
+        hist, bins = np.histogram(col, bins=50)
     width = 0.7 * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
     f = plt.figure()
     plt.bar(center, hist, align='center', width=width)
+    if override_xticks:
+        plt.xticks(center, categories)
     if verbose:
         plt.show()
     return f

@@ -6,6 +6,7 @@ from diogenes.display.display import plot_box_plot,plot_simple_histogram
 import diogenes.display as dsp
 from diogenes.display.display import feature_pairs_in_tree
 from diogenes.display.display import feature_pairs_in_rf
+from diogenes.display.display import table
 from diogenes.display.display import crosstab
 from diogenes.display.display import describe_cols
 from diogenes import utils
@@ -100,6 +101,23 @@ J 3000.0 James
                                         describe_cols(
                                             test_sa,
                                             verbose=False)))
+
+    def test_table(self):
+        data = np.array(['a', 'b', 'a', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 
+                         'b', 'c', 'a'], dtype='O')
+        ctrl_sa = np.array(
+                [('a', 4), ('b', 6), ('c', 3)],
+                dtype=[('col_name', 'S1'), ('count', int)])           
+        ctrl_printout = """
+  col_name count
+0        a     4
+1        b     6
+2        c     3
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(uft.array_equal(ctrl_sa, 
+                                            table(data)))
+            self.assertEqual(get_stdout().strip(), ctrl_printout)
 
     def test_crosstab(self):
         l1= [1, 2, 7, 7, 2, 1, 2, 1, 1]

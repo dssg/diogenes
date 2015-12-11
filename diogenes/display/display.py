@@ -107,6 +107,29 @@ def describe_cols(M, verbose=True):
         pprint_sa(ret)
     return ret
 
+def table(col, verbose=True):
+    """
+    Creates a summary or the number of occurrences of each value in the column
+
+    Similar to R's table
+
+    Parameters
+    ----------
+    col :np.ndarray
+
+    Returns
+    -------
+    np.ndarray
+        structured array
+    """
+    col = utils.check_col(col)
+    cnt = Counter(col)
+    cat_and_cnt = sorted(cnt.iteritems(), key=lambda item: item[0])
+    ret = convert_to_sa(cat_and_cnt, col_names=('col_name', 'count'))
+    if verbose:
+        pprint_sa(ret)
+    return ret
+
 def crosstab(col1, col2, verbose=True):
     """
     Makes a crosstab of col1 and col2. This is represented as a

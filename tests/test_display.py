@@ -78,9 +78,13 @@ J 3000.0 James
                                     ('Mean', float), ('Standard Dev', float),
                                     ('Minimum', int), ('Maximum', int)])
         self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_list)))
+                                        describe_cols(
+                                            test_list, 
+                                            verbose=False)))
         self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_nd)))
+                                        describe_cols(
+                                            test_nd,
+                                            verbose=False)))
         ctrl_sa = np.array([('id', 6, 3.5, 1.707825127659933, 1, 6),
                             ('val', 6, 4.5, 1.707825127659933, 2, 7),
                             ('name', np.nan, np.nan, np.nan, np.nan, np.nan)],
@@ -88,7 +92,9 @@ J 3000.0 James
                                   ('Mean', float), ('Standard Dev', float),
                                   ('Minimum', float), ('Maximum', float)])
         self.assertTrue(uft.array_equal(ctrl_sa, 
-                                        describe_cols(test_sa)))
+                                        describe_cols(
+                                            test_sa,
+                                            verbose=False)))
 
     def test_crosstab(self):
         l1= [1, 2, 7, 7, 2, 1, 2, 1, 1]

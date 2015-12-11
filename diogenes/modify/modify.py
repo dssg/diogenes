@@ -480,6 +480,29 @@ def row_is_within_region(M, col_names, boundary):
     bbPath = mplPath.Path(np.array(boundary))
     return [bbPath.contains_point(point) for point in M[col_names]]
 
+def row_is_nan(M, col_name, boundary=None):
+    """Picks rows for which cell is np.nan
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : None
+        unused
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
+    return np.isnan(M[col_name])
+
 def combine_cols(M, lambd, col_names):
     """Return an array that is the function of existing columns
 

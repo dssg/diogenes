@@ -77,10 +77,19 @@ J 3000.0 James
                              dtype=[('Column Name', 'S2'), ('Count', int),
                                     ('Mean', float), ('Standard Dev', float),
                                     ('Minimum', int), ('Maximum', int)])
+        ctrl_printout = """
+  Column Name Count Mean  Standard Dev Minimum Maximum
+0          f0     6  3.5 1.70782512766       1       6
+1          f1     6  4.5 1.70782512766       2       7
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(uft.array_equal(ctrl_list, 
+                                            describe_cols(
+                                                test_list)))
+            self.assertEqual(get_stdout().strip(), ctrl_printout)
         self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_list)))
-        self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_nd)))
+                                        describe_cols(
+                                            test_nd, verbose=False)))
         ctrl_sa = np.array([('id', 6, 3.5, 1.707825127659933, 1, 6),
                             ('val', 6, 4.5, 1.707825127659933, 2, 7),
                             ('name', np.nan, np.nan, np.nan, np.nan, np.nan)],
@@ -88,7 +97,9 @@ J 3000.0 James
                                   ('Mean', float), ('Standard Dev', float),
                                   ('Minimum', float), ('Maximum', float)])
         self.assertTrue(uft.array_equal(ctrl_sa, 
-                                        describe_cols(test_sa)))
+                                        describe_cols(
+                                            test_sa,
+                                            verbose=False)))
 
     def test_crosstab(self):
         l1= [1, 2, 7, 7, 2, 1, 2, 1, 1]
@@ -102,7 +113,15 @@ J 3000.0 James
                                   ('3', int),
                                   ('4', int),
                                   ('6', int)])
-        self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+        correct_printout = """
+  col1_value 1 2 3 4 6
+0          1 1 0 1 2 0
+1          2 0 0 1 0 2
+2          7 0 1 0 0 1
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+            self.assertEqual(get_stdout().strip(), correct_printout)
 
     def test_plot_simple_histogram(self):
         np.random.seed(0)

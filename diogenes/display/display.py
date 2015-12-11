@@ -76,7 +76,7 @@ __describe_cols_metrics = [('Count', len),
 
 __describe_cols_fill = [np.nan] * len(__describe_cols_metrics)
 
-def describe_cols(M):
+def describe_cols(M, verbose=True):
     """Returns summary statistics for a numpy array
 
     Parameters
@@ -102,10 +102,12 @@ def describe_cols(M):
         descr_rows.append(row)
     col_names = ['Column Name'] + [col_name for col_name, _ in 
                                    __describe_cols_metrics]
-    return convert_to_sa(descr_rows, col_names=col_names)
+    ret = convert_to_sa(descr_rows, col_names=col_names)
+    if verbose:
+        pprint_sa(ret)
+    return ret
 
-
-def crosstab(col1, col2):
+def crosstab(col1, col2, verbose=True):
     """
     Makes a crosstab of col1 and col2. This is represented as a
     structured array with the following properties:
@@ -142,7 +144,10 @@ def crosstab(col1, col2):
         crosstab_rows.append(['{}'.format(col1_val)] + counts)
     col_names = ['col1_value'] + ['{}'.format(col2_val) for col2_val in 
                                   col2_unique]
-    return convert_to_sa(crosstab_rows, col_names=col_names)
+    ret = convert_to_sa(crosstab_rows, col_names=col_names)
+    if verbose:
+        pprint_sa(ret)
+    return ret
 
 
 def plot_simple_histogram(col, verbose=True):

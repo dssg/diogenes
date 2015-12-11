@@ -68,20 +68,25 @@ class TestModify(unittest.TestCase):
                    
     def test_label_encoding(self):
         M = np.array(
-            [('a', 0, 'Martin'),
-             ('b', 1, 'Tim'),
-             ('b', 2, 'Martin'),
-             ('c', 3, 'Martin')],
-            dtype=[('letter', 'O'), ('idx', int), ('name', 'O')])
+            [('a', 0, 'Martin', 100),
+             ('b', 1, 'Tim', 222),
+             ('b', 2, 'Martin', 100),
+             ('c', 3, 'Martin', 222)],
+            dtype=[('letter', 'O'), ('idx', int), ('name', 'O'),
+                   ('categorical_number', int)])
         ctrl = np.array(
-            [(0, 0, 0),
-             (1, 1, 1),
-             (1, 2, 0),
-             (2, 3, 0)],
-            dtype=[('letter', int), ('idx', int), ('name', int)])
+            [(0, 0, 0, 0),
+             (1, 1, 1, 1),
+             (1, 2, 0, 0),
+             (2, 3, 0, 1)],
+            dtype=[('letter', int), ('idx', int), ('name', int),
+                   ('categorical_number', int)])
         ctrl_classes = {'letter': np.array(['a', 'b', 'c']),
-                        'name': np.array(['Martin', 'Tim'])}
-        new_M, classes = label_encode(M)
+                        'name': np.array(['Martin', 'Tim']),
+                        'categorical_number': np.array([100, 222])}
+        new_M, classes = label_encode(
+            M, 
+            force_columns=['categorical_number'])
         self.assertTrue(np.array_equal(ctrl, new_M))
         self.assertEqual(ctrl_classes.keys(), classes.keys())
         for key in ctrl_classes:

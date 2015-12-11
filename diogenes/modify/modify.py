@@ -551,7 +551,7 @@ def combine_mean(*args):
     """
     return np.mean(args)
     
-def label_encode(M):
+def label_encode(M, force_columns=[]):
     """Changes string cols to ints so that there is a 1-1 mapping between 
     strings and ints
 
@@ -559,6 +559,10 @@ def label_encode(M):
     ----------
     M : numpy.ndarray
         structured array
+    force_columns : list of str
+        By default, label_encode will only encode string columns. If the name
+        of a numerical column is also present in force_columns, then that 
+        column will also be label encoded
 
     Returns
     -------
@@ -573,7 +577,7 @@ def label_encode(M):
     result_arrays = []
     classes = {}
     for (col_name, fmt) in M.dtype.descr:
-        if 'S' in fmt or 'O' in fmt:
+        if 'S' in fmt or 'O' in fmt or col_name in force_columns:
             col = M[col_name]
             le = preprocessing.LabelEncoder()
             le.fit(col)

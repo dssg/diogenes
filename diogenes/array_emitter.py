@@ -710,7 +710,6 @@ class ArrayEmitter(object):
             sql_inner_from_clause_1,
             sql_select_clause,
             sql_where_clause)
-        print sql_select
         return sql_select
 
     def emit_M(self):
@@ -931,7 +930,6 @@ class ArrayEmitter(object):
                             aggr=row_M_col_aggr_of_interest))
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
-            import pdb; pdb.set_trace()
             data_train = ae_train.emit_M()
             # TODO remove label_col_AGGR
             label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr_of_interest)

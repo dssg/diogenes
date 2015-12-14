@@ -555,26 +555,46 @@ class ArrayEmitter(object):
         col_specs = self.__col_specs
         if isinstance(aggrs, basestring):
             aggrs = [aggrs]
-        select_clause = ', '.join(
-                ['{feat_name}_tbl.val_{aggr} as {feat_name}_{aggr}'.format(
-                    feat_name=feat_name,
-                    aggr=aggr) for aggr in aggrs])
-        from_clause_1 = "(SELECT {unit_id_col} as id, ".format(
-                unit_id_col=col_specs['unit_id'])
-        from_clause_2 = ', '.join(
-                ["{aggr}({val_col}) as val_{aggr}".format(
+
+        feat_table = feat_name + '_tbl'
+
+        select_clause = ',\n'.join(
+                ["    {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
+                    feat_table=feat_table,
                     aggr=aggr,
-                    val_col=col_specs['val']) for aggr in aggrs]) + ' '
-        from_clause_3 = ("FROM {table_name} WHERE "
-                         "{feature_col} = '{feat_name}' AND "
-                         "(({start_time_col} >= {start_time} "
-                         "  AND {start_time_col} <= {stop_time}) "
-                         " OR {start_time_col} IS NULL) AND "
-                         "(({stop_time_col} >= {start_time} "
-                         "  AND {stop_time_col} <= {stop_time}) "
-                         " OR {stop_time_col} IS NULL) "
-                         "GROUP BY id) {feat_name}_tbl ON "
-                         "id_tbl.id = {feat_name}_tbl.id) ").format(
+                    feat_name=feat_name) for aggr in aggrs])
+
+        with_clause_0 = ("    {feat_table} AS (\n"
+                         "        SELECT\n"
+                         "            {unit_id_col} as id,\n").format(
+                            unit_id_col=col_specs['unit_id'],
+                            feat_table=feat_table)
+        with_clause_1 = ',\n'.join(
+                ["            {aggr}({val_col}) as val_{aggr}".format(
+                    aggr=aggr,
+                    val_col=col_specs['val']) for aggr in aggrs]) + '\n'
+        with_clause_2 = ("        FROM\n"
+                         "            {table_name}\n"
+                         "        WHERE\n"
+                         "            {feature_col} = '{feat_name}'\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                (\n"
+                         "                     {start_time_col} >= {start_time}\n"
+                         "                     AND {start_time_col} <= {stop_time}\n"
+                         "                )\n"
+                         "                OR {start_time_col} IS NULL\n"
+                         "            )\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                (\n"
+                         "                    {stop_time_col} >= {start_time}\n"
+                         "                    AND {stop_time_col} <= {stop_time}\n"
+                         "                )\n"
+                         "                OR {stop_time_col} IS NULL\n"
+                         "            )\n"
+                         "        GROUP BY id\n"
+                         "    )").format(
                              val_col=col_specs['val'],
                              table_name=table_name,
                              feature_col=col_specs['feature'],
@@ -587,11 +607,11 @@ class ArrayEmitter(object):
                                         feat_name == label_feature_name else
                                         stop_time),
                              feat_name=feat_name)
-        return {'select': select_clause, 
-                'from': from_clause_1 + from_clause_2 + from_clause_3}
-                
-                                  
 
+        return {'table': feat_table,
+                'select': select_clause, 
+                'with': '{}{}{}'.format(with_clause_0, with_clause_1, with_clause_2)}
+                
     def get_query(self):
         """Returns SQL query that will be used to create the M-formatted table
         """
@@ -623,6 +643,7 @@ class ArrayEmitter(object):
                 table_name)
         feat_names = [row[0] for row in conn.execute(sql_features)]
 
+        # get per_feature subqueries
         subqueries = [self.__feature_subqueries(
             feat_name, 
             start_time, 
@@ -630,29 +651,50 @@ class ArrayEmitter(object):
             label_start_time,
             label_stop_time) for feat_name in feat_names]
 
-        # Now we build the complicated sql query
-        sql_select_clause = 'SELECT id_tbl.id, '
-        sql_select_clause += ', '.join(
+        # build temporary tables
+        sql_with_clause_0 = ("WITH\n"
+                             "    id_tbl AS (\n"
+                             "        SELECT DISTINCT\n" 
+                             "            {unit_id_col} AS id\n"
+                             "        FROM\n"
+                             "            {table_name}\n"
+                             "    ),\n\n").format(
+                                   unit_id_col=col_specs['unit_id'],
+                                   table_name=table_name)
+        sql_with_clause_1 = ',\n\n'.join(
+                [subquery['with'] for subquery in subqueries])
+
+        # build select out of subtables
+        sql_select_clause_0 = ("\n"
+                               "\n"
+                               "SELECT\n"
+                               "    id_tbl.id,\n")
+        sql_select_clause_1 = ',\n'.join(
                 [subquery['select'] for subquery in subqueries])
                                  
-        sql_from_clause_top = ('FROM ({}SELECT DISTINCT {} AS id FROM {}) id_tbl '
-                               'LEFT JOIN ').format(
-                                '(' * len(feat_names),
-                                col_specs['unit_id'],
-                                table_name)
-        sql_from_clause_features = 'LEFT JOIN '.join(
-                [subquery['from'] for subquery in subqueries])
+        sql_from_clause_0 = ("\nFROM\n"
+                             "    id_tbl\n"
+                             "    LEFT JOIN ")
+        sql_from_clause_1 = "LEFT JOIN ".join(
+            ["{feat_tbl}\n         ON {feat_tbl}.id = id_tbl.id\n    ".format(
+                feat_tbl=subquery['table']) for subquery in subqueries])
+
         # TODO we can probably do something more sophisticated than just 
         # throwing the user's directives in here
         sql_where_clause = ''
         if self.__selections:
-            sql_where_clause = "WHERE " + "AND ".join(
-                ['({})'.format(sel) for sel in self.__selections]) 
-        sql_select = '{} {} {} {}'.format(
-            sql_select_clause, 
-            sql_from_clause_top,
-            sql_from_clause_features, 
+            sql_where_clause = "WHERE\n" + " AND\n".join(
+                ['        ({})'.format(sel) for sel in self.__selections]) 
+
+        sql_select = '{}{}{}{}{}{}{}'.format(
+            sql_with_clause_0,
+            sql_with_clause_1,
+            sql_select_clause_0,
+            sql_select_clause_1,
+            sql_from_clause_0,
+            sql_from_clause_1,
             sql_where_clause)
+        print sql_select
         return sql_select
 
     def emit_M(self):
@@ -873,6 +915,7 @@ class ArrayEmitter(object):
                             aggr=row_M_col_aggr_of_interest))
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
+            import pdb; pdb.set_trace()
             data_train = ae_train.emit_M()
             # TODO remove label_col_AGGR
             label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr_of_interest)

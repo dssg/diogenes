@@ -556,7 +556,11 @@ class ArrayEmitter(object):
         if isinstance(aggrs, basestring):
             aggrs = [aggrs]
 
-        feat_table = feat_name + '_tbl'
+        feat_table = '{}_tbl'.format(feat_name)
+        nicknames = ', '.join(
+                ['{feat_name}_{aggr}'.format(
+                    feat_name=feat_name,
+                    aggr=aggr) for aggr in aggrs])
 
         select_clause = ',\n'.join(
                 ["    {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
@@ -609,6 +613,7 @@ class ArrayEmitter(object):
                              feat_name=feat_name)
 
         return {'table': feat_table,
+                'nicknames': nicknames,
                 'select': select_clause, 
                 'with': '{}{}{}'.format(with_clause_0, with_clause_1, with_clause_2)}
                 
@@ -675,18 +680,20 @@ class ArrayEmitter(object):
         sql_from_clause_0 = ("\nFROM\n"
                              "    id_tbl\n"
                              "    LEFT JOIN ")
-        sql_from_clause_1 = "LEFT JOIN ".join(
-            ["{feat_tbl}\n         ON {feat_tbl}.id = id_tbl.id\n    ".format(
+        sql_from_clause_1 = "\n    LEFT JOIN ".join(
+            ["{feat_tbl}\n         ON {feat_tbl}.id = id_tbl.id".format(
                 feat_tbl=subquery['table']) for subquery in subqueries])
 
         # TODO we can probably do something more sophisticated than just 
         # throwing the user's directives in here
-        sql_where_clause = ''
+        # TODO something with better performance than coalesce
+        sql_where_clause = "\nWHERE\n    COALESCE({}) IS NOT NULL".format(
+                ', '.join([subquery['nicknames'] for subquery in subqueries]))
         if self.__selections:
-            sql_where_clause = "WHERE\n" + " AND\n".join(
-                ['        ({})'.format(sel) for sel in self.__selections]) 
+            sql_where_clause += " AND\n" + " AND\n".join(
+                ['    ({})'.format(sel) for sel in self.__selections]) 
 
-        sql_select = '{}{}{}{}{}{}{}'.format(
+        sql_select = '{}{}{}{}{}{}{};'.format(
             sql_with_clause_0,
             sql_with_clause_1,
             sql_select_clause_0,

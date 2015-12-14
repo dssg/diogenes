@@ -563,7 +563,7 @@ class ArrayEmitter(object):
                     aggr=aggr) for aggr in aggrs])
 
         select_clause = ',\n'.join(
-                ["    {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
+                ["            {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
                     feat_table=feat_table,
                     aggr=aggr,
                     feat_name=feat_name) for aggr in aggrs])
@@ -670,20 +670,28 @@ class ArrayEmitter(object):
                 [subquery['with'] for subquery in subqueries])
 
         # build select out of subtables
-        sql_select_clause_0 = ("\n"
-                               "\n"
-                               "SELECT\n"
-                               "    id_tbl.id,\n")
-        sql_select_clause_1 = ',\n'.join(
+        sql_inner_select_clause_0 = (",\n\n"
+                                     "    inner_select_tbl AS (\n"
+                                     "        SELECT\n"
+                                     "            id_tbl.id,\n")
+        sql_inner_select_clause_1 = ',\n'.join(
                 [subquery['select'] for subquery in subqueries])
                                  
-        sql_from_clause_0 = ("\nFROM\n"
-                             "    id_tbl\n"
-                             "    LEFT JOIN ")
-        sql_from_clause_1 = "\n    LEFT JOIN ".join(
-            ["{feat_tbl}\n         ON {feat_tbl}.id = id_tbl.id".format(
+        sql_inner_from_clause_0 = ("\n"
+                                   "        FROM\n"
+                                   "            id_tbl\n"
+                                   "            LEFT JOIN ")
+        sql_inner_from_clause_1 = "\n            LEFT JOIN ".join(
+            ["{feat_tbl}\n                 ON {feat_tbl}.id = id_tbl.id".format(
                 feat_tbl=subquery['table']) for subquery in subqueries])
 
+        sql_select_clause=("\n"
+                           "    )\n"
+                           "\n"
+                           "SELECT\n"
+                           "    *\n" 
+                           "FROM\n"
+                           "    inner_select_tbl")
         # TODO we can probably do something more sophisticated than just 
         # throwing the user's directives in here
         # TODO something with better performance than coalesce
@@ -693,13 +701,14 @@ class ArrayEmitter(object):
             sql_where_clause += " AND\n" + " AND\n".join(
                 ['    ({})'.format(sel) for sel in self.__selections]) 
 
-        sql_select = '{}{}{}{}{}{}{};'.format(
+        sql_select = '{}{}{}{}{}{}{}{};'.format(
             sql_with_clause_0,
             sql_with_clause_1,
-            sql_select_clause_0,
-            sql_select_clause_1,
-            sql_from_clause_0,
-            sql_from_clause_1,
+            sql_inner_select_clause_0,
+            sql_inner_select_clause_1,
+            sql_inner_from_clause_0,
+            sql_inner_from_clause_1,
+            sql_select_clause,
             sql_where_clause)
         print sql_select
         return sql_select

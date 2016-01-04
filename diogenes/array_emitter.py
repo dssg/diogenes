@@ -99,15 +99,15 @@ class ArrayEmitter(object):
 
     *Table 2*
 
-    +------------+----------+-------------+----------+
-    | student_id | math_gpa | english_gpa | absences |
-    +============+==========+=============+==========+
-    |          0 |      2.2 |        3.95 |        8 |
-    +------------+----------+-------------+----------+
-    |          1 |     3.45 |         nan |        0 |
-    +------------+----------+-------------+----------+
-    |          2 |      3.4 |         nan |       96 |
-    +------------+----------+-------------+----------+
+    +------------+--------------+-----------------+--------------+
+    | student_id | math_gpa_AVG | english_gpa_AVG | absences_MAX |
+    +============+==============+=================+==============+
+    |          0 |          2.2 |            3.95 |            8 |
+    +------------+--------------+-----------------+--------------+
+    |          1 |         3.45 |             nan |            0 |
+    +------------+--------------+-----------------+--------------+
+    |          2 |          3.4 |             nan |           96 |
+    +------------+--------------+-----------------+--------------+
 
     In an M-formatted table, each unit has a single row, and each feature has
     its own column. Notice that the student_ids in Table 2 correspond to the
@@ -157,7 +157,7 @@ class ArrayEmitter(object):
     >>> ae = ae.get_rg_from_csv('table1.csv')
     >>> ae = ae.set_aggregation('math_gpa', 'AVG')
     >>> ae = ae.set_aggregation('absences', 'MAX')
-    >>> ae = ae.select_rows_in_M('math_gpa <= 3.4')
+    >>> ae = ae.select_rows_in_M('math_gpa_AVG <= 3.4')
     >>> ae = ae.set_interval(2005, 2006)
     >>> table3 = ae.emit_M()
 
@@ -165,13 +165,13 @@ class ArrayEmitter(object):
     
     *Table 3:*
 
-    +------------+----------+-------------+----------+
-    | student_id | math_gpa | english_gpa | absences |
-    +============+==========+=============+==========+
-    |          0 |      2.2 |        3.95 |        8 |
-    +------------+----------+-------------+----------+
-    |          2 |      3.4 |         nan |       96 |
-    +------------+----------+-------------+----------+
+    +------------+--------------+-----------------+--------------+
+    | student_id | math_gpa_AVG | english_gpa_AVG | absences_MAX |
+    +============+==============+=================+==============+
+    |          0 |          2.2 |            3.95 |            8 |
+    +------------+--------------+-----------------+--------------+
+    |          2 |          3.4 |             nan |           96 |
+    +------------+--------------+-----------------+--------------+
 
     Notice that Table 3 is identical to Table 2, except student 1 has been
     omitted because his/her GPA is higher than 3.4.

@@ -231,6 +231,7 @@ class TestArrayEmitter(unittest.TestCase):
             interval_inc_value=1,
             interval_expanding=False,
             row_M_col_name='cohort',
+            row_M_col_aggr_of_interest='SUM',
             row_M_train_window_start=2008,
             row_M_train_window_end=2008,
             row_M_test_window_start=2009,

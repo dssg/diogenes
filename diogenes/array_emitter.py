@@ -176,6 +176,9 @@ class ArrayEmitter(object):
     Notice that Table 3 is identical to Table 2, except student 1 has been
     omitted because his/her GPA is higher than 3.4.
 
+    **Taking labels and features from different time intervals**
+
+
     **Note on function call semantics**
 
     Most methods of ArrayEmitter return new ArrayEmitters rather than 
@@ -356,6 +359,14 @@ class ArrayEmitter(object):
         return cp
 
     def set_label_feature(self, feature_name):
+        """Sets the feature in the array which will be considered the label
+
+        Returns
+        -------
+        ArrayGenerator
+            Copy of this ArrayGenerator with specified label column
+
+        """
         cp = self.__copy()
         cp.__label_feature_name = feature_name
         return cp
@@ -410,6 +421,7 @@ class ArrayEmitter(object):
         return cp
 
     def set_default_aggregation(self, method):
+        #TODO update docs with multiple aggregations stuff
         """Sets the default method used to aggregate across dates
 
         ArrayEmitter will use the value of set_default_aggregation when
@@ -515,6 +527,21 @@ class ArrayEmitter(object):
         return cp
 
     def set_label_interval(self, start_time, stop_time):
+        """Sets interval from which to select labels
+
+        Parameters
+        ----------
+        start_time : number or datetime.datetime
+            Start time of log tables to include in this sa's labels
+        stop_time : number or datetime.datetime
+            Stop time of log tables to include in this sa's labels
+
+        Returns
+        -------
+        ArrayEmitter
+            With label interval set
+        """
+
         cp = self.__copy()
         cp.__label_start_time = start_time
         cp.__label_stop_time = stop_time
@@ -752,7 +779,7 @@ class ArrayEmitter(object):
         """
         Generates ArrayGenerators according to some subsetting directive.
 
-        There are two ways that we determine what the train and test sets are
+        There are three ways that we determine what the train and test sets are
         for each trial:
 
         1. The start time/stop time interval. This is the interval used to
@@ -761,7 +788,12 @@ class ArrayEmitter(object):
            to set_interval.  variables pertaining to this interval have the 
            interval* prefix.
 
-        2. The rows of the M matrix to select, based on the value of some
+        2. The start time/stop time interval for labels. If these values
+           are set, then time intervals for the label are different
+           than the time intervals for the other features. Variables pertaining
+           to this interval have the label_interval* prefix.
+
+        3. The rows of the M matrix to select, based on the value of some
            column in the M matrix. Setting the start and end of this interval
            is equivalent to passing values to select_rows_in_M. Values 
            pertaining to this set of rows have the row_M* prefix. Taking
@@ -782,14 +814,34 @@ class ArrayEmitter(object):
             size of testing interval
         interval_inc_value : datetime, timedelta, or number
             interval to increment train and test interval
+        label_col_aggr_of_interest : str
+            The type of aggregation which will signify the label
+            (for example, use 'AVG' if the label is the 'AVG' of the label
+            column in the M-formatted matrix)
         interval_expanding : boolean
             whether or not the training interval is expanding
+        label_interval_train_window_start : number or datetime or None
+            start of training interval for labels
+        label_interval_train_window_size : number or datetime or None
+            (Initial) size of training interval for labels
+        label_interval_test_window_start : number or datetime or None
+            start of testing interval for labels
+        label_interval_test_window_size : number or datetime or None
+            size of testing interval for labels
+        label_interval_inc_value : datetime, timedelta, or number or None
+            interval to increment train and test interval for labels
+        label_interval_expanding : boolean
+            whether or not the training interval for labels is expanding
         row_M_col_name : str or None
             If not None, the name of the feature which will be used to select
             different training and testing sets in addition to the interval
 
             If None, train and testing sets will use all rows given a 
             particular time interval
+        row_M_col_aggr_of_interest : str
+            The name of the aggregation used to subset rows of M.
+            (For example, use 'AVG' if we want to select rows based on the
+            average of the values in the interval)
         row_M_train_window_start : ? or None
             Start of train window for M rows. If None, uses
             interval_train_window_start

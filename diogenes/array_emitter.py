@@ -372,15 +372,16 @@ class ArrayEmitter(object):
         return cp
 
     def set_aggregation(self, feature_name, method):
-        """Sets the method used to aggregate across dates in a RG table.
+        """Sets the method or methods used to aggregate across dates in the 
+        RG table.
 
         Parameters
         ----------
         feature_name : str
             Name of feature for which we are aggregating
-        method : str 
-            Method used to aggregate the feature across year. 
-            Can be one of:
+        method : str or list of strs
+            Method or methods used to aggregate the feature across year. 
+            If a str, can be one of:
 
                 * 'AVG'
                     Mean average
@@ -399,6 +400,9 @@ class ArrayEmitter(object):
 
             Additionally, method can be any aggregation function supported
             by the database in which the RG table lives.
+
+            If a list, will create one aggregate column for each method
+            in the list, for example: ['AVG', 'MIN', 'MAX']
             
         Returns
         -------

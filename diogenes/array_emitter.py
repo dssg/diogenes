@@ -931,6 +931,7 @@ class ArrayEmitter(object):
             # TODO this should actually run clfs and build an experiment 
             # rather than doing this yield
             data_train = ae_train.emit_M()
+
             # TODO remove label_col_AGGR
             label_plus_aggr = '{}_{}'.format(label_col, label_col_aggr_of_interest)
             M_train = utils.remove_cols(data_train, label_plus_aggr)
@@ -938,6 +939,8 @@ class ArrayEmitter(object):
             data_test = ae_test.emit_M()
             M_test = utils.remove_cols(data_test, label_plus_aggr)
             y_test = data_test[label_plus_aggr]
+
+            #import pdb; pdb.set_trace()
 
             # if column ended up with an Object type, there is no date.
             # remove it
@@ -1048,6 +1051,44 @@ def _remove_if_present(l, item):
 
 def M_to_rg(conn_str, from_table, to_table, unit_id_col, 
             start_time_col=None, stop_time_col=None, feature_cols=None):
+    """Convert a table in M-format to a table in RG-format
+
+    Data in the M-formatted from_table is appended to the RG-formatted
+    to_table. Consequently, the user can run M_to_rg multiple times to
+    convert multiple M-formatted tables to the same RG-formatted table
+
+    For character or text columns in from_table, entries will be encoded
+    to integers when they are dumped into the RG-formatted table. For each
+    of these columns, M_to_rg will create a table with a name of the form:
+    [to_table]_encode_[from_table]_[col_name]
+
+    Parameters
+    ----------
+    conn_str : str
+        SQLAlchemy connection string to access database
+    from_table : str
+        Name of M-formatted table to convert to RG-formatted table
+    to_table : str
+        Name of RG-formatted table that data will be inserted into. This 
+        table must either:
+        1. Not yet exist in the database or
+        2. Adhere to the schema:
+            (row_id SERIAL PRIMARY KEY, unit_id INT, start_time TIMESTAMP, 
+             end_time TIMESTAMP, feat TEXT, val REAL);
+    unit_id_col : str
+        The column in from_table which contains the unique unit ID
+    start_time_col : str or None
+        The column in from_table which contains the start time. If None,
+        start times will be left NULL in the RG-formatted array
+    stop_time_col : str or None
+        The column in from_table which contains the stop time. If None,
+        stop times will be left NULL in the RG-formatted array
+    feature_cols : list of str or None
+        The columns of from_table which will be inserted into to_table in
+        RG-format. If None, will use all columns in from_table except for
+        unit_id_col, start_time_col and stop_time_col
+    """
+
     conn = connect_sql(conn_str, allow_pgres_copy_optimization=True)
     sql = ('CREATE TABLE IF NOT EXISTS {} '
            '(row_id SERIAL PRIMARY KEY, unit_id INT, start_time TIMESTAMP, '

@@ -199,6 +199,7 @@ class TestArrayEmitter(unittest.TestCase):
             interval_test_window_start=2002,
             interval_test_window_end=2003,
             interval_inc_value=1,
+            label_col_aggr_of_interest='SUM',
             interval_expanding=False,
             label_interval_train_window_start=2007,
             label_interval_train_window_end=2007,
@@ -213,9 +214,9 @@ class TestArrayEmitter(unittest.TestCase):
         def feature_gen(M, labels, test_or_train, interval_start, interval_end, 
                         label_interval_start, label_interval_end,
                         row_M_start, row_M_end):
-            return (append_cols(M, M['relevent_feature'] * 2 if 
+            return (append_cols(M, M['relevent_feature_SUM'] * 2 if 
                         test_or_train == 'test' 
-                        else M['relevent_feature'] * 3, 'mult'),
+                        else M['relevent_feature_SUM'] * 3, 'mult'),
                     labels)
         db_file = uft.path_of_data('rg_subset_over.db')
         conn_str = 'sqlite:///{}'.format(db_file)
@@ -229,6 +230,7 @@ class TestArrayEmitter(unittest.TestCase):
             interval_test_window_start=2006,
             interval_test_window_end=2007,
             interval_inc_value=1,
+            label_col_aggr_of_interest='SUM',
             interval_expanding=False,
             row_M_col_name='cohort',
             row_M_col_aggr_of_interest='SUM',
@@ -242,7 +244,7 @@ class TestArrayEmitter(unittest.TestCase):
             feature_gen_lambda=feature_gen)
         for run in it.chain.from_iterable(
                 [trial.runs_flattened() for trial in exp.trials]):
-            relevent_idx = run.col_names.index('relevent_feature')
+            relevent_idx = run.col_names.index('relevent_feature_SUM')
             mult_idx = run.col_names.index('mult')
             self.assertTrue(
                     np.allclose(run.M[:,relevent_idx] * 3, run.M[:,mult_idx]))

@@ -6,6 +6,8 @@
 Welcome to Diogenes' documentation!
 ====================================
 
+Diogenes is a project that makes common machine learning tasks easier.
+
 Contents:
 
 .. toctree::

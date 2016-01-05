@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from numpy.random import rand
+import urllib2
 
 from diogenes.display.display import describe_cols
 
@@ -19,6 +20,11 @@ class TestRead(unittest.TestCase):
 
     def test_open_csv_url(self): 
         url = 'http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv'
+        try:
+            urllib2.urlopen(url)
+        except (urllib2.HTTPError, urllib2.URLError):
+            utils_for_tests.print_in_box('skipping test_open_csv_url', 'remote resource not found')
+            self.skipTest('couldn\'t get remote resource')
         sa = read.open_csv_url(url, delimiter=';')
         ctrl_dtype = [('fixed acidity', '<f8'), 
                       ('volatile acidity', '<f8'), 

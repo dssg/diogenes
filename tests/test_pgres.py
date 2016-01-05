@@ -96,9 +96,9 @@ class TestPgres(unittest.TestCase):
         res3 = ae.set_interval(
             datetime(2010, 1, 1), 
             datetime(2010, 12, 31)).emit_M()
-        ctrl_dtype = [('id', '<i8'), ('bounded', '<f8'), 
-                      ('no_start', '<f8'), ('no_stop', '<f8'), 
-                      ('unbounded', '<f8')]
+        ctrl_dtype = [('id', '<i8'), ('bounded_sum', '<f8'), 
+                      ('no_start_sum', '<f8'), ('no_stop_sum', '<f8'), 
+                      ('unbounded_sum', '<f8')]
         ctrl1_dat = [(0, 1.0, 100.0, 100000.0, 1000000.0),
                      (1, 0.01, 0.001, 1e-06, 1e-07), 
                      (2, np.nan, np.nan, np.nan, 2e-08)]

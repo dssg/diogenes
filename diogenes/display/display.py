@@ -76,7 +76,7 @@ __describe_cols_metrics = [('Count', len),
 
 __describe_cols_fill = [np.nan] * len(__describe_cols_metrics)
 
-def describe_cols(M):
+def describe_cols(M, verbose=True):
     """Returns summary statistics for a numpy array
 
     Parameters
@@ -102,10 +102,35 @@ def describe_cols(M):
         descr_rows.append(row)
     col_names = ['Column Name'] + [col_name for col_name, _ in 
                                    __describe_cols_metrics]
-    return convert_to_sa(descr_rows, col_names=col_names)
+    ret = convert_to_sa(descr_rows, col_names=col_names)
+    if verbose:
+        pprint_sa(ret)
+    return ret
 
+def table(col, verbose=True):
+    """
+    Creates a summary or the number of occurrences of each value in the column
 
-def crosstab(col1, col2):
+    Similar to R's table
+
+    Parameters
+    ----------
+    col :np.ndarray
+
+    Returns
+    -------
+    np.ndarray
+        structured array
+    """
+    col = utils.check_col(col)
+    cnt = Counter(col)
+    cat_and_cnt = sorted(cnt.iteritems(), key=lambda item: item[0])
+    ret = convert_to_sa(cat_and_cnt, col_names=('col_name', 'count'))
+    if verbose:
+        pprint_sa(ret)
+    return ret
+
+def crosstab(col1, col2, verbose=True):
     """
     Makes a crosstab of col1 and col2. This is represented as a
     structured array with the following properties:
@@ -142,7 +167,10 @@ def crosstab(col1, col2):
         crosstab_rows.append(['{}'.format(col1_val)] + counts)
     col_names = ['col1_value'] + ['{}'.format(col2_val) for col2_val in 
                                   col2_unique]
-    return convert_to_sa(crosstab_rows, col_names=col_names)
+    ret = convert_to_sa(crosstab_rows, col_names=col_names)
+    if verbose:
+        pprint_sa(ret)
+    return ret
 
 
 def plot_simple_histogram(col, verbose=True):
@@ -161,11 +189,21 @@ def plot_simple_histogram(col, verbose=True):
 
     """
     col = utils.check_col(col)
-    hist, bins = np.histogram(col, bins=50)
+    override_xticks = False
+    if col.dtype.char in ('O', 'S'): # If col is strings, handle differently
+        counts = Counter(col)
+        categories = sorted(counts.keys())
+        hist = [counts[cat] for cat in categories]
+        bins = np.arange(len(categories) + 1)
+        override_xticks = True
+    else:
+        hist, bins = np.histogram(col, bins=50)
     width = 0.7 * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
     f = plt.figure()
     plt.bar(center, hist, align='center', width=width)
+    if override_xticks:
+        plt.xticks(center, categories)
     if verbose:
         plt.show()
     return f

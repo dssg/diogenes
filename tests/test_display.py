@@ -6,6 +6,7 @@ from diogenes.display.display import plot_box_plot,plot_simple_histogram
 import diogenes.display as dsp
 from diogenes.display.display import feature_pairs_in_tree
 from diogenes.display.display import feature_pairs_in_rf
+from diogenes.display.display import table
 from diogenes.display.display import crosstab
 from diogenes.display.display import describe_cols
 from diogenes import utils
@@ -77,10 +78,19 @@ J 3000.0 James
                              dtype=[('Column Name', 'S2'), ('Count', int),
                                     ('Mean', float), ('Standard Dev', float),
                                     ('Minimum', int), ('Maximum', int)])
+        ctrl_printout = """
+  Column Name Count Mean  Standard Dev Minimum Maximum
+0          f0     6  3.5 1.70782512766       1       6
+1          f1     6  4.5 1.70782512766       2       7
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(uft.array_equal(ctrl_list, 
+                                            describe_cols(
+                                                test_list)))
+            self.assertEqual(get_stdout().strip(), ctrl_printout)
         self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_list)))
-        self.assertTrue(uft.array_equal(ctrl_list, 
-                                        describe_cols(test_nd)))
+                                        describe_cols(
+                                            test_nd, verbose=False)))
         ctrl_sa = np.array([('id', 6, 3.5, 1.707825127659933, 1, 6),
                             ('val', 6, 4.5, 1.707825127659933, 2, 7),
                             ('name', np.nan, np.nan, np.nan, np.nan, np.nan)],
@@ -88,7 +98,26 @@ J 3000.0 James
                                   ('Mean', float), ('Standard Dev', float),
                                   ('Minimum', float), ('Maximum', float)])
         self.assertTrue(uft.array_equal(ctrl_sa, 
-                                        describe_cols(test_sa)))
+                                        describe_cols(
+                                            test_sa,
+                                            verbose=False)))
+
+    def test_table(self):
+        data = np.array(['a', 'b', 'a', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 
+                         'b', 'c', 'a'], dtype='O')
+        ctrl_sa = np.array(
+                [('a', 4), ('b', 6), ('c', 3)],
+                dtype=[('col_name', 'S1'), ('count', int)])           
+        ctrl_printout = """
+  col_name count
+0        a     4
+1        b     6
+2        c     3
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(uft.array_equal(ctrl_sa, 
+                                            table(data)))
+            self.assertEqual(get_stdout().strip(), ctrl_printout)
 
     def test_crosstab(self):
         l1= [1, 2, 7, 7, 2, 1, 2, 1, 1]
@@ -102,13 +131,25 @@ J 3000.0 James
                                   ('3', int),
                                   ('4', int),
                                   ('6', int)])
-        self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+        correct_printout = """
+  col1_value 1 2 3 4 6
+0          1 1 0 1 2 0
+1          2 0 0 1 0 2
+2          7 0 1 0 0 1
+        """.strip()
+        with uft.rerout_stdout() as get_stdout:
+            self.assertTrue(np.array_equal(correct, crosstab(l1,l2)))
+            self.assertEqual(get_stdout().strip(), correct_printout)
 
     def test_plot_simple_histogram(self):
         np.random.seed(0)
         data = np.random.normal(size=(1000,))
         fig = plot_simple_histogram(data, verbose=False)
         self.add_fig_to_report(fig, 'plot_simple_histogram')
+        data = np.array(['a', 'b', 'a', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 
+                         'b', 'c', 'a'], dtype='O')
+        fig = plot_simple_histogram(data, verbose=False)
+        self.add_fig_to_report(fig, 'plot_simple_histogram_categorical')
 
     def test_plot_prec_recall(self):
         M, labels = uft.generate_correlated_test_matrix(1000)

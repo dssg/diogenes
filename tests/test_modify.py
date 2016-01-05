@@ -16,10 +16,12 @@ from diogenes.modify import col_val_eq
 from diogenes.modify import col_val_eq_any
 from diogenes.modify import col_fewer_than_n_nonzero
 from diogenes.modify import where_all_are_true 
+from diogenes.modify import choose_rows_where 
 from diogenes.modify import remove_rows_where
 from diogenes.modify import row_val_eq
 from diogenes.modify import row_val_lt 
 from diogenes.modify import row_val_between
+from diogenes.modify import row_is_nan
 from diogenes.modify import combine_cols
 from diogenes.modify import combine_sum
 from diogenes.modify import combine_mean 
@@ -66,20 +68,25 @@ class TestModify(unittest.TestCase):
                    
     def test_label_encoding(self):
         M = np.array(
-            [('a', 0, 'Martin'),
-             ('b', 1, 'Tim'),
-             ('b', 2, 'Martin'),
-             ('c', 3, 'Martin')],
-            dtype=[('letter', 'O'), ('idx', int), ('name', 'O')])
+            [('a', 0, 'Martin', 100),
+             ('b', 1, 'Tim', 222),
+             ('b', 2, 'Martin', 100),
+             ('c', 3, 'Martin', 222)],
+            dtype=[('letter', 'O'), ('idx', int), ('name', 'O'),
+                   ('categorical_number', int)])
         ctrl = np.array(
-            [(0, 0, 0),
-             (1, 1, 1),
-             (1, 2, 0),
-             (2, 3, 0)],
-            dtype=[('letter', int), ('idx', int), ('name', int)])
+            [(0, 0, 0, 0),
+             (1, 1, 1, 1),
+             (1, 2, 0, 0),
+             (2, 3, 0, 1)],
+            dtype=[('letter', int), ('idx', int), ('name', int),
+                   ('categorical_number', int)])
         ctrl_classes = {'letter': np.array(['a', 'b', 'c']),
-                        'name': np.array(['Martin', 'Tim'])}
-        new_M, classes = label_encode(M)
+                        'name': np.array(['Martin', 'Tim']),
+                        'categorical_number': np.array([100, 222])}
+        new_M, classes = label_encode(
+            M, 
+            force_columns=['categorical_number'])
         self.assertTrue(np.array_equal(ctrl, new_M))
         self.assertEqual(ctrl_classes.keys(), classes.keys())
         for key in ctrl_classes:
@@ -144,8 +151,62 @@ class TestModify(unittest.TestCase):
         res = where_all_are_true(
             M, 
             arguments)
+
         ctrl = np.array([True, False, False])
                    
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_choose_rows_where(self):
+        M = [[1,2,3], [2,3,4], [3,4,5]]
+        col_names = ['heigh','weight', 'age']
+        lables= [0,0,1]
+        M = diogenes.utils.cast_list_of_list_to_sa(
+            M,
+            col_names=col_names)
+
+        arguments = [{'func': row_val_eq, 'col_name': 'heigh', 'vals': 1},
+                     {'func': row_val_lt, 'col_name': 'weight', 'vals': 3},
+                     {'func': row_val_between, 'col_name': 'age', 'vals': 
+                      (3, 4)}]
+
+        res = choose_rows_where(
+            M, 
+            arguments)
+
+        ctrl = cast_list_of_list_to_sa([[1,2,3]],col_names=['heigh','weight', 'age'])
+                   
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_remove_rows_where(self):
+        M = [[1,2,3], [2,3,4], [3,4,5]]
+        col_names = ['heigh','weight', 'age']
+        lables= [0,0,1]
+        M = diogenes.utils.cast_list_of_list_to_sa(
+            M,
+            col_names=col_names)
+
+        arguments = [{'func': row_val_eq, 'col_name': 'heigh', 'vals': 1},
+                     {'func': row_val_lt, 'col_name': 'weight', 'vals': 3},
+                     {'func': row_val_between, 'col_name': 'age', 'vals': 
+                      (3, 4)}]
+
+        res = remove_rows_where(
+            M, 
+            arguments)
+
+        ctrl = cast_list_of_list_to_sa([[2,3,4],[3,4,5]],col_names=['heigh','weight', 'age'])
+                   
+        self.assertTrue(np.array_equal(res, ctrl))
+
+    def test_row_is_nan(self):
+        M = np.array(
+                [(0, 1,), (1, np.nan), (2, 0), (3, np.nan), (4, 1)],
+                dtype=[('id', int), ('label', float)])
+        arguments = [{'func': row_is_nan, 'col_name': 'label', 'vals': None}]
+        res = remove_rows_where(M, arguments)
+        ctrl = np.array(
+            [(0, 1), (2, 0), (4, 1)],
+            dtype=[('id', int), ('label', float)])
         self.assertTrue(np.array_equal(res, ctrl))
 
     def test_combine_cols(self):

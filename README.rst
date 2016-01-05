@@ -203,6 +203,6 @@ Other packages
 Next Steps
 ----------
 
-Check out the `documentation <http://dssg.github.io/diogenes>`_
+Check out the `documentation <http://dssg-diogenes.github.io/diogenes>`_
 
 

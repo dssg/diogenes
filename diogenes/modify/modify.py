@@ -82,7 +82,7 @@ def __valid_col_select_func(f):
 
 def __check_args_col_select(args, argument_name='arguments'):
     return utils.check_arguments(args, {'func': __valid_col_select_func, 'vals': None}, 
-                                 argument_name)
+                                 argument_name=argument_name)
 
 def __valid_row_select_func(f):
     if not hasattr(f, '__call__'):
@@ -95,7 +95,7 @@ def __valid_row_select_func(f):
 def __check_args_row_select(M, args, argument_name='arguments'):
     return utils.check_arguments(args, {'func': __valid_col_select_func, 'vals': None, 
                                         'col_name': lambda name: name in M.dtype.names}, 
-                                 argument_name)
+                                 argument_name=argument_name)
 
 def choose_cols_where(M, arguments):
     """Returns a structured array containing only columns adhering to a query
@@ -284,14 +284,7 @@ def choose_rows_where(M, arguments):
         Structured array with only specified rows
 
     """
-    M = utils.check_sa(M)
-    args = __check_args_row_select(M, arguments)
-
-    to_select = np.ones(M.size, dtype=bool)
-    for arg_set in arguments:
-        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
-                                    arg_set['vals'])
-        to_select = np.logical_and(to_select, lambd(M, col_name, vals))
+    to_select = where_all_are_true(M,arguments)
     return M[to_select]
 
 def remove_rows_where(M, arguments):
@@ -310,14 +303,7 @@ def remove_rows_where(M, arguments):
         Structured array without specified rows
 
     """
-    M = utils.check_sa(M)
-    args = __check_args_row_select(M, arguments)
-
-    to_remove = np.ones(M.size, dtype=bool)
-    for arg_set in arguments:
-        lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
-                                    arg_set['vals'])
-        to_remove = np.logical_and(to_remove, lambd(M, col_name, vals))
+    to_remove = where_all_are_true(M,arguments)
     return M[np.logical_not(to_remove)]
 
 def where_all_are_true(M, arguments):
@@ -344,6 +330,7 @@ def where_all_are_true(M, arguments):
         lambd, col_name, vals = (arg_set['func'], arg_set['col_name'],
                                     arg_set['vals'])
         to_select = np.logical_and(to_select, lambd(M, col_name, vals))
+        if not np.any(to_select): break
     return to_select
 
 def row_is_outlier(M, col_name, boundary=3.0):
@@ -493,6 +480,29 @@ def row_is_within_region(M, col_names, boundary):
     bbPath = mplPath.Path(np.array(boundary))
     return [bbPath.contains_point(point) for point in M[col_names]]
 
+def row_is_nan(M, col_name, boundary=None):
+    """Picks rows for which cell is np.nan
+
+    To be used as a 'func' argument in choose_rows_where, remove_rows_where, 
+    or where_all_are_true (see module documentation).
+
+    Parameters
+    ----------
+    M : numpy.ndarray
+        structured array
+    col_name : str
+        name of column to check
+    boundary : None
+        unused
+
+    Returns
+    -------
+    numpy.ndarray
+        boolean array: True if row picked, False if not.
+
+    """
+    return np.isnan(M[col_name])
+
 def combine_cols(M, lambd, col_names):
     """Return an array that is the function of existing columns
 
@@ -541,7 +551,7 @@ def combine_mean(*args):
     """
     return np.mean(args)
     
-def label_encode(M):
+def label_encode(M, force_columns=[]):
     """Changes string cols to ints so that there is a 1-1 mapping between 
     strings and ints
 
@@ -549,6 +559,10 @@ def label_encode(M):
     ----------
     M : numpy.ndarray
         structured array
+    force_columns : list of str
+        By default, label_encode will only encode string columns. If the name
+        of a numerical column is also present in force_columns, then that 
+        column will also be label encoded
 
     Returns
     -------
@@ -563,7 +577,7 @@ def label_encode(M):
     result_arrays = []
     classes = {}
     for (col_name, fmt) in M.dtype.descr:
-        if 'S' in fmt or 'O' in fmt:
+        if 'S' in fmt or 'O' in fmt or col_name in force_columns:
             col = M[col_name]
             le = preprocessing.LabelEncoder()
             le.fit(col)

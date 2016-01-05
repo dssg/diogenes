@@ -180,7 +180,7 @@ class ArrayEmitter(object):
 
     If you need to take labels and the rest of your features from different
     time intervals, set the label column with set_label_feature and set the
-    label interval with set_label_interval
+    label interval with set_label_interval.
 
     **Note on function call semantics**
 

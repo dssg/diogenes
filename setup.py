@@ -13,6 +13,7 @@ setup(
                           'scikit-learn', 
                           'matplotlib', 
                           'SQLAlchemy',
+                          'psycopg2',
                           'joblib',
                           'pdfkit'),
         zip_safe=False)

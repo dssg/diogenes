@@ -1192,7 +1192,7 @@ def M_to_rg(conn_str, from_table, to_table, unit_id_col,
     sql_char = ("DROP TABLE IF EXISTS {encode_table}; "
                 "CREATE TABLE {encode_table} AS "
                 "   SELECT DISTINCT {{feat_col}} AS val, "
-                "       RANK() OVER(ORDER BY {{feat_col}}) AS encoding "
+                "       DENSE_RANK() OVER(ORDER BY {{feat_col}}) AS encoding "
                 "   FROM {from_table}; "
                 "INSERT INTO {to_table} (unit_id, start_time, end_time, "
                 "                        feat, val) "

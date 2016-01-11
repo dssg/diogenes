@@ -8,6 +8,8 @@ setup(
         description='A grid search library for machine learning',
         packages=find_packages(),
         install_requires=('numpy>=1.10.1',
+                          'scipy',
+                          'pandas',
                           'scikit-learn', 
                           'matplotlib', 
                           'SQLAlchemy',

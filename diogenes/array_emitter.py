@@ -8,6 +8,7 @@ import diogenes.grid_search.experiment as exp
 
 from sklearn.ensemble import RandomForestClassifier
 
+
 class ArrayEmitter(object):
     """
     Array emitter is a tool that accepts tables from either SQL or CSVs in the 
@@ -675,7 +676,6 @@ class ArrayEmitter(object):
             else:
                 label_stop_time = self.__clean_time(label_stop_time)
 
-
         # get all features
         sql_features = 'SELECT DISTINCT {} FROM {};'.format(
                 col_specs['feature'], 
@@ -961,9 +961,10 @@ class ArrayEmitter(object):
         current_row_M_test_start = row_M_test_window_start
         current_row_M_test_end = row_M_test_window_end
         ae = self.set_label_feature(label_col)
-        while (current_interval_test_start < interval_end and
-               current_row_M_test_start < row_M_end and
-               current_label_interval_test_start < interval_end):
+
+        while (current_interval_test_start <= interval_end and
+               current_row_M_test_start <= row_M_end and
+               current_label_interval_test_start <= interval_end):
             ae_train = ae.set_interval(current_interval_train_start,
                                         current_interval_train_end)
             ae_train = ae_train.set_label_interval(
@@ -998,8 +999,6 @@ class ArrayEmitter(object):
             data_test = ae_test.emit_M()
             M_test = utils.remove_cols(data_test, label_plus_aggr)
             y_test = data_test[label_plus_aggr]
-
-            #import pdb; pdb.set_trace()
 
             # if column ended up with an Object type, there is no date.
             # remove it

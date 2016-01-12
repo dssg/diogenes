@@ -10,6 +10,7 @@ import os
 import itertools as it
 from collections import Counter
 from multiprocessing import cpu_count
+import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -733,30 +734,32 @@ class Run(object):
         list of float
 
         """
-        labels_true = self.__test_labels()
-        labels_score = self.__pred_proba()
-        prec, _, thresh = precision_recall_curve(
-                labels_true, 
-                labels_score)
+        # labels_true = self.__test_labels()
+        # labels_score = self.__pred_proba()
 
-        # Adopted from Rayid's code
-        precision_curve = prec[:-1]
-        pct_above_per_thresh = []
-        number_scored = len(labels_score)
-        for value in thresh:
-            num_above_thresh = len(labels_score[labels_score>=value])
-            pct_above_thresh = num_above_thresh / float(number_scored)
-            pct_above_per_thresh.append(pct_above_thresh)
-        pct_above_per_thresh = np.array(pct_above_per_thresh)
-        # Add point at 0% above thresh, 1, precision
-        pct_above_per_thresh = np.append(pct_above_per_thresh, 0)
-        precision_curve = np.append(precision_curve, 1)
+        if (np.max(query_thresholds) > 1.0) or (np.min(query_thresholds) < 0.0):
+            raise ValueError("Thresholds need to be in [0.0, 1.0]")
 
-        # TODO something better than linear interpolation
-        return np.interp(
-                query_thresholds, 
-                pct_above_per_thresh[::-1],
-                precision_curve[::-1])
+        true_pred = np.array(zip(self.__test_labels(), self.__pred_proba()),
+                            dtype=[('truth','b'),
+                                   ('pred','>f4')])
+
+        if len(true_pred) < 10:
+            warnings.warn("Testing data has <20 datapoints, so careful with the precisions.")
+
+        # sort by prediction score in descending score, break ties by label in ascending order (conservative)
+        true_pred['pred'] = true_pred['pred']*(-1)
+        true_pred.sort(order=['pred','truth'])
+        true_pred['pred'] = true_pred['pred']*(-1) # acrobatics, cause numpy has no ascending=[False, True]
+
+        precs = []
+        for value in query_thresholds:
+            # get the top chunk of the list; ceil() to be conservative
+            precs.append(
+                        true_pred[:int(np.ceil(value * len(true_pred)))]['truth'].mean()
+                        )
+        precs = np.array(precs)
+        return precs
 
     def roc_auc(self):
         """Returns area under ROC curve"""

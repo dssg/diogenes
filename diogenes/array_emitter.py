@@ -909,17 +909,17 @@ class ArrayEmitter(object):
         sql_features = 'SELECT DISTINCT {} FROM {};'.format(
                 col_specs['feature'], 
                 table_name)
-        feat_names = [row[0] for row in conn.execute(sql_features)].remove(
-                label_feature_name)
+        feat_names = [row[0] for row in conn.execute(sql_features)]
+        feat_names.remove(label_feature_name)
 
         # get per_feature subqueries
         label_subquery = self.__feature_subqueries_label(
             label_start_time,
             label_stop_time)
 
-        feature_subqueries = [label_subquery] + 
+        feature_subqueries = ([label_subquery] + 
             [self.__feature_subqueries_nonlabel(feat_name)
-                for feat_name in feat_names]
+                for feat_name in feat_names])
 
         # build temporary tables
         sql_with_clause_0 = ("WITH\n"

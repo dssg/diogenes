@@ -187,20 +187,17 @@ J 3000.0 James
                 labels)
         clf = RandomForestClassifier(random_state=0)
         clf.fit(M_train, labels_train)
-        res = dsp.get_top_features(clf, M, verbose=False)
+
+        ctrl_feat_importances = clf.feature_importances_
+        ctrl_col_names = ['f{}'.format(i) for i in xrange(15)]
+        ctrl_feat_ranks = np.argsort(ctrl_feat_importances)[::-1][:10]
         ctrl = utils.convert_to_sa(
-                [('f5',  0.0773838526068), 
-                 ('f13',   0.0769596713039),
-                 ('f8',  0.0751584839431),
-                 ('f6',  0.0730815879102),
-                 ('f11',   0.0684456133071),
-                 ('f9',  0.0666747414603),
-                 ('f10',   0.0659621889608),
-                 ('f7',  0.0657988099065),
-                 ('f2',  0.0634000069218),
-                 ('f0',  0.0632912268319)],
-                col_names=('feat_name', 'score'))
+                zip(ctrl_col_names, ctrl_feat_importances),
+                col_names=('feat_name', 'score'))[ctrl_feat_ranks]
+
+        res = dsp.get_top_features(clf, M, verbose=False)
         self.assertTrue(uft.array_equal(ctrl, res))
+
         res = dsp.get_top_features(clf, col_names=['f{}'.format(i) for i in xrange(15)], verbose=False)
         self.assertTrue(uft.array_equal(ctrl, res))
 

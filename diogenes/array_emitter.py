@@ -746,6 +746,238 @@ class ArrayEmitter(object):
             sql_where_clause)
         return sql_select
 
+    def __feature_subqueries_nonlabel(
+            self, 
+            feat_name):
+        aggregations = self.__aggregations
+        table_name = self.__rg_table_name
+        label_feature_name = self.__label_feature_name
+        aggrs = aggregations.get(feat_name, self.__default_aggregation)
+        col_specs = self.__col_specs
+        if isinstance(aggrs, basestring):
+            aggrs = [aggrs]
+
+        feat_table = '{}_tbl'.format(feat_name)
+        nicknames = ', '.join(
+                ['{feat_name}_{aggr}'.format(
+                    feat_name=feat_name,
+                    aggr=aggr) for aggr in aggrs])
+
+        select_clause = ',\n'.join(
+                ["            {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
+                    feat_table=feat_table,
+                    aggr=aggr,
+                    feat_name=feat_name) for aggr in aggrs])
+
+        with_clause_0 = ("    {feat_table} AS (\n"
+                         "        SELECT\n"
+                         "            {table_name}.{unit_id_col} as id,\n").format(
+                            unit_id_col=col_specs['unit_id'],
+                            feat_table=feat_table)
+        with_clause_1 = ',\n'.join(
+                ["            {aggr}({table_name}.{val_col}) as val_{aggr}".format(
+                    aggr=aggr,
+                    val_col=col_specs['val']) for aggr in aggrs]) + '\n'
+        with_clause_2 = ("        FROM\n"
+                         "            {table_name} JOIN tbl_label\n"
+                         "            ON {table_name}.{unit_id_col} = tbl_label.id\n"
+                         "        WHERE\n"
+                         "            {feature_col} = '{feat_name}'\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                {table_name}.{stop_time_col} < tbl_label.stop_time\n"
+                         "                OR {start_time_col} IS NULL\n"
+                         "            )\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                {table_name}.{stop_time_col} < tbl_label.stop_time\n"
+                         "                OR {stop_time_col} IS NULL\n"
+                         "            )\n"
+                         "        GROUP BY {table_name}.{unit_id_col}\n"
+                         "    )").format(
+                             val_col=col_specs['val'],
+                             table_name=table_name,
+                             feature_col=col_specs['feature'],
+                             start_time_col=col_specs['start_time'],
+                             stop_time_col=col_specs['stop_time'],
+                             feat_name=feat_name,
+                             unit_id_col=col_specs['unit_id'])
+
+        return {'table': feat_table,
+                'nicknames': nicknames,
+                'select': select_clause, 
+                'with': '{}{}{}'.format(with_clause_0, with_clause_1, with_clause_2)}
+
+    def __feature_subqueries_label(
+            self, 
+            start_time,
+            stop_time):
+        aggregations = self.__aggregations
+        table_name = self.__rg_table_name
+        feat_name = self.__label_feature_name
+        aggrs = aggregations.get(feat_name, self.__default_aggregation)
+        col_specs = self.__col_specs
+        if isinstance(aggrs, basestring):
+            aggrs = [aggrs]
+
+        feat_table = 'label_tbl'
+        nicknames = ', '.join(
+                ['{feat_name}_{aggr}'.format(
+                    feat_name=feat_name,
+                    aggr=aggr) for aggr in aggrs])
+
+        select_clause = ',\n'.join(
+                ["            {feat_table}.val_{aggr} as {feat_name}_{aggr}".format(
+                    feat_table=feat_table,
+                    aggr=aggr,
+                    feat_name=feat_name) for aggr in aggrs])
+
+        with_clause_0 = ("    {feat_table} AS (\n"
+                         "        SELECT\n"
+                         "            {unit_id_col} as id,\n").format(
+                            unit_id_col=col_specs['unit_id'],
+                            feat_table=feat_table)
+        with_clause_1 = ("            COALESCE(MAX({stop_time_col}), "
+                         "MAX({start_time_col})) AS stop_time\n").format(
+                                 start_time_col=col_specs['start_time'],
+                                 stop_time_col=col_specs['stop_time'])
+        with_clause_2 = ',\n'.join(
+                ["            {aggr}({val_col}) as val_{aggr}".format(
+                    aggr=aggr,
+                    val_col=col_specs['val']) for aggr in aggrs]) + '\n'
+        with_clause_3 = ("        FROM\n"
+                         "            {table_name}\n"
+                         "        WHERE\n"
+                         "            {feature_col} = '{feat_name}'\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                (\n"
+                         "                     {start_time_col} >= {start_time}\n"
+                         "                     AND {start_time_col} <= {stop_time}\n"
+                         "                )\n"
+                         "                OR {start_time_col} IS NULL\n"
+                         "            )\n"
+                         "            AND\n"
+                         "            (\n"
+                         "                (\n"
+                         "                    {stop_time_col} >= {start_time}\n"
+                         "                    AND {stop_time_col} <= {stop_time}\n"
+                         "                )\n"
+                         "                OR {stop_time_col} IS NULL\n"
+                         "            )\n"
+                         "        GROUP BY id\n"
+                         "    )").format(
+                             val_col=col_specs['val'],
+                             table_name=table_name,
+                             feature_col=col_specs['feature'],
+                             start_time_col=col_specs['start_time'],
+                             start_time=start_time,
+                             stop_time_col=col_specs['stop_time'],
+                             stop_time=stop_time,
+                             feat_name=feat_name)
+
+        return {'table': feat_table,
+                'nicknames': nicknames,
+                'select': select_clause, 
+                'with': '{}{}{}{}'.format(with_clause_0, with_clause_1, with_clause_2,
+                    with_clause_3)}
+
+    def get_query_with_labels(self):
+        """Returns SQL query that will be used to create the M-formatted table
+        
+        (treating label columns separately)
+        """
+        col_specs = self.__col_specs
+        conn = self.__conn
+        table_name = self.__rg_table_name
+
+        label_feature_name = self.__label_feature_name
+        label_start_time = self.__label_start_time
+        label_stop_time = self.__label_stop_time
+
+        if label_start_time is None:
+            label_start_time = start_time
+        else:
+            label_start_time = self.__clean_time(label_start_time)
+        if label_stop_time is None:
+            label_stop_time = end_time
+        else:
+            label_stop_time = self.__clean_time(label_stop_time)
+
+
+        # get all features
+        sql_features = 'SELECT DISTINCT {} FROM {};'.format(
+                col_specs['feature'], 
+                table_name)
+        feat_names = [row[0] for row in conn.execute(sql_features)].remove(
+                label_feature_name)
+
+        # get per_feature subqueries
+        label_subquery = self.__feature_subqueries_label(
+            label_start_time,
+            label_stop_time)
+
+        feature_subqueries = [label_subquery] + 
+            [self.__feature_subqueries_nonlabel(feat_name)
+                for feat_name in feat_names]
+
+        # build temporary tables
+        sql_with_clause_0 = ("WITH\n"
+                             "    id_tbl AS (\n"
+                             "        SELECT DISTINCT\n" 
+                             "            {unit_id_col} AS id\n"
+                             "        FROM\n"
+                             "            {table_name}\n"
+                             "    ),\n\n").format(
+                                   unit_id_col=col_specs['unit_id'],
+                                   table_name=table_name)
+        sql_with_clause_1 = ',\n\n'.join(
+                [subquery['with'] for subquery in subqueries])
+
+        # build select out of subtables
+        sql_inner_select_clause_0 = (",\n\n"
+                                     "    inner_select_tbl AS (\n"
+                                     "        SELECT\n"
+                                     "            id_tbl.id,\n")
+        sql_inner_select_clause_1 = ',\n'.join(
+                [subquery['select'] for subquery in subqueries])
+                                 
+        sql_inner_from_clause_0 = ("\n"
+                                   "        FROM\n"
+                                   "            id_tbl\n"
+                                   "            LEFT JOIN ")
+        sql_inner_from_clause_1 = "\n            LEFT JOIN ".join(
+            ["{feat_tbl}\n                 ON {feat_tbl}.id = id_tbl.id".format(
+                feat_tbl=subquery['table']) for subquery in subqueries])
+
+        sql_select_clause=("\n"
+                           "    )\n"
+                           "\n"
+                           "SELECT\n"
+                           "    *\n" 
+                           "FROM\n"
+                           "    inner_select_tbl")
+        # TODO we can probably do something more sophisticated than just 
+        # throwing the user's directives in here
+        # TODO something with better performance than coalesce
+        sql_where_clause = "\nWHERE\n    COALESCE({}) IS NOT NULL".format(
+                ', '.join([subquery['nicknames'] for subquery in subqueries]))
+        if self.__selections:
+            sql_where_clause += " AND\n" + " AND\n".join(
+                ['    ({})'.format(sel) for sel in self.__selections]) 
+
+        sql_select = '{}{}{}{}{}{}{}{};'.format(
+            sql_with_clause_0,
+            sql_with_clause_1,
+            sql_inner_select_clause_0,
+            sql_inner_select_clause_1,
+            sql_inner_from_clause_0,
+            sql_inner_from_clause_1,
+            sql_select_clause,
+            sql_where_clause)
+        return sql_select
+
+
     def emit_M(self):
         """Creates a structured array in M-format
 
@@ -755,7 +987,12 @@ class ArrayEmitter(object):
             Numpy structured array constructed using the specified queries and
             subsets
         """
-        return self.__conn.execute(self.get_query())
+        if self.__label_feature_name:
+            query = self.get_query_with_labels()
+        else:
+            query = self.get_query()
+        print query
+        return self.__conn.execute(query)
 
     def subset_over(
             self, 

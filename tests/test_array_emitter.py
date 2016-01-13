@@ -16,7 +16,7 @@ class TestArrayEmitter(unittest.TestCase):
         ae = array_emitter.ArrayEmitter()
         ae = ae.get_rg_from_sql(conn_str, 'rg_students')
         ae = ae.set_aggregation('absences', 'MAX')
-        ae = ae.set_interval(2005, 2007)
+#        ae = ae.set_interval(2005, 2007)
         ae = ae.set_label_feature('graduated')
         ae = ae.set_label_interval(2009, 2009)
         res = ae.emit_M()

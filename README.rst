@@ -186,7 +186,7 @@ Required Packages
 
 Python packages
 ---------------
-- `Python 2.7 <https://www.python.org/>`_
+- `Python 2.7.x where x>=11 <https://www.python.org/>`_
 - `Numpy 1.10.1 <http://www.numpy.org/>`_
 - `scikit-learn <http://scikit-learn.org/stable/>`_
 - `pandas <http://pandas.pydata.org/>`_
@@ -194,7 +194,7 @@ Python packages
 - `pdfkit <https://github.com/pdfkit/pdfkit>`_
 - `plotlib <http://matplotlib.org/>`_
 
-Other packages
+Other (Non-Python) packages
 --------------
 
 - `wkhtmltopdf <http://wkhtmltopdf.org/>`_

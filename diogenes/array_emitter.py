@@ -999,19 +999,13 @@ class ArrayEmitter(object):
     def subset_over(
             self, 
             label_col,
-            interval_train_window_start,
-            interval_train_window_end,
-            interval_test_window_start,
-            interval_test_window_end,
-            interval_inc_value,
             label_col_aggr_of_interest='AVG',
-            interval_expanding=False,
-            label_interval_train_window_start=None,
-            label_interval_train_window_end=None,
-            label_interval_test_window_start=None,
-            label_interval_test_window_end=None,
-            label_interval_inc_value=None,
-            label_interval_expanding=False,
+            label_interval_train_window_start,
+            label_interval_train_window_end,
+            label_interval_test_window_start,
+            label_interval_test_window_end,
+            label_interval_inc_value,
+            label_interval_expanding,
             row_M_col_name=None,
             row_M_col_aggr_of_interest='AVG',
             row_M_train_window_start=None,
@@ -1050,22 +1044,10 @@ class ArrayEmitter(object):
         ----------
         label_col : str
             The name of the column containing labels
-        interval_train_window_start : number or datetime
-            start of training interval
-        interval_train_window_size : number or datetime
-            (Initial) size of training interval
-        interval_test_window_start : number or datetime
-            start of testing interval
-        interval_test_window_size : number or datetime
-            size of testing interval
-        interval_inc_value : datetime, timedelta, or number
-            interval to increment train and test interval
         label_col_aggr_of_interest : str
             The type of aggregation which will signify the label
             (for example, use 'AVG' if the label is the 'AVG' of the label
             column in the M-formatted matrix)
-        interval_expanding : boolean
-            whether or not the training interval is expanding
         label_interval_train_window_start : number or datetime or None
             start of training interval for labels
         label_interval_train_window_size : number or datetime or None
@@ -1128,15 +1110,15 @@ class ArrayEmitter(object):
             Experiment collecting train/test sets that have been run
         """
         if row_M_train_window_start is None:
-            row_M_train_window_start = interval_train_window_start
+            row_M_train_window_start = label_interval_train_window_start
         if row_M_train_window_end is None:
-            row_M_train_window_end = interval_train_window_end
+            row_M_train_window_end = label_interval_train_window_end
         if row_M_test_window_start is None:
-            row_M_test_window_start = interval_test_window_start
+            row_M_test_window_start = label_interval_test_window_start
         if row_M_test_window_end is None:
-            row_M_test_window_end = interval_test_window_end
+            row_M_test_window_end = label_interval_test_window_end
         if row_M_inc_value is None:
-            row_M_inc_value = interval_inc_value
+            row_M_inc_value = label_interval_inc_value
 
         conn = self.__conn
         col_specs = self.__col_specs
@@ -1146,16 +1128,19 @@ class ArrayEmitter(object):
             "SELECT MAX(CASE "
             "   WHEN {stop_time_col} > {start_time_col} THEN {stop_time_col} "
             "   ELSE {start_time_col} "
-            "END) as max_time FROM {table_name}").format(
+            "END) as max_time FROM {table_name} "
+            "WHERE {feat_col} = {label_name}").format(
                stop_time_col=col_specs['stop_time'],
                start_time_col=col_specs['start_time'],
-               table_name=table_name)
+               table_name=table_name,
+               feat_col=col_specs['feature'],
+               label_name=label_col)
         interval_end = conn.execute(
                 sql_get_max_interval_end)[0][0]
         # Makesure datetime64s are the same resolution
         if (isinstance(interval_end, np.datetime64) and 
-                isinstance(interval_test_window_start, np.datetime64)):
-            interval_end = interval_end.astype(interval_test_window_start.dtype)
+                isinstance(label_interval_test_window_start, np.datetime64)):
+            interval_end = interval_end.astype(label_interval_test_window_start.dtype)
 
         if row_M_col_name is not None:
             sql_get_max_col = ("SELECT MAX({}) FROM {} "
@@ -1176,21 +1161,6 @@ class ArrayEmitter(object):
             for param_dict in utils.transpose_dict_of_lists(all_clf_ps):
                 trial_directives.append((clf, param_dict, []))
 
-        if label_interval_train_window_start is None:
-            label_interval_train_window_start = interval_train_window_start
-        if label_interval_train_window_end is None:
-            label_interval_train_window_end = interval_train_window_end
-        if label_interval_test_window_start is None:
-            label_interval_test_window_start = interval_test_window_start
-        if label_interval_test_window_end is None:
-            label_interval_test_window_end = interval_test_window_end
-        if label_interval_inc_value is None:
-            label_interval_inc_value = interval_inc_value
-
-        current_interval_train_start = interval_train_window_start
-        current_interval_train_end = interval_train_window_end
-        current_interval_test_start = interval_test_window_start
-        current_interval_test_end = interval_test_window_end
         current_label_interval_train_start = label_interval_train_window_start
         current_label_interval_train_end = label_interval_train_window_end
         current_label_interval_test_start = label_interval_test_window_start
@@ -1200,16 +1170,11 @@ class ArrayEmitter(object):
         current_row_M_test_start = row_M_test_window_start
         current_row_M_test_end = row_M_test_window_end
         ae = self.set_label_feature(label_col)
-        while (current_interval_test_start < interval_end and
-               current_row_M_test_start < row_M_end and
+        while (current_row_M_test_start < row_M_end and
                current_label_interval_test_start < interval_end):
-            ae_train = ae.set_interval(current_interval_train_start,
-                                        current_interval_train_end)
             ae_train = ae_train.set_label_interval(
                     current_label_interval_train_start,
                     current_label_interval_train_end)
-            ae_test = ae.set_interval(current_interval_test_start,
-                                        current_interval_test_end)
             ae_test = ae_test.set_label_interval(
                     current_label_interval_test_start,
                     current_label_interval_test_end)
@@ -1291,11 +1256,7 @@ class ArrayEmitter(object):
                     None,
                     col_names,
                     np.arange(len(col_names)),
-                    {'train_interval_start': current_interval_train_start,
-                     'train_interval_end': current_interval_train_end,
-                     'test_interval_start': current_interval_test_start,
-                     'test_interval_end': current_interval_test_end,
-                     'train_label_interval_start': current_label_interval_train_start,
+                    {'train_label_interval_start': current_label_interval_train_start,
                      'train_label_interval_end': current_label_interval_train_end,
                      'test_label_interval_start': current_label_interval_test_start,
                      'test_label_interval_end': current_label_interval_test_end},
@@ -1306,11 +1267,6 @@ class ArrayEmitter(object):
                     M_test_nd,
                     y_test))
 
-            if not interval_expanding:
-                current_interval_train_start += interval_inc_value
-            current_interval_train_end += interval_inc_value
-            current_interval_test_start += interval_inc_value
-            current_interval_test_end += interval_inc_value
             if not label_interval_expanding:
                 current_label_interval_train_start += label_interval_inc_value
             current_label_interval_train_end += label_interval_inc_value

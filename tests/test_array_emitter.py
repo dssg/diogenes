@@ -209,6 +209,7 @@ class TestArrayEmitter(unittest.TestCase):
         def feature_gen(M, labels, test_or_train, interval_start, interval_end, 
                         label_interval_start, label_interval_end,
                         row_M_start, row_M_end):
+            import pdb; pdb.set_trace()
             return (append_cols(M, M['relevent_feature_SUM'] * 2 if 
                         test_or_train == 'test' 
                         else M['relevent_feature_SUM'] * 3, 'mult'),

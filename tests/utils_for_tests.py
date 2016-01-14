@@ -84,11 +84,6 @@ def array_equal(M1, M2, eps=1e-5, idx_col=None):
             transitions[M1_idx_backindices[idx]] = M2_idx_backindices[idx]
         new_M2_order = [transitions[i] for i in xrange(M1.shape[0])]
         M2_reordered = M2_reordered[new_M2_order]
-    print M1
-    print M1.dtype
-    print
-    print M2_reordered
-    print M2_reordered.dtype
     for col_name, col_type in M1.dtype.descr:
         M1_col = M1[col_name]
         M2_col = M2_reordered[col_name]

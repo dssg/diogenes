@@ -163,10 +163,10 @@ class TestArrayEmitter(unittest.TestCase):
         exp = ae.subset_over(
             label_col='label',
             label_col_aggr_of_interest='SUM',
-            label_interval_train_window_start=2004,
-            label_interval_train_window_end=2005,
-            label_interval_test_window_start=2006,
-            label_interval_test_window_end=2007,
+            label_interval_train_window_start=2008,
+            label_interval_train_window_end=2008,
+            label_interval_test_window_start=2009,
+            label_interval_test_window_end=2009,
             label_interval_inc_value=1,
             label_interval_expanding=False,
             row_M_col_name='cohort',
@@ -192,8 +192,8 @@ class TestArrayEmitter(unittest.TestCase):
             label_col_aggr_of_interest='SUM',
             label_interval_train_window_start=2009,
             label_interval_train_window_end=2009,
-            label_interval_test_window_start=2011,
-            label_interval_test_window_end=2011,
+            label_interval_test_window_start=2010,
+            label_interval_test_window_end=2010,
             label_interval_inc_value=1,
             label_interval_expanding=False)
         exp.make_csv('label_window.csv')

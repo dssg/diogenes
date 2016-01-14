@@ -190,11 +190,10 @@ class TestArrayEmitter(unittest.TestCase):
         exp = ae.subset_over(
             label_col='inspection',
             label_col_aggr_of_interest='SUM',
-            label_interval_expanding=False,
-            label_interval_train_window_start=2007,
-            label_interval_train_window_end=2007,
-            label_interval_test_window_start=2009,
-            label_interval_test_window_end=2009,
+            label_interval_train_window_start=2009,
+            label_interval_train_window_end=2009,
+            label_interval_test_window_start=2011,
+            label_interval_test_window_end=2011,
             label_interval_inc_value=1,
             label_interval_expanding=False)
         exp.make_csv('label_window.csv')

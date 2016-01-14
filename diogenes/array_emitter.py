@@ -999,13 +999,13 @@ class ArrayEmitter(object):
     def subset_over(
             self, 
             label_col,
-            label_col_aggr_of_interest='AVG',
             label_interval_train_window_start,
             label_interval_train_window_end,
             label_interval_test_window_start,
             label_interval_test_window_end,
             label_interval_inc_value,
             label_interval_expanding,
+            label_col_aggr_of_interest='AVG',
             row_M_col_name=None,
             row_M_col_aggr_of_interest='AVG',
             row_M_train_window_start=None,
@@ -1129,7 +1129,7 @@ class ArrayEmitter(object):
             "   WHEN {stop_time_col} > {start_time_col} THEN {stop_time_col} "
             "   ELSE {start_time_col} "
             "END) as max_time FROM {table_name} "
-            "WHERE {feat_col} = {label_name}").format(
+            "WHERE {feat_col} = '{label_name}'").format(
                stop_time_col=col_specs['stop_time'],
                start_time_col=col_specs['start_time'],
                table_name=table_name,
@@ -1172,10 +1172,10 @@ class ArrayEmitter(object):
         ae = self.set_label_feature(label_col)
         while (current_row_M_test_start < row_M_end and
                current_label_interval_test_start < interval_end):
-            ae_train = ae_train.set_label_interval(
+            ae_train = ae.set_label_interval(
                     current_label_interval_train_start,
                     current_label_interval_train_end)
-            ae_test = ae_test.set_label_interval(
+            ae_test = ae.set_label_interval(
                     current_label_interval_test_start,
                     current_label_interval_test_end)
             if row_M_col_name is not None:

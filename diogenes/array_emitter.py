@@ -993,7 +993,6 @@ class ArrayEmitter(object):
             query = self.get_query_with_labels()
         else:
             query = self.get_query()
-        print query
         return self.__conn.execute(query)
 
     def subset_over(
@@ -1223,8 +1222,6 @@ class ArrayEmitter(object):
                         M_train, 
                         y_train,
                         'train', 
-                        current_interval_train_start,
-                        current_interval_train_end,
                         current_label_interval_train_start,
                         current_label_interval_train_end,
                         current_row_M_train_start,
@@ -1233,8 +1230,6 @@ class ArrayEmitter(object):
                         M_test,
                         y_test,
                         'test',
-                        current_interval_test_start,
-                        current_interval_test_end,
                         current_label_interval_test_start,
                         current_label_interval_test_end,
                         current_row_M_test_start,
@@ -1422,7 +1417,6 @@ def M_to_rg(conn_str, from_table, to_table, unit_id_col,
             sql = sql_boolean.format(feat_col=feat_col)
         else: # numeric dtype. Leave as is
             sql = sql_numeric.format(feat_col=feat_col)
-        print sql
         conn.execute(sql.format(feat_col=feat_col))
 
 

@@ -200,10 +200,9 @@ class TestArrayEmitter(unittest.TestCase):
 
     def test_feature_gen_lambda(self):
 
-        def feature_gen(M, labels, test_or_train, interval_start, interval_end, 
+        def feature_gen(M, labels, test_or_train,
                         label_interval_start, label_interval_end,
                         row_M_start, row_M_end):
-            import pdb; pdb.set_trace()
             return (append_cols(M, M['relevent_feature_SUM'] * 2 if 
                         test_or_train == 'test' 
                         else M['relevent_feature_SUM'] * 3, 'mult'),
@@ -215,10 +214,10 @@ class TestArrayEmitter(unittest.TestCase):
         ae = ae.set_default_aggregation('SUM')
         exp = ae.subset_over(
             label_col='label',
-            label_interval_train_window_start=2004,
-            label_interval_train_window_end=2005,
-            label_interval_test_window_start=2006,
-            label_interval_test_window_end=2007,
+            label_interval_train_window_start=2008,
+            label_interval_train_window_end=2008,
+            label_interval_test_window_start=2009,
+            label_interval_test_window_end=2009,
             label_interval_inc_value=1,
             label_col_aggr_of_interest='SUM',
             label_interval_expanding=False,

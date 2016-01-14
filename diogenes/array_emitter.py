@@ -178,9 +178,37 @@ class ArrayEmitter(object):
 
     **Taking labels and features from different time intervals**
 
-    If you need to take labels and the rest of your features from different
-    time intervals, set the label column with set_label_feature and set the
-    label interval with set_label_interval.
+    If the label feature is set with set_label_feature, then the semantics
+    of emit_M changes: 
+
+    Rather than selecting features that fall within the values specified
+    in set_interval, array_emitter will select labels from the values
+    specified in set_label_interval. Features that are not labels will
+    be selected such that a feature is selected for a given unit if its time
+    is before the label for that unit. For example, if we have:
+
+    *Table 4:*
+
+    +---------+------------+----------+---------+-------+
+    | unit_id | start_time | end_time | feature | value |
+    +=========+============+==========+=========+=======+
+    |       0 |       2001 |          |      f0 |     1 |
+    +---------+------------+----------+---------+-------+
+    |       0 |       2004 |          |      f0 |     3 |
+    +---------+------------+----------+---------+-------+
+    |       0 |       2002 |          |   label |     1 |
+    +---------+------------+----------+---------+-------+
+
+    and do
+
+    >>> ae = ae.set_label_feature('label')
+    >>> ae = ae.set_label_interval(2002, 2002)
+    >>> ae = ae.set_aggregation('f0', 'MAX')
+    >>> ae.emit_M()
+
+    We will end up with a value for f0 of unit 0 of 1, not 3
+
+    *If you use set_label_feature, make sure to also set_label_interval*
 
     **Note on function call semantics**
 

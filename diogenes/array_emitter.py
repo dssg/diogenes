@@ -773,25 +773,27 @@ class ArrayEmitter(object):
                          "        SELECT\n"
                          "            {table_name}.{unit_id_col} as id,\n").format(
                             unit_id_col=col_specs['unit_id'],
-                            feat_table=feat_table)
+                            feat_table=feat_table,
+                            table_name=table_name)
         with_clause_1 = ',\n'.join(
                 ["            {aggr}({table_name}.{val_col}) as val_{aggr}".format(
                     aggr=aggr,
-                    val_col=col_specs['val']) for aggr in aggrs]) + '\n'
+                    val_col=col_specs['val'],
+                    table_name=table_name) for aggr in aggrs]) + '\n'
         with_clause_2 = ("        FROM\n"
-                         "            {table_name} JOIN tbl_label\n"
-                         "            ON {table_name}.{unit_id_col} = tbl_label.id\n"
+                         "            {table_name} JOIN label_tbl\n"
+                         "            ON {table_name}.{unit_id_col} = label_tbl.id\n"
                          "        WHERE\n"
                          "            {feature_col} = '{feat_name}'\n"
                          "            AND\n"
                          "            (\n"
-                         "                {table_name}.{stop_time_col} < tbl_label.stop_time\n"
-                         "                OR {start_time_col} IS NULL\n"
+                         "                {table_name}.{stop_time_col} < label_tbl.stop_time\n"
+                         "                OR {table_name}.{start_time_col} IS NULL\n"
                          "            )\n"
                          "            AND\n"
                          "            (\n"
-                         "                {table_name}.{stop_time_col} < tbl_label.stop_time\n"
-                         "                OR {stop_time_col} IS NULL\n"
+                         "                {table_name}.{stop_time_col} < label_tbl.stop_time\n"
+                         "                OR {table_name}.{stop_time_col} IS NULL\n"
                          "            )\n"
                          "        GROUP BY {table_name}.{unit_id_col}\n"
                          "    )").format(
@@ -838,7 +840,7 @@ class ArrayEmitter(object):
                             unit_id_col=col_specs['unit_id'],
                             feat_table=feat_table)
         with_clause_1 = ("            COALESCE(MAX({stop_time_col}), "
-                         "MAX({start_time_col})) AS stop_time\n").format(
+                         "MAX({start_time_col})) AS stop_time,\n").format(
                                  start_time_col=col_specs['start_time'],
                                  stop_time_col=col_specs['stop_time'])
         with_clause_2 = ',\n'.join(
@@ -917,7 +919,7 @@ class ArrayEmitter(object):
             label_start_time,
             label_stop_time)
 
-        feature_subqueries = ([label_subquery] + 
+        subqueries = ([label_subquery] + 
             [self.__feature_subqueries_nonlabel(feat_name)
                 for feat_name in feat_names])
 

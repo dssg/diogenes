@@ -64,6 +64,7 @@ def array_equal(M1, M2, eps=1e-5, idx_col=None):
             continue
         if 'O' in M1_dtype_str and 'S' in M2_dtype_str:
             continue
+        import pdb; pdb.set_trace()
         return False
     if idx_col is not None:
         M1_idx_col = M1[idx_col]
@@ -83,6 +84,11 @@ def array_equal(M1, M2, eps=1e-5, idx_col=None):
             transitions[M1_idx_backindices[idx]] = M2_idx_backindices[idx]
         new_M2_order = [transitions[i] for i in xrange(M1.shape[0])]
         M2_reordered = M2_reordered[new_M2_order]
+    print M1
+    print M1.dtype
+    print
+    print M2_reordered
+    print M2_reordered.dtype
     for col_name, col_type in M1.dtype.descr:
         M1_col = M1[col_name]
         M2_col = M2_reordered[col_name]
